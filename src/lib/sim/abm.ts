@@ -192,11 +192,15 @@ export function stepAbm(state: AbmState): AbmMetrics {
       0.5 * a.priceSensitivity * (state.price - 1) -
       0.25 * a.dataSensitivity * (1 - p.control);
 
+    a.atRiskFlag = false;
     if (a.state === "unaware") {
       const adoptP = clamp(utility * 0.5 * p.launchRate * a.trust, 0, 0.6);
       if (u() < adoptP) a.state = "adopted";
     } else if (a.state === "adopted") {
-      if (utility < 0.35) atRisk++;
+      if (utility < 0.35) {
+        atRisk++;
+        a.atRiskFlag = true;
+      }
       const churnP = clamp((0.35 - utility) * a.switchProp, 0, 0.5);
       if (u() < churnP) a.state = "churned";
     } else {
