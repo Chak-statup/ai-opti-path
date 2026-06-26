@@ -25,6 +25,8 @@ export interface Agent {
   switchProp: number;
   neighbors: number[];
   state: AgentState;
+  /** adopted but currently below the satisfaction threshold */
+  atRiskFlag: boolean;
   /** revenue value per active month */
   value: number;
 }
