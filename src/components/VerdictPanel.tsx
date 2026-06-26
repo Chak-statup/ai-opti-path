@@ -40,7 +40,7 @@ export function VerdictPanel({ results }: { results: CausalResult[] }) {
               <span
                 className="h-2.5 w-2.5 rounded-full"
                 style={{
-                  background: `var(--color-${STRATEGY_META[r.strategy].token})`,
+                  background: `var(--${STRATEGY_META[r.strategy].token})`,
                 }}
               />
               <span className="text-xs font-medium text-muted-foreground">

@@ -91,12 +91,12 @@ function Index() {
               <div
                 key={s}
                 className="rounded-2xl border border-border bg-card p-5"
-                style={{ borderTopColor: `var(--color-${m.token})`, borderTopWidth: 3 }}
+                style={{ borderTopColor: `var(--${m.token})`, borderTopWidth: 3 }}
               >
                 <div className="flex items-center gap-2">
                   <span
                     className="h-3 w-3 rounded-full"
-                    style={{ background: `var(--color-${m.token})` }}
+                    style={{ background: `var(--${m.token})` }}
                   />
                   <h3 className="font-display text-base font-semibold">{m.label}</h3>
                 </div>
@@ -129,7 +129,7 @@ function Index() {
               >
                 <span
                   className="flex h-11 w-11 items-center justify-center rounded-xl text-white"
-                  style={{ background: `var(--color-${model.tone})` }}
+                  style={{ background: `var(--${model.tone})` }}
                 >
                   <model.icon className="h-5 w-5" />
                 </span>
@@ -147,7 +147,7 @@ function Index() {
                     >
                       <span
                         className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: `var(--color-${model.tone})` }}
+                        style={{ background: `var(--${model.tone})` }}
                       />
                       {p}
                     </li>

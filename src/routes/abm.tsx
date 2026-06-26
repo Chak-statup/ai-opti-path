@@ -125,7 +125,7 @@ function AbmPage() {
                   >
                     <span
                       className="h-2.5 w-2.5 rounded-full"
-                      style={{ background: `var(--color-${STRATEGY_META[s].token})` }}
+                      style={{ background: `var(--${STRATEGY_META[s].token})` }}
                     />
                     {STRATEGY_META[s].label}
                   </button>
@@ -198,32 +198,32 @@ function AbmPage() {
               <div className="mt-3">
                 <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={history} margin={{ top: 8, right: 12, bottom: 4, left: 4 }}>
-                    <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="month"
-                      tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+                      tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                       tickLine={false}
-                      axisLine={{ stroke: "var(--color-border)" }}
+                      axisLine={{ stroke: "var(--border)" }}
                     />
                     <YAxis
-                      tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+                      tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                       tickLine={false}
                       axisLine={false}
                       width={36}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: "var(--color-popover)",
-                        border: "1px solid var(--color-border)",
+                        background: "var(--popover)",
+                        border: "1px solid var(--border)",
                         borderRadius: 12,
                         fontSize: 12,
-                        color: "var(--color-popover-foreground)",
+                        color: "var(--popover-foreground)",
                       }}
                       labelFormatter={(l) => `Month ${l}`}
                     />
-                    <Line dataKey="adopted" name="Adopted" stroke="var(--color-quality)" strokeWidth={2.5} dot={false} isAnimationActive={false} />
-                    <Line dataKey="atRisk" name="At risk" stroke="var(--color-cost)" strokeWidth={2} dot={false} isAnimationActive={false} />
-                    <Line dataKey="churned" name="Churned" stroke="var(--color-risk)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    <Line dataKey="adopted" name="Adopted" stroke="var(--quality)" strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                    <Line dataKey="atRisk" name="At risk" stroke="var(--cost)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    <Line dataKey="churned" name="Churned" stroke="var(--risk)" strokeWidth={2} dot={false} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -245,7 +245,7 @@ function Kpi({ label, value, token }: { label: string; value: number; token: str
   return (
     <div className="rounded-xl border border-border p-3">
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full" style={{ background: `var(--color-${token})` }} />
+        <span className="h-2 w-2 rounded-full" style={{ background: `var(--${token})` }} />
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
       <p className="mt-0.5 font-display text-2xl font-semibold tabular-nums">{value}</p>
@@ -256,7 +256,7 @@ function Kpi({ label, value, token }: { label: string; value: number; token: str
 function Legend({ token, label }: { token: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5 text-muted-foreground">
-      <span className="h-2.5 w-2.5 rounded-full" style={{ background: `var(--color-${token})` }} />
+      <span className="h-2.5 w-2.5 rounded-full" style={{ background: `var(--${token})` }} />
       {label}
     </div>
   );
