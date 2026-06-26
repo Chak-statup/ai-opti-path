@@ -150,6 +150,8 @@ function CausalPage() {
               <CausalLoopDiagram />
               <VerdictPanel results={results} />
             </div>
+
+            <ModelSpec />
           </div>
         </div>
       </main>
