@@ -231,6 +231,8 @@ function AbmPage() {
                 replay to see how this population absorbs them.
               </p>
             </div>
+
+            <AbmModelSpec />
           </div>
         </div>
       </main>
