@@ -94,6 +94,7 @@ export function initAbm(
       switchProp: u(),
       neighbors: [],
       state: "unaware",
+      atRiskFlag: false,
       value,
     });
   }
