@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/outfit";
 @import "@fontsource-variable/figtree";
+@import "katex/dist/katex.min.css";
 
 @custom-variant dark (&:is(.dark *));
 
