@@ -13,6 +13,7 @@ import {
 import { SiteHeader } from "@/components/SiteHeader";
 import { ScenarioControls } from "@/components/ScenarioControls";
 import { AgentCanvas } from "@/components/abm/AgentCanvas";
+import { AbmModelSpec } from "@/components/abm/AbmModelSpec";
 import { defaultScenario, STRATEGIES, STRATEGY_META } from "@/lib/sim/scenario";
 import { initAbm, stepAbm, type AbmMetrics, type AbmState } from "@/lib/sim/abm";
 import type { Scenario, Strategy } from "@/lib/sim/types";
