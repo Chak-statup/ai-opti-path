@@ -5,6 +5,7 @@ import { ScenarioControls } from "@/components/ScenarioControls";
 import { BandChart } from "@/components/charts/BandChart";
 import { CausalLoopDiagram } from "@/components/CausalLoopDiagram";
 import { VerdictPanel } from "@/components/VerdictPanel";
+import { ModelSpec } from "@/components/ModelSpec";
 import { defaultScenario, STRATEGIES, STRATEGY_META } from "@/lib/sim/scenario";
 import { simulateAllCausal } from "@/lib/sim/causal";
 import type { Scenario, Strategy } from "@/lib/sim/types";
