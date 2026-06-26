@@ -45,7 +45,7 @@ export function CausalLoopDiagram() {
             refY="3"
             orient="auto"
           >
-            <path d="M0,0 L7,3 L0,6 Z" fill="var(--color-risk)" />
+            <path d="M0,0 L7,3 L0,6 Z" fill="var(--risk)" />
           </marker>
           <marker
             id="arrow-b"
@@ -55,7 +55,7 @@ export function CausalLoopDiagram() {
             refY="3"
             orient="auto"
           >
-            <path d="M0,0 L7,3 L0,6 Z" fill="var(--color-quality)" />
+            <path d="M0,0 L7,3 L0,6 Z" fill="var(--quality)" />
           </marker>
         </defs>
 
@@ -64,7 +64,7 @@ export function CausalLoopDiagram() {
           const b = nodeById(e.to);
           const mx = (a.x + b.x) / 2;
           const my = (a.y + b.y) / 2;
-          const color = e.loop === "R" ? "var(--color-risk)" : "var(--color-quality)";
+          const color = e.loop === "R" ? "var(--risk)" : "var(--quality)";
           return (
             <g key={i}>
               <line
@@ -77,7 +77,7 @@ export function CausalLoopDiagram() {
                 strokeOpacity={0.55}
                 markerEnd={e.loop === "R" ? "url(#arrow-r)" : "url(#arrow-b)"}
               />
-              <circle cx={mx} cy={my} r={9} fill="var(--color-card)" stroke={color} />
+              <circle cx={mx} cy={my} r={9} fill="var(--card)" stroke={color} />
               <text
                 x={mx}
                 y={my + 3.5}
@@ -100,8 +100,8 @@ export function CausalLoopDiagram() {
               width={124}
               height={36}
               rx={10}
-              fill={`var(--color-${n.tone}-soft)`}
-              stroke={`var(--color-${n.tone})`}
+              fill={`var(--${n.tone}-soft)`}
+              stroke={`var(--${n.tone})`}
               strokeWidth={1.2}
             />
             <text
@@ -110,7 +110,7 @@ export function CausalLoopDiagram() {
               textAnchor="middle"
               fontSize="11.5"
               fontWeight="600"
-              fill="var(--color-foreground)"
+              fill="var(--foreground)"
             >
               {n.label}
             </text>

@@ -5,6 +5,7 @@ import { ScenarioControls } from "@/components/ScenarioControls";
 import { BandChart } from "@/components/charts/BandChart";
 import { CausalLoopDiagram } from "@/components/CausalLoopDiagram";
 import { VerdictPanel } from "@/components/VerdictPanel";
+import { ModelSpec } from "@/components/ModelSpec";
 import { defaultScenario, STRATEGIES, STRATEGY_META } from "@/lib/sim/scenario";
 import { simulateAllCausal } from "@/lib/sim/causal";
 import type { Scenario, Strategy } from "@/lib/sim/types";
@@ -104,7 +105,7 @@ function CausalPage() {
                     >
                       <span
                         className="h-2.5 w-2.5 rounded-full"
-                        style={{ background: `var(--color-${STRATEGY_META[s].token})` }}
+                        style={{ background: `var(--${STRATEGY_META[s].token})` }}
                       />
                       {STRATEGY_META[s].label}
                     </button>
@@ -129,7 +130,7 @@ function CausalPage() {
                   <div className="flex items-center gap-2">
                     <span
                       className="h-2.5 w-2.5 rounded-full"
-                      style={{ background: `var(--color-${STRATEGY_META[r.strategy].token})` }}
+                      style={{ background: `var(--${STRATEGY_META[r.strategy].token})` }}
                     />
                     <h3 className="text-sm font-semibold">
                       {STRATEGY_META[r.strategy].label}
@@ -149,6 +150,8 @@ function CausalPage() {
               <CausalLoopDiagram />
               <VerdictPanel results={results} />
             </div>
+
+            <ModelSpec />
           </div>
         </div>
       </main>
