@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, Network } from "lucide-react";
+import { Activity, LineChart } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function SiteHeader() {
