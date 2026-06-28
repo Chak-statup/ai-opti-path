@@ -10,23 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SimulatorRouteImport } from './routes/simulator'
-import { Route as CausalRouteImport } from './routes/causal'
-import { Route as AbmRouteImport } from './routes/abm'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SimulatorRoute = SimulatorRouteImport.update({
   id: '/simulator',
   path: '/simulator',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CausalRoute = CausalRouteImport.update({
-  id: '/causal',
-  path: '/causal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AbmRoute = AbmRouteImport.update({
-  id: '/abm',
-  path: '/abm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,35 +25,27 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/abm': typeof AbmRoute
-  '/causal': typeof CausalRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/abm': typeof AbmRoute
-  '/causal': typeof CausalRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/abm': typeof AbmRoute
-  '/causal': typeof CausalRoute
   '/simulator': typeof SimulatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/abm' | '/causal' | '/simulator'
+  fullPaths: '/' | '/simulator'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/abm' | '/causal' | '/simulator'
-  id: '__root__' | '/' | '/abm' | '/causal' | '/simulator'
+  to: '/' | '/simulator'
+  id: '__root__' | '/' | '/simulator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AbmRoute: typeof AbmRoute
-  CausalRoute: typeof CausalRoute
   SimulatorRoute: typeof SimulatorRoute
 }
 
@@ -76,20 +56,6 @@ declare module '@tanstack/react-router' {
       path: '/simulator'
       fullPath: '/simulator'
       preLoaderRoute: typeof SimulatorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/causal': {
-      id: '/causal'
-      path: '/causal'
-      fullPath: '/causal'
-      preLoaderRoute: typeof CausalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/abm': {
-      id: '/abm'
-      path: '/abm'
-      fullPath: '/abm'
-      preLoaderRoute: typeof AbmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,8 +70,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AbmRoute: AbmRoute,
-  CausalRoute: CausalRoute,
   SimulatorRoute: SimulatorRoute,
 }
 export const routeTree = rootRouteImport
