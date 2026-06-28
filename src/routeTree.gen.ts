@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as CausalRouteImport } from './routes/causal'
 import { Route as AbmRouteImport } from './routes/abm'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SimulatorRoute = SimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CausalRoute = CausalRouteImport.update({
   id: '/causal',
   path: '/causal',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/abm': typeof AbmRoute
   '/causal': typeof CausalRoute
+  '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/abm': typeof AbmRoute
   '/causal': typeof CausalRoute
+  '/simulator': typeof SimulatorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/abm': typeof AbmRoute
   '/causal': typeof CausalRoute
+  '/simulator': typeof SimulatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/abm' | '/causal'
+  fullPaths: '/' | '/abm' | '/causal' | '/simulator'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/abm' | '/causal'
-  id: '__root__' | '/' | '/abm' | '/causal'
+  to: '/' | '/abm' | '/causal' | '/simulator'
+  id: '__root__' | '/' | '/abm' | '/causal' | '/simulator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AbmRoute: typeof AbmRoute
   CausalRoute: typeof CausalRoute
+  SimulatorRoute: typeof SimulatorRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/simulator': {
+      id: '/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof SimulatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/causal': {
       id: '/causal'
       path: '/causal'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AbmRoute: AbmRoute,
   CausalRoute: CausalRoute,
+  SimulatorRoute: SimulatorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
