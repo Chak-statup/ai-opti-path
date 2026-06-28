@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, Network } from "lucide-react";
+import { Activity, LineChart } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function SiteHeader() {
@@ -16,11 +16,8 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          <NavLink to="/causal" icon={<Network className="h-4 w-4" />}>
-            Causal model
-          </NavLink>
-          <NavLink to="/abm" icon={<Activity className="h-4 w-4" />}>
-            Agent model
+          <NavLink to="/simulator" icon={<LineChart className="h-4 w-4" />}>
+            Simulator
           </NavLink>
           <div className="ml-2">
             <ThemeToggle />
