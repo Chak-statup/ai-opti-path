@@ -1537,6 +1537,39 @@
   font-variant-numeric: tabular-nums;
 }
 .exp-mit-radar { display: flex; flex-direction: column; gap: 0.8rem; max-width: 360px; margin: 0 auto; }
+.exp-mit-radar-title {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+}
+.exp-mit-card.primary {
+  box-shadow: inset 0 0 0 1px var(--exp-axis);
+}
+.exp-mit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+}
+.exp-mit-table th {
+  text-align: left;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  font-weight: 600;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--exp-border);
+}
+.exp-mit-table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid var(--exp-border);
+  color: var(--exp-ink);
+}
+.exp-mit-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.exp-mit-table tr.primary td { font-weight: 600; }
+.exp-mit-table .exp-swatch { margin-right: 0.4rem; }
 .exp-mit-apply {
   display: flex;
   align-items: center;
