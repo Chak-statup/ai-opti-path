@@ -1083,3 +1083,84 @@
 .exp-problem-name { font-weight: 600; font-size: 0.95rem; }
 .exp-problem-q { font-size: 0.78rem; color: var(--exp-muted); font-variant-numeric: tabular-nums; }
 .exp-problem-stance { margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--exp-muted); }
+
+/* ============================================================
+ * How it works (model explainer)
+ * ============================================================ */
+.exp-howto { max-width: 880px; margin: 0 auto; }
+.exp-howto-sec { padding: 1.4rem 0; border-top: 1px solid var(--exp-border); }
+.exp-howto-sec:first-child { border-top: none; padding-top: 0.4rem; }
+.exp-howto-h {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+}
+.exp-howto .exp-prose { margin: 0 0 0.7rem; }
+.exp-howto-note { font-size: 0.82rem; color: var(--exp-muted); }
+
+.exp-howto-eq {
+  background: var(--exp-surface);
+  border: 1px solid var(--exp-border);
+  border-radius: 4px;
+  padding: 1rem 1.1rem 0.8rem;
+  margin: 0.8rem 0;
+}
+.exp-howto-eq .exp-tex-block { display: block; overflow-x: auto; }
+.exp-howto-cap {
+  margin: 0.7rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--exp-muted);
+}
+
+.exp-param-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.exp-param-table th {
+  text-align: left;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--exp-ink);
+}
+.exp-param-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--exp-grid);
+  color: var(--exp-ink);
+  vertical-align: top;
+}
+.exp-param-sym { white-space: nowrap; }
+.exp-param-val { white-space: nowrap; color: var(--exp-muted); font-variant-numeric: tabular-nums; }
+
+.exp-howto-findings { display: grid; gap: 0.9rem; }
+.exp-howto-finding { display: flex; gap: 0.8rem; align-items: flex-start; }
+.exp-howto-finding-num {
+  flex: none;
+  width: 1.6rem; height: 1.6rem;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--exp-ink);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.exp-howto-finding h4 { margin: 0.15rem 0 0.2rem; font-size: 0.9rem; }
+.exp-howto-finding p { margin: 0; font-size: 0.84rem; line-height: 1.5; color: var(--exp-muted); }
+
+.exp-howto-illus {
+  margin: 1.2rem 0 0;
+  padding: 0.8rem 1rem;
+  border-left: 3px solid var(--exp-accent-2);
+  background: var(--exp-surface);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--exp-muted);
+}
