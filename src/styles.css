@@ -1313,6 +1313,70 @@
   color: var(--exp-muted);
   letter-spacing: 0.02em;
 }
+.exp-mit-ai {
+  border: 1px solid var(--exp-border);
+  border-left: 3px solid var(--exp-accent-3);
+  background: var(--exp-surface);
+  border-radius: 6px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.exp-mit-ai-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.exp-mit-ai-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--exp-ink);
+}
+.exp-mit-ai-tag {
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  border: 1px solid var(--exp-border);
+  border-radius: 99px;
+  padding: 0.12rem 0.5rem;
+}
+.exp-mit-ai-btn {
+  align-self: flex-start;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--exp-accent-3);
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+}
+.exp-mit-ai-btn:hover { filter: brightness(1.07); }
+.exp-mit-ai-btn:disabled { opacity: 0.6; cursor: progress; }
+.exp-mit-ai-out { display: flex; flex-direction: column; gap: 0.5rem; }
+.exp-mit-ai-pick { font-size: 0.82rem; color: var(--exp-ink); }
+.exp-mit-ai-line {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--exp-muted);
+  margin: 0;
+}
+.exp-mit-ai-reset {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  color: var(--exp-accent-3);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
 .exp-mit-cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

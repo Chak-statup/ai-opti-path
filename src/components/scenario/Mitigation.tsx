@@ -26,6 +26,20 @@ function fmtDelta(v: number): string {
   return `${sign}$${Math.abs(v).toFixed(0)}M`;
 }
 
+// Mocked AI briefing — composed locally from the chosen candidate's numbers.
+// No network call, no key. Stands in for the human-in-the-loop advisory until
+// the live model is wired in.
+function aiBriefing(
+  c: { label: string; rationale: string; cumProfit: number; deltaVsBaseline: number; vec: { innovation: number; resilience: number } },
+  baseProfit: number,
+): string[] {
+  return [
+    `I read the live scenario and stress-tested the candidate vectors against the same environment. "${c.label}" is the strongest response: it moves the cumulative result from ${fmt(baseProfit)} to ${fmt(c.cumProfit)} (${fmtDelta(c.deltaVsBaseline)}).`,
+    `The decisive move is to ${c.rationale.charAt(0).toLowerCase()}${c.rationale.slice(1)}`,
+    `Watch-out: this leans on innovation ${Math.round(c.vec.innovation)} and resilience ${Math.round(c.vec.resilience)}. If the external shock deepens, raise resilience first — it is the cheapest hedge against vendor pricing pass-through.`,
+  ];
+}
+
 export function Mitigation({
   data,
   ctx,
@@ -42,6 +56,20 @@ export function Mitigation({
   const candidates = useMemo(() => proposeMitigations(data, base, ctx), [data, base, ctx]);
   const [selId, setSelId] = useState(candidates[0]?.id ?? "");
   const selected = candidates.find((c) => c.id === selId) ?? candidates[0];
+
+  // Mocked AI advisory state — "Analysing…" then reveals a briefing.
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiDone, setAiDone] = useState(false);
+  const runAi = () => {
+    setAiLoading(true);
+    setAiDone(false);
+    window.setTimeout(() => {
+      const best = candidates[0];
+      if (best) setSelId(best.id);
+      setAiLoading(false);
+      setAiDone(true);
+    }, 900);
+  };
 
   const t = data.t;
   const baseDerived = useMemo(
@@ -88,6 +116,47 @@ export function Mitigation({
       <div className="exp-mit-tag">
         Model-proposed mitigations — generated from the live scenario, ranked by cumulative profit
       </div>
+
+      <div className="exp-mit-ai">
+        <div className="exp-mit-ai-head">
+          <span className="exp-mit-ai-title">AI-mitigated strategy</span>
+          <span className="exp-mit-ai-tag">Demo — mocked advisory</span>
+        </div>
+        {!aiDone ? (
+          <>
+            <p className="exp-prose">
+              Let the assistant read the live scenario, pick a mitigated strategy vector and apply it
+              to the before vs after below — human stays in the loop.
+            </p>
+            <button
+              type="button"
+              className="exp-mit-ai-btn"
+              onClick={runAi}
+              disabled={aiLoading || candidates.length === 0}
+            >
+              {aiLoading ? "Analysing scenario…" : "Generate AI mitigation"}
+            </button>
+          </>
+        ) : (
+          <div className="exp-mit-ai-out">
+            <div className="exp-mit-ai-pick">
+              Recommended vector: <strong>{selected.label}</strong>{" "}
+              <span style={{ color: selected.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}>
+                {fmtDelta(selected.deltaVsBaseline)}
+              </span>
+            </div>
+            {aiBriefing(selected, baseDerived.cumProfit).map((p, i) => (
+              <p key={i} className="exp-mit-ai-line">
+                {p}
+              </p>
+            ))}
+            <button type="button" className="exp-mit-ai-reset" onClick={() => setAiDone(false)}>
+              Re-run advisory
+            </button>
+          </div>
+        )}
+      </div>
+
 
       <div className="exp-mit-cards">
         {candidates.map((c) => (
