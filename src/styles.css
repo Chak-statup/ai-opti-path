@@ -1184,6 +1184,56 @@
 .exp-problem-q { font-size: 0.78rem; color: var(--exp-muted); font-variant-numeric: tabular-nums; }
 .exp-problem-stance { margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--exp-muted); }
 
+/* Crucial axes that make the decision hard */
+.exp-axis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+@media (max-width: 760px) { .exp-axis-grid { grid-template-columns: 1fr; } }
+.exp-axis-card {
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem;
+  background: var(--exp-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.exp-axis-head { display: flex; align-items: baseline; gap: 0.7rem; }
+.exp-axis-num {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--exp-frontier);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.exp-axis-title { font-weight: 600; font-size: 1rem; color: var(--exp-ink); }
+.exp-axis-q { margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--exp-ink); }
+.exp-axis-risks-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--exp-accent-2);
+  font-weight: 600;
+  border-top: 1px solid var(--exp-border);
+  padding-top: 0.7rem;
+}
+.exp-axis-risks { margin: 0; padding-left: 1.05rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.exp-axis-risks li { font-size: 0.82rem; line-height: 1.4; color: var(--exp-muted); }
+.exp-axis-note {
+  border: 1px solid var(--exp-border);
+  border-left: 3px solid var(--exp-accent-2);
+  border-radius: 8px;
+  background: var(--exp-surface);
+  padding: 1rem 1.15rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--exp-ink);
+  margin-top: 1.25rem;
+}
+
 /* ============================================================
  * How it works (model explainer)
  * ============================================================ */
