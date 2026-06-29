@@ -243,3 +243,169 @@ export function computeCausalState(
     profitPos: cumProfit >= 0,
   };
 }
+
+// ---- Scenario context, risk radar & tipping points ----------------------
+// Two extra knobs ground the "what could change" question. They feed the same
+// arithmetic, so the radar and tipping points never disagree with the charts.
+export interface ScenarioContext {
+  tokenPriceFactor: number; // 1 = today, 3 = vendor triples token price
+  regPressure: number; // 0..100 regulatory / compliance load
+}
+
+export const DEFAULT_CONTEXT: ScenarioContext = {
+  tokenPriceFactor: 1.5,
+  regPressure: 30,
+};
+
+export interface ScenarioPreset {
+  id: string;
+  label: string;
+  blurb: string;
+  ctx: ScenarioContext;
+  dm: number;
+  qstar: number;
+}
+
+export const PRESETS: ScenarioPreset[] = [
+  {
+    id: "status-quo",
+    label: "Status quo",
+    blurb: "Today's prices, moderate compliance, balanced margin.",
+    ctx: { tokenPriceFactor: 1.5, regPressure: 30 },
+    dm: 6,
+    qstar: 0.5,
+  },
+  {
+    id: "pricing-shock",
+    label: "Pricing shock",
+    blurb: "The vendor triples token prices after market consolidation.",
+    ctx: { tokenPriceFactor: 3, regPressure: 30 },
+    dm: 6,
+    qstar: 0.5,
+  },
+  {
+    id: "regulatory-stress",
+    label: "Regulatory stress test",
+    blurb: "Full audit duty for every AI app on an 18-month deadline.",
+    ctx: { tokenPriceFactor: 1.5, regPressure: 80 },
+    dm: 6,
+    qstar: 0.5,
+  },
+  {
+    id: "oss-breakthrough",
+    label: "Open-source breakthrough",
+    blurb: "An open model matches the frontier — token cost collapses.",
+    ctx: { tokenPriceFactor: 0.6, regPressure: 30 },
+    dm: 8,
+    qstar: 0.5,
+  },
+];
+
+function totals(data: RunsData, s: number, dm: number, qstar: number, ctx: ScenarioContext) {
+  const d = deriveStrategy(data, s, dm, qstar, ctx);
+  const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+  return {
+    cumMargin: sum(d.margin),
+    cumCost: sum(d.cost),
+    cumProfit: d.cumProfit,
+    usersEnd: d.users[d.users.length - 1],
+  };
+}
+
+export interface RiskScores {
+  cost: number; // risk: higher = worse
+  lockin: number; // risk
+  regulatory: number; // risk
+  innovation: number; // strength: higher = better
+  resilience: number; // strength
+}
+
+// Each axis 0..100. Cost / lock-in / regulatory are risks; innovation /
+// resilience are strengths. Plain-language text carries the direction.
+export function deriveRiskScores(
+  data: RunsData,
+  s: number,
+  dm: number,
+  qstar: number,
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
+): RiskScores {
+  const p = data.meta.params;
+  const Q = data.meta.strategies[s].Q;
+  const tt = totals(data, s, dm, qstar, ctx);
+
+  const costRatio = tt.cumCost / Math.max(tt.cumMargin, 1e-9);
+  const cost = clamp01(costRatio / 1.4) * 100;
+
+  const lockin = clamp01(Q * (0.55 + 0.45 * (ctx.tokenPriceFactor / 4))) * 100;
+
+  const regulatory = clamp01(ctx.regPressure / 100) * 100;
+
+  const innovation = clamp01(Q * 1.05 - ctx.regPressure / 220) * 100;
+
+  const resilience = clamp01(0.5 + tt.cumProfit / 600) * 100;
+
+  return { cost, lockin, regulatory, innovation, resilience };
+}
+
+export interface TippingPoint {
+  key: string;
+  label: string;
+  value: number; // 0..100
+  threshold: number;
+  belowIsBad: boolean;
+  crossed: boolean;
+  explanation: string;
+}
+
+export function deriveTippingPoints(
+  data: RunsData,
+  s: number,
+  dm: number,
+  qstar: number,
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
+): TippingPoint[] {
+  const r = deriveRiskScores(data, s, dm, qstar, ctx);
+  const pts: TippingPoint[] = [
+    {
+      key: "cost",
+      label: "Token cost risk",
+      value: r.cost,
+      threshold: 65,
+      belowIsBad: false,
+      crossed: r.cost >= 65,
+      explanation:
+        "Past this line, token cost outruns product margin — every new user at full scale adds a loss, and shutting apps off costs reputation.",
+    },
+    {
+      key: "lockin",
+      label: "Vendor lock-in",
+      value: r.lockin,
+      threshold: 70,
+      belowIsBad: false,
+      crossed: r.lockin >= 70,
+      explanation:
+        "Past this line, switching costs exceed the migration benefit. Price negotiations lose their basis and market power shifts to the vendor.",
+    },
+    {
+      key: "regulatory",
+      label: "Regulatory load",
+      value: r.regulatory,
+      threshold: 72,
+      belowIsBad: false,
+      crossed: r.regulatory >= 72,
+      explanation:
+        "Past this line, compliance consumes most of the AI build capacity and innovation cycles stretch beyond 18 months.",
+    },
+    {
+      key: "innovation",
+      label: "Innovation erosion",
+      value: r.innovation,
+      threshold: 40,
+      belowIsBad: true,
+      crossed: r.innovation < 40,
+      explanation:
+        "Below this line, the company loses pace with the market — competitors build a structural lead within a year.",
+    },
+  ];
+  return pts;
+}
