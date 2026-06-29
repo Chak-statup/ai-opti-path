@@ -209,11 +209,36 @@
 }
 .exp-header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 1.1rem 1.5rem;
+  padding: 0.85rem 1.5rem;
   border-bottom: 1px solid var(--exp-border);
+}
+.exp-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+.exp-logo-link {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.exp-logo-img {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+.dark .exp-logo-img.light { display: none; }
+.exp-logo-img.dark { display: none; }
+.dark .exp-logo-img.dark { display: block; }
+.exp-brand-divider {
+  width: 1px;
+  height: 26px;
+  background: var(--exp-border);
+  flex-shrink: 0;
 }
 .exp-titles h1 {
   font-size: 0.98rem;
