@@ -193,7 +193,7 @@ function ExplorerView({
 
           <div className="exp-control">
             <div className="exp-control-head">
-              <span className="exp-control-label">Strategy</span>
+              <span className="exp-control-label">Quality threshold</span>
               <span className="exp-control-val">{snappedQ.toFixed(2)}</span>
             </div>
             <input
@@ -252,7 +252,7 @@ function ExplorerView({
             {tab === "strategy" ? (
               <>
                 <h2 className="exp-section-title">
-                  Cumulative profit vs strategy
+                  CUMULATIVE PROFIT VS QUALITY THRESHOLD
                 </h2>
                 <LineChart
                   xs={data.qstar_grid}
