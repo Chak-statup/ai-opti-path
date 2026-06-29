@@ -544,6 +544,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               ctx={ctx}
               stratColors={STRAT_COLORS}
             />
+            <AiInsight derived={derived} riskAll={riskAll} ctx={ctx} />
           </section>
         </div>
       )}
