@@ -30,18 +30,18 @@ type MetricKey = "users" | "margin" | "cost" | "profit";
 type Tab = "strategy" | MetricKey;
 
 const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
-  users: { title: "Active users N(t)", yLabel: "users (000s)", zero: false },
+  users: { title: "Active users", yLabel: "users (000s)", zero: false },
   margin: { title: "Operating margin", yLabel: "$M / step", zero: false },
   cost: { title: "Cost (CAC + fixed)", yLabel: "$M / step", zero: false },
-  profit: { title: "Net profit Π(t)", yLabel: "$M / step", zero: true },
+  profit: { title: "Revenue", yLabel: "$M / step", zero: true },
 };
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "strategy", label: "Strategy" },
+  { key: "profit", label: "Revenue" },
   { key: "users", label: "Users" },
   { key: "margin", label: "Margin" },
   { key: "cost", label: "Cost" },
-  { key: "profit", label: "Profit" },
+  { key: "strategy", label: "Strategy" },
 ];
 
 function fmtMoney(v: number): string {
@@ -54,7 +54,7 @@ function Explorer() {
   const [err, setErr] = useState<string | null>(null);
   const [dm, setDm] = useState(6);
   const [qstar, setQstar] = useState(0.5);
-  const [tab, setTab] = useState<Tab>("strategy");
+  const [tab, setTab] = useState<Tab>("profit");
 
   useEffect(() => {
     fetch("/runs.json")
@@ -144,7 +144,7 @@ function ExplorerView({
     width: 2,
   }));
   const sweepGuides: VGuide[] = [
-    { x: snappedQ, label: `Q* = ${snappedQ.toFixed(2)}`, color: "var(--exp-marker)", dash: false },
+    { x: snappedQ, label: `Strategy ${snappedQ.toFixed(2)}`, color: "var(--exp-marker)", dash: false },
     ...data.meta.strategies.map((st, s) => ({
       x: st.Q,
       color: STRAT_COLORS[s],
@@ -163,10 +163,9 @@ function ExplorerView({
           </Link>
           <span className="exp-brand-divider" />
           <div className="exp-titles">
-            <h1>AI Product Economics — Scenario Explorer</h1>
+            <h1>AI Product Economics · Scenario Explorer</h1>
             <p>
-              How two strategic levers move the outcome across three operating
-              models, over a {params.T}-step horizon.
+              Two levers, three strategies, over a {params.T}-step horizon.
             </p>
           </div>
         </div>
@@ -180,7 +179,7 @@ function ExplorerView({
         <aside className="exp-rail">
           <div className="exp-control">
             <div className="exp-control-head">
-              <span className="exp-control-label">{"Δm"} — margin slope</span>
+              <span className="exp-control-label">Margin per customer</span>
               <span className="exp-control-val">{dm.toFixed(1)}</span>
             </div>
             <input
@@ -191,12 +190,12 @@ function ExplorerView({
               value={dm}
               onChange={(e) => setDm(parseFloat(e.target.value))}
             />
-            <p className="exp-control-note">Per-user margin gain per unit quality.</p>
+            <p className="exp-control-note">Margin gain per customer per unit quality.</p>
           </div>
 
           <div className="exp-control">
             <div className="exp-control-head">
-              <span className="exp-control-label">Q* — churn threshold</span>
+              <span className="exp-control-label">Strategy</span>
               <span className="exp-control-val">{snappedQ.toFixed(2)}</span>
             </div>
             <input
@@ -235,7 +234,7 @@ function ExplorerView({
           </div>
         </aside>
 
-        {/* Chart area — one view at a time */}
+        {/* Chart area · one view at a time */}
         <main className="exp-main">
           <div className="exp-tabs" role="tablist" aria-label="Chart view">
             {TABS.map((x) => (
@@ -255,12 +254,12 @@ function ExplorerView({
             {tab === "strategy" ? (
               <>
                 <h2 className="exp-section-title">
-                  Strategy · Cumulative profit vs quality threshold
+                  Cumulative profit vs strategy
                 </h2>
                 <LineChart
                   xs={data.qstar_grid}
                   series={sweepSeries}
-                  xLabel="Q* — churn quality threshold"
+                  xLabel="Strategy"
                   yLabel="$M over horizon"
                   vGuides={sweepGuides}
                   zeroLine
