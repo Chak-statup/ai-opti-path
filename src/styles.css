@@ -312,6 +312,10 @@
   color: var(--exp-muted);
   line-height: 1.3;
 }
+.exp-tex {
+  font-family: "KaTeX_Math", "Latin Modern Math", "Cambria Math", serif;
+  font-style: italic;
+}
 .exp-legend-title,
 .exp-readout-title {
   font-size: 0.68rem;
@@ -573,7 +577,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: #ffffff;
-  background: #F39C12;
+  background: #C0392B;
   border-radius: 4px;
   text-decoration: none;
   transition: opacity 0.15s ease;

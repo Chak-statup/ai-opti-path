@@ -51,7 +51,7 @@ function LandingPage() {
             </p>
             <div className="lp-cta-row">
               <Link to="/evaluator" className="lp-cta-primary">
-                Open the Scenario Evaluator
+                To Evaluator &gt;
               </Link>
             </div>
           </div>

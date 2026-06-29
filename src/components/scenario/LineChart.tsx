@@ -43,6 +43,19 @@ function niceTicks(min: number, max: number, count = 5): number[] {
   return ticks;
 }
 
+// Render a label where Greek math symbols use the KaTeX math font.
+function renderTex(label: string) {
+  return [...label].map((ch, i) =>
+    /[\u0370-\u03FF]/.test(ch) ? (
+      <tspan key={i} className="exp-tex">
+        {ch}
+      </tspan>
+    ) : (
+      <tspan key={i}>{ch}</tspan>
+    ),
+  );
+}
+
 export function LineChart({
   xs,
   series,
@@ -167,7 +180,7 @@ export function LineChart({
                 className="exp-guide-label"
                 fill={g.color ?? "var(--exp-muted)"}
               >
-                {g.label}
+                {renderTex(g.label)}
               </text>
             )}
           </g>

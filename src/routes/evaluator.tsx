@@ -130,7 +130,7 @@ function ExplorerView({
     const bold: Series[] = [];
     derived.forEach((d, s) => {
       d.samples.forEach((sm) => {
-        faint.push({ ys: sm[key], color: STRAT_COLORS[s], width: 1, opacity: 0.22 });
+        faint.push({ ys: sm[key], color: STRAT_COLORS[s], width: 1, opacity: 0.3 });
       });
       bold.push({ ys: d[key], color: STRAT_COLORS[s], width: 2 });
     });
@@ -164,10 +164,7 @@ function ExplorerView({
           <span className="exp-brand-divider" />
           <div className="exp-titles">
             <h1>Scenario Evaluator</h1>
-            <p>
-              AI Product economics. Two levers, three strategies, over a{" "}
-              {params.T}-step horizon.
-            </p>
+            <p>AI Product economics. Two levers, three strategies.</p>
           </div>
         </div>
         <Link to="/" className="exp-home-link">
@@ -191,7 +188,7 @@ function ExplorerView({
               value={dm}
               onChange={(e) => setDm(parseFloat(e.target.value))}
             />
-            <p className="exp-control-note">Margin gain per customer per unit quality.</p>
+            
           </div>
 
           <div className="exp-control">
@@ -207,7 +204,7 @@ function ExplorerView({
               value={qstar}
               onChange={(e) => setQstar(parseFloat(e.target.value))}
             />
-            <p className="exp-control-note">Quality at which churn falls; snaps to grid.</p>
+            
           </div>
 
           <div className="exp-legend">
