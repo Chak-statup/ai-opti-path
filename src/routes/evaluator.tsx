@@ -179,7 +179,7 @@ function ExplorerView({
         <aside className="exp-rail">
           <div className="exp-control">
             <div className="exp-control-head">
-              <span className="exp-control-label">{"Δm"} — margin slope</span>
+              <span className="exp-control-label">Margin per customer</span>
               <span className="exp-control-val">{dm.toFixed(1)}</span>
             </div>
             <input
@@ -190,12 +190,12 @@ function ExplorerView({
               value={dm}
               onChange={(e) => setDm(parseFloat(e.target.value))}
             />
-            <p className="exp-control-note">Per-user margin gain per unit quality.</p>
+            <p className="exp-control-note">Margin gain per customer per unit quality.</p>
           </div>
 
           <div className="exp-control">
             <div className="exp-control-head">
-              <span className="exp-control-label">Q* — churn threshold</span>
+              <span className="exp-control-label">Strategy</span>
               <span className="exp-control-val">{snappedQ.toFixed(2)}</span>
             </div>
             <input
