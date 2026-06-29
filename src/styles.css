@@ -842,14 +842,21 @@
 .exp-edge-sample.good { border-top-color: var(--exp-hybrid); }
 .exp-edge-sample.bad { border-top-color: var(--exp-accent-3); }
 .cd-node-title {
-  font-size: 15px;
+  font-size: 21px;
   font-weight: 700;
   font-family: var(--exp-font);
 }
 .cd-node-sub {
-  font-size: 10px;
+  font-size: 13px;
   font-family: var(--exp-font);
   font-variant-numeric: tabular-nums;
+}
+.cd-svg { display: block; }
+.cd-flow {
+  animation: cd-dash 1.4s linear infinite;
+}
+@keyframes cd-dash {
+  to { stroke-dashoffset: -16; }
 }
 
 /* ============================================================
