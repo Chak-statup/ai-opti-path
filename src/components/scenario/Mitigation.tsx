@@ -57,6 +57,20 @@ export function Mitigation({
   const [selId, setSelId] = useState(candidates[0]?.id ?? "");
   const selected = candidates.find((c) => c.id === selId) ?? candidates[0];
 
+  // Mocked AI advisory state — "Analysing…" then reveals a briefing.
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiDone, setAiDone] = useState(false);
+  const runAi = () => {
+    setAiLoading(true);
+    setAiDone(false);
+    window.setTimeout(() => {
+      const best = candidates[0];
+      if (best) setSelId(best.id);
+      setAiLoading(false);
+      setAiDone(true);
+    }, 900);
+  };
+
   const t = data.t;
   const baseDerived = useMemo(
     () => deriveStrategy(data, base.strat, base.dm, base.qstar, ctx, base.vec),
