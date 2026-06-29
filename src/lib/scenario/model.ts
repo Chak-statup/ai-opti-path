@@ -162,3 +162,70 @@ export function sweepCumProfit(data: RunsData, dm: number): number[][] {
     }),
   );
 }
+
+// ---- Interactive causal state -------------------------------------------
+// Live values that drive the causal pathway diagram. Everything here is a
+// direct read of the same arithmetic used for the trajectories, so the graph
+// and the charts can never disagree.
+export interface CausalState {
+  Q: number;
+  churn: number; // χ value
+  churnNorm: number; // 0 good .. 1 bad
+  margin: number; // m per user
+  marginNorm: number; // 0 .. 1
+  comp: number; // competition pressure 0 .. 1
+  usersEnd: number; // final users (thousands)
+  usersNorm: number; // 0 .. 1
+  cumProfit: number; // $M over horizon
+  profitNorm: number; // 0 .. 1 magnitude
+  shockNorm: number; // 0 .. 1 size of price-shock hit
+  profitPos: boolean;
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v));
+}
+
+export function computeCausalState(
+  data: RunsData,
+  s: number,
+  dm: number,
+  qstar: number,
+): CausalState {
+  const p = data.meta.params;
+  const qi = qstarIndex(qstar, data.qstar_grid);
+  const snapped = data.qstar_grid[qi];
+  const Q = data.meta.strategies[s].Q;
+
+  const churn = chi(Q, snapped, p);
+  const churnNorm = clamp01((churn - p.chi_min) / (p.chi_max - p.chi_min));
+
+  const margin = p.m0 + dm * Q;
+  const dmMax = data.meta.controls.dm.max ?? 12;
+  const marginNorm = clamp01((margin - p.m0) / (dmMax * 1));
+
+  const comp = clamp01(p.phi / 0.5);
+
+  const d = deriveStrategy(data, s, dm, snapped);
+  const usersEnd = d.users[d.users.length - 1];
+  const usersNorm = clamp01(usersEnd / (p.K / 1000));
+
+  const cumProfit = d.cumProfit;
+  const profitNorm = clamp01(Math.abs(cumProfit) / 600);
+  const shockNorm = clamp01(p.dm_shock / Math.max(margin, 0.1));
+
+  return {
+    Q,
+    churn,
+    churnNorm,
+    margin,
+    marginNorm,
+    comp,
+    usersEnd,
+    usersNorm,
+    cumProfit,
+    profitNorm,
+    shockNorm,
+    profitPos: cumProfit >= 0,
+  };
+}
