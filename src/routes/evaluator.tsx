@@ -135,7 +135,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const { params, controls } = data.meta;
   const t = data.t;
 
-  const [stage, setStage] = useState<Stage>("problem");
+  const [stage, setStage] = useState<Stage>("howto");
   const [traceStrat, setTraceStrat] = useState(1);
   const [dm, setDm] = useState(PRESETS[0].dm);
   const [qstar, setQstar] = useState(PRESETS[0].qstar);
