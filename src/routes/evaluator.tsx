@@ -17,7 +17,7 @@ export const Route = createFileRoute("/evaluator")({
       {
         name: "description",
         content:
-          "An interactive exhibit exploring the economics of an AI product across Open, Hybrid and Frontier strategies.",
+          "Scenario Evaluator for AI Product economics across three strategies.",
       },
     ],
   }),
