@@ -30,18 +30,18 @@ type MetricKey = "users" | "margin" | "cost" | "profit";
 type Tab = "strategy" | MetricKey;
 
 const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
-  users: { title: "Active users N(t)", yLabel: "users (000s)", zero: false },
+  users: { title: "Active users", yLabel: "users (000s)", zero: false },
   margin: { title: "Operating margin", yLabel: "$M / step", zero: false },
   cost: { title: "Cost (CAC + fixed)", yLabel: "$M / step", zero: false },
-  profit: { title: "Net profit Π(t)", yLabel: "$M / step", zero: true },
+  profit: { title: "Revenue", yLabel: "$M / step", zero: true },
 };
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "strategy", label: "Strategy" },
+  { key: "profit", label: "Revenue" },
   { key: "users", label: "Users" },
   { key: "margin", label: "Margin" },
   { key: "cost", label: "Cost" },
-  { key: "profit", label: "Profit" },
+  { key: "strategy", label: "Strategy" },
 ];
 
 function fmtMoney(v: number): string {
