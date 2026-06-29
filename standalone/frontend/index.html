@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scenario Evaluator — AI Product Economics</title>
+    <meta
+      name="description"
+      content="An interactive scenario explorer for the economics of AI product strategy."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+    />
+    <!-- Tailwind utility classes available app-wide via the Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="lp">
+      <header class="lp-nav">
+        <div class="lp-nav-inner">
+          <a href="index.html" class="lp-logo" aria-label="STAT UP home">
+            <img src="assets/statup-logo.png" alt="STAT UP" class="exp-logo-img light" />
+            <img src="assets/statup-logo-dark.png" alt="STAT UP" class="exp-logo-img dark" />
+          </a>
+          <nav class="lp-nav-links">
+            <a href="index.html" class="lp-nav-link">Home</a>
+            <a href="evaluator.html" class="lp-nav-link">Evaluator</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="lp-main">
+        <section class="lp-hero">
+          <div class="lp-hero-bg" id="hero-bg" aria-hidden="true"></div>
+          <div class="lp-hero-content">
+            <p class="lp-steps">Plan, Evaluate, Decide</p>
+            <h1 class="lp-hero-title">Scenario Evaluator</h1>
+            <p class="lp-hero-lead">
+              AI Product economics. There are many paths to scaling AI. Here you
+              can simulate each one and make a better-informed decision.
+            </p>
+            <div class="lp-cta-row">
+              <a href="evaluator.html" class="lp-cta-primary">To the Evaluator &rarr;</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="lp-about">
+          <h2 class="lp-section-title">What the evaluator shows</h2>
+          <p class="lp-about-body">
+            This is an illustration, not a forecast. It extends a simple
+            word-of-mouth growth model to simulate the different dynamics each
+            strategy can produce. Two knobs drive everything: Quality knob and
+            Margin per user. Adjust them to see how active users, margin, cost and
+            revenue respond, and which strategy comes out ahead.
+          </p>
+        </section>
+      </main>
+
+      <footer class="lp-footer">
+        <p>Interactive decision-intelligence demo, built for live executive review</p>
+      </footer>
+    </div>
+
+    <script type="module" src="js/home.js"></script>
+  </body>
+</html>
