@@ -363,6 +363,8 @@ function ExplorerView({
           </section>
         </main>
       </div>
+      )}
     </div>
+
   );
 }
