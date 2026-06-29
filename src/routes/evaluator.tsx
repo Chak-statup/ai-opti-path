@@ -13,11 +13,11 @@ import {
 export const Route = createFileRoute("/evaluator")({
   head: () => ({
     meta: [
-      { title: "AI Strategy — Scenario Explorer" },
+      { title: "Scenario Evaluator — AI Product Economics" },
       {
         name: "description",
         content:
-          "An interactive exhibit exploring the economics of an AI product across Open, Hybrid and Frontier strategies.",
+          "Scenario Evaluator for AI Product economics across three strategies.",
       },
     ],
   }),
@@ -163,9 +163,10 @@ function ExplorerView({
           </Link>
           <span className="exp-brand-divider" />
           <div className="exp-titles">
-            <h1>AI Product Economics · Scenario Explorer</h1>
+            <h1>Scenario Evaluator</h1>
             <p>
-              Two levers, three strategies, over a {params.T}-step horizon.
+              AI Product economics. Two levers, three strategies, over a{" "}
+              {params.T}-step horizon.
             </p>
           </div>
         </div>
@@ -271,7 +272,7 @@ function ExplorerView({
             ) : (
               <>
                 <h2 className="exp-section-title">
-                  Trajectory · {activeTab.label}
+                  Trajectory, {activeTab.label}
                 </h2>
                 <LineChart
                   xs={t}

@@ -7,7 +7,7 @@ SEED=12345
 T=P['T']; STEPS=361
 t=np.linspace(0,T,STEPS)
 dt=t[1]-t[0]
-strategies=[("Open",0.3),("Hybrid",0.6),("Frontier",0.9)]
+strategies=[("Strategy 1",0.3),("Strategy 2",0.6),("Strategy 3",0.9)]
 qstar_grid=[round(0.10+0.02*k,2) for k in range(46)]
 
 def chi(Q,Qs):
