@@ -64,7 +64,7 @@ export function Recommendation({
         <ul className="exp-rec-list">
           {topRisks.map((r, i) => (
             <li key={r.k}>
-              <strong>{RISK_LABEL[r.k]}</strong> sits at {Math.round(r.v)}/100 —{" "}
+              <strong>{RISK_LABEL[r.k]}</strong> sits at {Math.round(r.v)}/100,{" "}
               {i === 0 ? "the dominant pressure on this path" : "the next risk to watch"}.
             </li>
           ))}
