@@ -148,6 +148,12 @@ function ExplorerView({
 
   const sweep = useMemo(() => sweepCumProfit(data, dm), [data, dm]);
 
+  const causalState = useMemo(
+    () => computeCausalState(data, traceStrat, dm, snappedQ),
+    [data, traceStrat, dm, snappedQ],
+  );
+
+
   const baseGuides: VGuide[] = [
     { x: params.tau, label: "τ revenue", color: "var(--exp-axis)" },
     { x: params.t_shock, label: "price shock", color: "var(--exp-axis)" },
