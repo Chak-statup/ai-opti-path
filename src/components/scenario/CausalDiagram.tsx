@@ -65,17 +65,25 @@ function curve(ax: number, ay: number, bx: number, by: number) {
   return `M ${ax},${ay} C ${mx},${ay} ${mx},${by} ${bx},${by}`;
 }
 
-function tex(text: string, color: string) {
-  return [...text].map((c, i) =>
-    /[\u0370-\u03FF]/.test(c) ? (
-      <tspan key={i} className="exp-tex" fill={color}>
-        {c}
-      </tspan>
-    ) : (
-      <tspan key={i} fill={color}>
-        {c}
-      </tspan>
-    ),
+// Render a LaTeX title centered inside a node via foreignObject, so every
+// symbol (Greek included) is typeset by KaTeX rather than a raw glyph.
+function NodeTitle({ n }: { n: NodeDef }) {
+  const fh = 34;
+  return (
+    <foreignObject x={n.x - n.w / 2} y={n.y - 26} width={n.w} height={fh}>
+      <div
+        style={{
+          height: fh,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--exp-ink)",
+          fontSize: "20px",
+        }}
+      >
+        <Tex>{n.title}</Tex>
+      </div>
+    </foreignObject>
   );
 }
 
