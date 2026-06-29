@@ -168,7 +168,7 @@
  * Scenario Explorer palette — the ONLY place these colors live.
  * Swap the whole exhibit palette here.
  * ============================================================ */
-.exp {
+:root {
   --exp-bg: #ffffff;
   --exp-surface: #f7f8f9;
   --exp-ink: #1a1d21;
@@ -181,6 +181,10 @@
   --exp-marker: #1a1d21;
   --exp-border: #e2e4e7;
   --exp-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.exp {
+  /* layout + typography overrides kept here; colors now global */
 }
 
 /* Explorer layout + typography (scoped) */
