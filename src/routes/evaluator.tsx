@@ -130,7 +130,7 @@ function ExplorerView({
     const bold: Series[] = [];
     derived.forEach((d, s) => {
       d.samples.forEach((sm) => {
-        faint.push({ ys: sm[key], color: STRAT_COLORS[s], width: 1, opacity: 0.22 });
+        faint.push({ ys: sm[key], color: STRAT_COLORS[s], width: 1, opacity: 0.3 });
       });
       bold.push({ ys: d[key], color: STRAT_COLORS[s], width: 2 });
     });
