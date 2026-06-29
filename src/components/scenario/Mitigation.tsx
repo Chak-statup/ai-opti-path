@@ -1,8 +1,9 @@
 // Mitigation step: when a shock hits or the goal changes, the model proposes
 // several alternative strategy vectors and simulates each against the same
-// environment. The human stays in the loop — pick a candidate to see the
-// before/after effect, then apply it to the live evaluator.
-import { useMemo, useState } from "react";
+// environment. The human stays in the loop. Toggle any number of candidates to
+// overlay their revenue trajectories against the current baseline, inspect the
+// primary one on the radar, then apply it to the live evaluator.
+import { useEffect, useMemo, useState } from "react";
 import { LineChart, type Series } from "@/components/scenario/LineChart";
 import { RadarChart, type RadarSeries } from "@/components/scenario/RadarChart";
 import {
@@ -16,6 +17,9 @@ import {
 
 const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "Innovation", "Resilience"];
 
+// Distinct trend colors for overlaying several candidates at once.
+const CAND_COLORS = ["#2980B9", "#16A085", "#F39C12", "#4B2C50", "#C0392B"];
+
 function fmt(v: number): string {
   const sign = v < 0 ? "−" : "";
   return `${sign}$${Math.abs(v).toFixed(0)}M`;
@@ -26,9 +30,7 @@ function fmtDelta(v: number): string {
   return `${sign}$${Math.abs(v).toFixed(0)}M`;
 }
 
-// Mocked AI briefing — composed locally from the chosen candidate's numbers.
-// No network call, no key. Stands in for the human-in-the-loop advisory until
-// the live model is wired in.
+// Mocked AI briefing, composed locally from the chosen candidate's numbers.
 function aiBriefing(
   c: { label: string; rationale: string; cumProfit: number; deltaVsBaseline: number; vec: { innovation: number; resilience: number } },
   baseProfit: number,
@@ -36,7 +38,7 @@ function aiBriefing(
   return [
     `I read the live scenario and stress-tested the candidate vectors against the same environment. "${c.label}" is the strongest response: it moves the cumulative result from ${fmt(baseProfit)} to ${fmt(c.cumProfit)} (${fmtDelta(c.deltaVsBaseline)}).`,
     `The decisive move is to ${c.rationale.charAt(0).toLowerCase()}${c.rationale.slice(1)}`,
-    `Watch-out: this leans on innovation ${Math.round(c.vec.innovation)} and resilience ${Math.round(c.vec.resilience)}. If the external shock deepens, raise resilience first — it is the cheapest hedge against vendor pricing pass-through.`,
+    `Watch-out: this leans on innovation ${Math.round(c.vec.innovation)} and resilience ${Math.round(c.vec.resilience)}. If the external shock deepens, raise resilience first, it is the cheapest hedge against vendor pricing pass-through.`,
   ];
 }
 
@@ -53,11 +55,36 @@ export function Mitigation({
   stratColors: string[];
   onApply: (c: MitigationBaseline) => void;
 }) {
+  void stratColors;
   const candidates = useMemo(() => proposeMitigations(data, base, ctx), [data, base, ctx]);
-  const [selId, setSelId] = useState(candidates[0]?.id ?? "");
-  const selected = candidates.find((c) => c.id === selId) ?? candidates[0];
+  const colorOf = useMemo(() => {
+    const map: Record<string, string> = {};
+    candidates.forEach((c, i) => (map[c.id] = CAND_COLORS[i % CAND_COLORS.length]));
+    return map;
+  }, [candidates]);
 
-  // Mocked AI advisory state — "Analysing…" then reveals a briefing.
+  // Multi-select set for overlay comparison + a single primary for radar/apply.
+  const firstId = candidates[0]?.id ?? "";
+  const [selIds, setSelIds] = useState<string[]>(firstId ? [firstId] : []);
+  const [primaryId, setPrimaryId] = useState(firstId);
+
+  // Reset selection if the candidate set changes (scenario or base changed).
+  useEffect(() => {
+    setSelIds(firstId ? [firstId] : []);
+    setPrimaryId(firstId);
+  }, [firstId]);
+
+  const primary = candidates.find((c) => c.id === primaryId) ?? candidates[0];
+  const selected = candidates.filter((c) => selIds.includes(c.id));
+
+  function toggle(id: string) {
+    setPrimaryId(id);
+    setSelIds((prev) =>
+      prev.includes(id) ? (prev.length > 1 ? prev.filter((x) => x !== id) : prev) : [...prev, id],
+    );
+  }
+
+  // Mocked AI advisory state.
   const [aiLoading, setAiLoading] = useState(false);
   const [aiDone, setAiDone] = useState(false);
   const runAi = () => {
@@ -65,7 +92,10 @@ export function Mitigation({
     setAiDone(false);
     window.setTimeout(() => {
       const best = candidates[0];
-      if (best) setSelId(best.id);
+      if (best) {
+        setPrimaryId(best.id);
+        setSelIds((prev) => (prev.includes(best.id) ? prev : [...prev, best.id]));
+      }
       setAiLoading(false);
       setAiDone(true);
     }, 900);
@@ -76,23 +106,35 @@ export function Mitigation({
     () => deriveStrategy(data, base.strat, base.dm, base.qstar, ctx, base.vec),
     [data, base, ctx],
   );
-  const afterDerived = useMemo(
-    () => deriveStrategy(data, selected.strat, selected.dm, selected.qstar, ctx, selected.vec),
-    [data, selected, ctx],
-  );
 
-  const profitSeries: Series[] = [
-    { ys: baseDerived.profit, color: "var(--exp-axis)", width: 2, opacity: 0.55 },
-    { ys: afterDerived.profit, color: stratColors[selected.strat], width: 2.4 },
-  ];
+  // Build overlay series: baseline first, then each selected candidate.
+  const profitSeries: Series[] = useMemo(() => {
+    const series: Series[] = [
+      { ys: baseDerived.profit, color: "var(--exp-axis)", width: 2, opacity: 0.5 },
+    ];
+    selected.forEach((c) => {
+      const d = deriveStrategy(data, c.strat, c.dm, c.qstar, ctx, c.vec);
+      series.push({
+        ys: d.profit,
+        color: colorOf[c.id],
+        width: c.id === primaryId ? 2.8 : 2,
+      });
+    });
+    return series;
+  }, [baseDerived, selected, data, ctx, colorOf, primaryId]);
+
+  const primaryDerived = useMemo(
+    () => deriveStrategy(data, primary.strat, primary.dm, primary.qstar, ctx, primary.vec),
+    [data, primary, ctx],
+  );
 
   const baseRisk = useMemo(
     () => deriveRiskScores(data, base.strat, base.dm, base.qstar, ctx, base.vec),
     [data, base, ctx],
   );
-  const afterRisk = useMemo(
-    () => deriveRiskScores(data, selected.strat, selected.dm, selected.qstar, ctx, selected.vec),
-    [data, selected, ctx],
+  const primaryRisk = useMemo(
+    () => deriveRiskScores(data, primary.strat, primary.dm, primary.qstar, ctx, primary.vec),
+    [data, primary, ctx],
   );
 
   const radarSeries: RadarSeries[] = [
@@ -105,8 +147,8 @@ export function Mitigation({
     },
     {
       label: "After",
-      color: stratColors[selected.strat],
-      values: [afterRisk.cost, afterRisk.lockin, afterRisk.regulatory, afterRisk.innovation, afterRisk.resilience],
+      color: colorOf[primary.id],
+      values: [primaryRisk.cost, primaryRisk.lockin, primaryRisk.regulatory, primaryRisk.innovation, primaryRisk.resilience],
       fill: true,
     },
   ];
@@ -114,19 +156,20 @@ export function Mitigation({
   return (
     <div className="exp-mit">
       <div className="exp-mit-tag">
-        Model-proposed mitigations — generated from the live scenario, ranked by cumulative profit
+        Model-proposed mitigations, generated from the live scenario and ranked by cumulative profit.
+        Toggle several to compare them, the highlighted one drives the radar and the apply button.
       </div>
 
       <div className="exp-mit-ai">
         <div className="exp-mit-ai-head">
           <span className="exp-mit-ai-title">AI-mitigated strategy</span>
-          <span className="exp-mit-ai-tag">Demo — mocked advisory</span>
+          <span className="exp-mit-ai-tag">Demo, mocked advisory</span>
         </div>
         {!aiDone ? (
           <>
             <p className="exp-prose">
-              Let the assistant read the live scenario, pick a mitigated strategy vector and apply it
-              to the before vs after below — human stays in the loop.
+              Let the assistant read the live scenario, pick a mitigated strategy vector and add it
+              to the comparison below. The human stays in the loop.
             </p>
             <button
               type="button"
@@ -134,18 +177,18 @@ export function Mitigation({
               onClick={runAi}
               disabled={aiLoading || candidates.length === 0}
             >
-              {aiLoading ? "Analysing scenario…" : "Generate AI mitigation"}
+              {aiLoading ? "Analysing scenario" : "Generate AI mitigation"}
             </button>
           </>
         ) : (
           <div className="exp-mit-ai-out">
             <div className="exp-mit-ai-pick">
-              Recommended vector: <strong>{selected.label}</strong>{" "}
-              <span style={{ color: selected.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}>
-                {fmtDelta(selected.deltaVsBaseline)}
+              Recommended vector: <strong>{primary.label}</strong>{" "}
+              <span style={{ color: primary.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}>
+                {fmtDelta(primary.deltaVsBaseline)}
               </span>
             </div>
-            {aiBriefing(selected, baseDerived.cumProfit).map((p, i) => (
+            {aiBriefing(primary, baseDerived.cumProfit).map((p, i) => (
               <p key={i} className="exp-mit-ai-line">
                 {p}
               </p>
@@ -157,49 +200,52 @@ export function Mitigation({
         )}
       </div>
 
-
       <div className="exp-mit-cards">
-        {candidates.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            className={`exp-mit-card ${selId === c.id ? "active" : ""}`}
-            aria-pressed={selId === c.id}
-            onClick={() => setSelId(c.id)}
-          >
-            <div className="exp-mit-card-head">
-              <span className="exp-mit-card-label">{c.label}</span>
-              <span
-                className="exp-mit-card-delta"
-                style={{ color: c.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}
-              >
-                {fmtDelta(c.deltaVsBaseline)}
-              </span>
-            </div>
-            <p className="exp-mit-card-rationale">{c.rationale}</p>
-            <div className="exp-mit-card-vec">
-              <span>{data.meta.strategies[c.strat].label}</span>
-              <span>Q* {c.qstar.toFixed(2)}</span>
-              <span>Δm {c.dm.toFixed(1)}</span>
-              <span>Innov {Math.round(c.vec.innovation)}</span>
-              <span>Resil {Math.round(c.vec.resilience)}</span>
-            </div>
-          </button>
-        ))}
+        {candidates.map((c) => {
+          const on = selIds.includes(c.id);
+          const isPrimary = c.id === primaryId;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              className={`exp-mit-card ${on ? "active" : ""} ${isPrimary ? "primary" : ""}`}
+              aria-pressed={on}
+              onClick={() => toggle(c.id)}
+              style={on ? { borderColor: colorOf[c.id] } : undefined}
+            >
+              <div className="exp-mit-card-head">
+                <span className="exp-mit-card-label">
+                  <span className="exp-swatch" style={{ background: colorOf[c.id], opacity: on ? 1 : 0.3 }} />
+                  {c.label}
+                </span>
+                <span
+                  className="exp-mit-card-delta"
+                  style={{ color: c.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}
+                >
+                  {fmtDelta(c.deltaVsBaseline)}
+                </span>
+              </div>
+              <p className="exp-mit-card-rationale">{c.rationale}</p>
+              <div className="exp-mit-card-vec">
+                <span>{data.meta.strategies[c.strat].label}</span>
+                <span>Q* {c.qstar.toFixed(2)}</span>
+                <span>Δm {c.dm.toFixed(1)}</span>
+                <span>Innov {Math.round(c.vec.innovation)}</span>
+                <span>Resil {Math.round(c.vec.resilience)}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       <div className="exp-mit-compare">
         <div className="exp-mit-chart">
           <div className="exp-mit-chart-head">
-            <span className="exp-section-title">BEFORE VS AFTER — REVENUE</span>
+            <span className="exp-section-title">BEFORE VS AFTER, REVENUE</span>
             <div className="exp-mit-numbers">
               <span className="exp-mit-num">
                 <span className="exp-swatch" style={{ background: "var(--exp-axis)" }} />
                 Before {fmt(baseDerived.cumProfit)}
-              </span>
-              <span className="exp-mit-num">
-                <span className="exp-swatch" style={{ background: stratColors[selected.strat] }} />
-                After {fmt(afterDerived.cumProfit)}
               </span>
             </div>
           </div>
@@ -216,16 +262,50 @@ export function Mitigation({
             yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
             height={300}
           />
+
+          <table className="exp-mit-table">
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Cumulative</th>
+                <th>vs before</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span className="exp-swatch" style={{ background: "var(--exp-axis)" }} /> Before
+                </td>
+                <td className="num">{fmt(baseDerived.cumProfit)}</td>
+                <td className="num">—</td>
+              </tr>
+              {selected.map((c) => (
+                <tr key={c.id} className={c.id === primaryId ? "primary" : ""}>
+                  <td>
+                    <span className="exp-swatch" style={{ background: colorOf[c.id] }} /> {c.label}
+                  </td>
+                  <td className="num">{fmt(c.cumProfit)}</td>
+                  <td
+                    className="num"
+                    style={{ color: c.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}
+                  >
+                    {fmtDelta(c.deltaVsBaseline)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         <div className="exp-mit-radar">
+          <div className="exp-mit-radar-title">{primary.label}, risk shape</div>
           <RadarChart axes={RADAR_AXES} series={radarSeries} size={320} />
           <div className="exp-radar-legend">
             <span className="exp-radar-legend-row">
               <span className="exp-swatch dashed" /> Before
             </span>
             <span className="exp-radar-legend-row">
-              <span className="exp-swatch" style={{ background: stratColors[selected.strat] }} /> After
+              <span className="exp-swatch" style={{ background: colorOf[primary.id] }} /> After
             </span>
           </div>
         </div>
@@ -233,8 +313,8 @@ export function Mitigation({
 
       <div className="exp-mit-apply">
         <p className="exp-prose">
-          <strong>{selected.label}</strong> moves cumulative result from {fmt(baseDerived.cumProfit)}{" "}
-          to <strong>{fmt(afterDerived.cumProfit)}</strong> ({fmtDelta(selected.deltaVsBaseline)}).
+          <strong>{primary.label}</strong> moves cumulative result from {fmt(baseDerived.cumProfit)}{" "}
+          to <strong>{fmt(primaryDerived.cumProfit)}</strong> ({fmtDelta(primary.deltaVsBaseline)}).
           Applying it sets every lever in the evaluator so you can keep exploring from there.
         </p>
         <button
@@ -242,14 +322,14 @@ export function Mitigation({
           className="exp-mit-apply-btn"
           onClick={() =>
             onApply({
-              strat: selected.strat,
-              dm: selected.dm,
-              qstar: selected.qstar,
-              vec: selected.vec,
+              strat: primary.strat,
+              dm: primary.dm,
+              qstar: primary.qstar,
+              vec: primary.vec,
             })
           }
         >
-          Apply this strategy vector →
+          Apply {primary.label} &rarr;
         </button>
       </div>
     </div>
