@@ -272,7 +272,7 @@ function ExplorerView({
             ) : (
               <>
                 <h2 className="exp-section-title">
-                  Trajectory · {activeTab.label}
+                  Trajectory, {activeTab.label}
                 </h2>
                 <LineChart
                   xs={t}
