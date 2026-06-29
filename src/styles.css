@@ -1264,3 +1264,215 @@
   line-height: 1.5;
   color: var(--exp-muted);
 }
+
+/* ============================================================
+ * Strategy-vector rail groups, mitigation, floating How-it-works
+ * ============================================================ */
+.exp-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--exp-border);
+}
+.exp-rail-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.exp-rail-group-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--exp-ink);
+}
+.exp-rail-group-tag {
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--exp-hybrid);
+  border: 1px solid var(--exp-border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  white-space: nowrap;
+}
+.exp-rail-group-tag.external { color: var(--exp-accent-3); }
+.exp-rail-note {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--exp-muted);
+}
+
+/* Mitigation */
+.exp-mit { display: flex; flex-direction: column; gap: 1.5rem; }
+.exp-mit-tag {
+  font-size: 0.74rem;
+  color: var(--exp-muted);
+  letter-spacing: 0.02em;
+}
+.exp-mit-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.7rem;
+}
+.exp-mit-card {
+  text-align: left;
+  border: 1px solid var(--exp-border);
+  background: var(--exp-bg);
+  border-radius: 10px;
+  padding: 0.85rem 0.95rem;
+  cursor: pointer;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  transition: all 0.12s ease;
+}
+.exp-mit-card:hover { border-color: var(--exp-axis); }
+.exp-mit-card.active {
+  border-color: var(--exp-ink);
+  box-shadow: inset 0 0 0 1px var(--exp-ink);
+  background: var(--exp-surface);
+}
+.exp-mit-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.exp-mit-card-label { font-weight: 600; font-size: 0.92rem; color: var(--exp-ink); }
+.exp-mit-card-delta { font-weight: 700; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.exp-mit-card-rationale { margin: 0; font-size: 0.78rem; line-height: 1.45; color: var(--exp-muted); }
+.exp-mit-card-vec {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  font-size: 0.7rem;
+  color: var(--exp-ink);
+  font-variant-numeric: tabular-nums;
+}
+.exp-mit-card-vec span {
+  border: 1px solid var(--exp-border);
+  border-radius: 5px;
+  padding: 0.05rem 0.4rem;
+}
+.exp-mit-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: center;
+}
+.exp-mit-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.exp-mit-numbers { display: flex; gap: 1rem; }
+.exp-mit-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.exp-mit-radar { display: flex; flex-direction: column; gap: 0.8rem; max-width: 360px; margin: 0 auto; }
+.exp-mit-apply {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-top: 1px solid var(--exp-border);
+  padding-top: 1.25rem;
+  flex-wrap: wrap;
+}
+.exp-mit-apply .exp-prose { margin: 0; flex: 1; min-width: 260px; }
+.exp-mit-apply-btn {
+  background: var(--exp-accent-3);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.12s ease;
+}
+.exp-mit-apply-btn:hover { filter: brightness(1.07); }
+@media (max-width: 900px) {
+  .exp-mit-cards { grid-template-columns: 1fr; }
+  .exp-mit-compare { grid-template-columns: 1fr; }
+}
+
+/* Floating How-it-works */
+.exp-howto-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 40;
+  background: var(--exp-ink);
+  color: var(--exp-bg);
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.7rem 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  transition: filter 0.12s ease;
+}
+.exp-howto-fab:hover { filter: brightness(1.1); }
+.exp-howto-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  justify-content: flex-end;
+}
+.exp-howto-panel {
+  width: min(640px, 100%);
+  height: 100%;
+  background: var(--exp-bg);
+  border-left: 1px solid var(--exp-border);
+  display: flex;
+  flex-direction: column;
+  animation: howto-slide 0.2s ease;
+}
+@keyframes howto-slide {
+  from { transform: translateX(24px); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.exp-howto-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--exp-border);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+.exp-howto-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--exp-muted);
+}
+.exp-howto-close:hover { color: var(--exp-ink); }
+.exp-howto-panel-body {
+  overflow-y: auto;
+  padding: 1.25rem;
+}
