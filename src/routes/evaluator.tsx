@@ -7,6 +7,7 @@ import { ScenarioPresets } from "@/components/scenario/ScenarioPresets";
 import { TippingPoints } from "@/components/scenario/TippingPoints";
 import { Recommendation } from "@/components/scenario/Recommendation";
 import { ProblemFrame } from "@/components/scenario/ProblemFrame";
+import { HowItWorks } from "@/components/scenario/HowItWorks";
 import { StatupLogo } from "@/components/StatupLogo";
 import {
   computeCausalState,
@@ -23,41 +24,48 @@ import {
   type StrategyDerived,
 } from "@/lib/scenario/model";
 
-type Stage = "problem" | "causal" | "risk" | "tipping" | "recommend";
+type Stage = "howto" | "problem" | "causal" | "risk" | "tipping" | "recommend";
 
 const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
   {
+    key: "howto",
+    label: "How it works",
+    step: "01",
+    blurb:
+      "The model behind the demo: what it is for, the equations, every parameter, and the findings that carry the decision.",
+  },
+  {
     key: "problem",
     label: "Problem",
-    step: "01",
+    step: "02",
     blurb:
       "The strategic question and why a single margin-per-user number hides the real decision.",
   },
   {
     key: "causal",
     label: "Causal pathway",
-    step: "02",
+    step: "03",
     blurb:
       "How a strategy plays out, end to end. Move a lever or pick a scenario and watch the pathway reshape — thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
     label: "Risk profile",
-    step: "03",
+    step: "04",
     blurb:
       "Every parameter collapses into one five-axis fingerprint per strategy, drawn against the status-quo baseline.",
   },
   {
     key: "tipping",
     label: "Tipping points",
-    step: "04",
+    step: "05",
     blurb:
       "Each risk against its critical line. Past a tipping point the dynamic reinforces itself and is hard to reverse.",
   },
   {
     key: "recommend",
     label: "Recommendation",
-    step: "05",
+    step: "06",
     blurb:
       "A plain-language read of the current scenario: which path wins, what drives it, and what would change the answer.",
   },
@@ -127,7 +135,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const { params, controls } = data.meta;
   const t = data.t;
 
-  const [stage, setStage] = useState<Stage>("problem");
+  const [stage, setStage] = useState<Stage>("howto");
   const [traceStrat, setTraceStrat] = useState(1);
   const [dm, setDm] = useState(PRESETS[0].dm);
   const [qstar, setQstar] = useState(PRESETS[0].qstar);
@@ -274,6 +282,12 @@ function ExplorerView({ data }: { data: RunsData }) {
       </nav>
       <p className="exp-journey-blurb">{activeStage.blurb}</p>
 
+      {stage === "howto" && (
+        <div className="exp-stage">
+          <HowItWorks />
+        </div>
+      )}
+
       {stage === "problem" && (
         <div className="exp-stage">
           <ProblemFrame
@@ -284,7 +298,7 @@ function ExplorerView({ data }: { data: RunsData }) {
         </div>
       )}
 
-      {stage !== "problem" && stage !== "recommend" && (
+      {stage !== "howto" && stage !== "problem" && stage !== "recommend" && (
         <div className="exp-body">
           {showRail && (
             <aside className="exp-rail">

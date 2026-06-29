@@ -1,67 +1,50 @@
-# Evaluator → Guided Decision Journey
+## Goal
 
-Fold the useful ideas from the reference console into our existing light-themed Evaluator. Same palette, English, no dark German chrome. The interactive causal pathway stays the centerpiece; everything new explains *why* the numbers move using plain-language causality tied to the live parameters.
+Add one new tab to the Scenario Evaluator that clearly explains how the underlying model works — its purpose, the equations, every parameter, and the key findings — sourced directly from the uploaded model card ("A Driven Dynamical Model of AI Product Economics"). This makes the demo self-explanatory for executives.
 
-## The journey (step nav replaces the two-tab bar)
+## Where it goes
 
+Add a new stage to the existing 5-step journey in `src/routes/evaluator.tsx`, placed first so it reads as the primer:
+
+```text
+01 How it works · 02 Problem · 03 Causal pathway · 04 Risk profile · 05 Tipping points · 06 Recommendation
 ```
-01 Problem    02 Causal pathway    03 Risk profile    04 Tipping points    05 Recommendation
-```
 
-- **01 Problem** — short framing: the strategic question and the core insight from the brief — "margin per user is not real; it's an output of margin and users, and margin depends on the vendor's pricing policy." Three strategy cards (Strategy 1/2/3) with their quality level Q and one-line stance. Sets context before any chart.
-- **02 Causal pathway** — the current interactive diagram, unchanged, now with a **scenario preset bar** above it (see below) and a plain-language "reading" sentence under it that updates live.
-- **03 Risk profile** — the **spider/radar chart** the brief asks for: each strategy's parameters collapse into one five-axis fingerprint, drawn against a dashed Status-Quo baseline.
-- **04 Tipping points** — threshold cards: each risk vs its critical line with a marker and a "what happens past here" sentence.
-- **05 Recommendation** — a generated-looking advisory (demo, no AI backend) that reads the live state and writes a structured recommendation.
+(Renumbering the existing `step` strings 01→06.) The new stage shows a full-width explainer panel with no control rail — same layout treatment as the Problem and Recommendation stages.
 
-The two existing chart views (Trajectories, Strategy sweep) move into a secondary toggle inside step 02 so nothing is lost.
+## Content (from the model card)
 
-## New concepts mapped to our real model
+A new component `src/components/scenario/HowItWorks.tsx` with clean, restrained sections matching the consulting aesthetic:
 
-Everything is derived from the same arithmetic already in `model.ts` (no fake numbers), plus two scenario-context knobs that ground the "what could change" question:
+1. **What the model is for** — one compact paragraph: a driven dynamical model of how one strategic choice (quality Q) drives users and profit over time; one state variable N(t); quality is a chosen input, not solved for; produces legible curves, not emergent chaos. Strategy reduces to a single number Q (Strategy 1 ≈ 0.3, Strategy 2 ≈ 0.6, Strategy 3 ≈ 0.9).
 
-- **Token price factor** (1×–4×) — multiplies the cost coefficient. This is the "Anthropic doubles token prices" lever.
-- **Regulatory pressure** (0–100) — adds fixed cost and dampens innovation.
+2. **The equations** — three rendered LaTeX blocks with a plain-language caption under each:
+   - User dynamics dN (external acquisition + word-of-mouth − churn − competition + demand noise).
+   - Quality maps: churn cliff χ(Q) and linear margin m(Q).
+   - Profit Π(t): gated, shock-hit margin − cost to replace lost users − fixed overhead. Note cumulative profit = time-integral (trapezoidal).
+   - Short note on where the price shock acts (a token-price spike hits margin, not the CAC line).
 
-These sit alongside the existing two levers (Margin per customer, Quality threshold).
+3. **Parameters** — a clean table (Symbol · Meaning · Value) for all rows in the model card: N(t), Q, K=100,000, p=0.01/mo, r=0.35/mo, χmin/χmax=0.02/0.35, κ=12, Q*=0.5, m0/Δm=$8/$6, Δm_shock=$4, φ=0.35, σ=0.12, c_ac=$15, F=$30,000, τ=6mo, t_shock=16mo, T=54mo. App-facing labels noted where relevant (Q = "Strategy", Δm = "Margin per customer", Q* = "Quality threshold").
 
-### Risk radar (5 axes, 0–100, computed live)
-- **Cost** — cost-to-margin ratio over the horizon (token price factor drives this).
-- **Lock-in** — rises with quality level Q (frontier strategy = deepest dependency) and token exposure.
-- **Regulatory** — from regulatory-pressure knob.
-- **Innovation** — capacity left after churn + compliance load (higher = better).
-- **Resilience** — buffer between cumulative profit and zero under the current shock.
+4. **What drives winners and losers** — short list: strategy levers (Q, Q*) vs. calibration parameters (φ, c_ac, F, churn-cliff shape, Δm); the rest is background.
 
-Each strategy renders as a filled polygon; Status Quo is a dashed grey reference so executives always see "vs baseline."
+5. **Key findings** — the four results: users rise/peak/decline; low-quality apps can lose money; a critical churn threshold turns profit negative; quality pays mainly through retention, not price.
 
-### Scenario presets (one click sets the knobs)
-- **Status Quo** — today's prices, moderate everything.
-- **Pricing shock** — token price 3×.
-- **Regulatory stress test** — regulatory pressure high.
-- **Open-source breakthrough** — token price down, margin up.
+6. **This is illustrative** — one-line honesty note: plausible placeholder parameters, not calibrated; meant for strategy discussion.
 
-Selecting a preset animates the causal pathway and radar so the change is visible.
+## LaTeX rendering
 
-### Tipping-point thresholds
-Four cards, each: current value, critical threshold, a marker bar, and a plain-language rule:
-- **Token cost risk** — "Past here, token cost exceeds product margin: scaling turns every new user into a loss."
-- **Vendor lock-in** — "Past here, switching costs exceed the migration benefit; price negotiations lose their basis."
-- **Regulatory load** — "Past here, compliance consumes most of the AI build capacity."
-- **Innovation erosion** — "Below here, competitors build a structural lead within a year."
-A small banner sums up "N of 4 thresholds crossed."
+KaTeX is already installed (`katex` dependency) and its CSS is already linked in `src/routes/__root.tsx`. Add a tiny helper `src/components/scenario/Tex.tsx` that calls `katex.renderToString(...)` and injects via `dangerouslySetInnerHTML`, supporting inline and block (display) mode. Used for the equation blocks and inline symbols so all math uses real LaTeX (consistent with the existing preference).
 
-### Recommendation (demo, rule-based — no backend)
-A deterministic function reads the live risk scores + tipping points and assembles a structured, advisory-styled output: the recommended strategy, the top two risks driving it, and the one change that would flip the decision. Presented as a clean exhibit (not a chat box). Labeled "Illustrative — generated from the model state," so it reads as a demo without claiming a live AI.
+## Styling
 
-## Explainability approach (plain-language causality)
-Every step carries a "because X → then Y" line built from live values, e.g.:
-- Pathway: "Token price at 3× pushes cost above margin around step 38, so cumulative profit for Strategy 3 turns negative."
-- Radar: "Strategy 1's lock-in is low because it commits to no single vendor, but its innovation lags."
-- Tipping point: shows the exact parameter that moved the value across the line.
+Add scoped styles to `src/styles.css` under the `exp-` namespace (e.g. `exp-howto`, `exp-howto-eq`, `exp-param-table`) reusing existing tokens — muted text, thin rules, high data-ink, no cards/gradients. Equation blocks centered on a faint surface; parameter table with light row separators.
 
-## Technical notes
-- `src/lib/scenario/model.ts`: add `tokenPriceFactor` + `regPressure` to the cost/competition arithmetic; add `deriveRiskScores()` (5 axes) and `deriveTippingPoints()` returning values, thresholds, crossed-state, and explanation strings. All pure functions over the existing precomputed runs.
-- New components under `src/components/scenario/`: `RadarChart.tsx` (hand-rolled SVG, matching LineChart style), `ScenarioPresets.tsx`, `TippingPoints.tsx`, `Recommendation.tsx`, `ProblemFrame.tsx`.
-- `src/routes/evaluator.tsx`: replace the tab bar with the 5-step journey nav; keep shared lever rail; route each step to its panel. Reuse existing tokens/classes; add minimal CSS for radar, threshold bars, and the advisory card.
-- Drop the now-unused `UncertaintyView`/old static causal pieces to avoid clutter.
-- No new dependencies; no backend. Self-explanatory and English throughout.
+## Files
+
+- `src/routes/evaluator.tsx` — add `howto` stage to `STAGES`, render `HowItWorks` for that stage, default the journey to it, renumber steps.
+- `src/components/scenario/HowItWorks.tsx` — new explainer component.
+- `src/components/scenario/Tex.tsx` — new KaTeX render helper.
+- `src/styles.css` — styles for the new sections.
+
+No business-logic or model changes — this is a presentation/explainer addition only.
