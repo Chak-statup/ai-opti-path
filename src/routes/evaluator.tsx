@@ -163,10 +163,9 @@ function ExplorerView({
           </Link>
           <span className="exp-brand-divider" />
           <div className="exp-titles">
-            <h1>AI Product Economics — Scenario Explorer</h1>
+            <h1>AI Product Economics · Scenario Explorer</h1>
             <p>
-              How two strategic levers move the outcome across three operating
-              models, over a {params.T}-step horizon.
+              Two levers, three strategies, over a {params.T}-step horizon.
             </p>
           </div>
         </div>
