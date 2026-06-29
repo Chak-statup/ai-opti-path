@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, type Series, type VGuide } from "@/components/scenario/LineChart";
+import { CausalDiagram } from "@/components/scenario/CausalDiagram";
+import { UncertaintyView } from "@/components/scenario/UncertaintyView";
 import { StatupLogo } from "@/components/StatupLogo";
 import {
   deriveStrategy,
@@ -9,6 +11,33 @@ import {
   type RunsData,
   type StrategyDerived,
 } from "@/lib/scenario/model";
+
+type Stage = "ode" | "causal" | "uncertainty";
+
+const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
+  {
+    key: "ode",
+    label: "ODE model",
+    step: "01",
+    blurb:
+      "The working dynamical model. Two levers — Margin per customer and the Quality threshold — drive users, margin, cost and revenue across three strategies.",
+  },
+  {
+    key: "causal",
+    label: "Causal model",
+    step: "02",
+    blurb:
+      "The same model as a structural causal graph: a decision and three uncertain priors flow through deterministic churn and margin maps into profit.",
+  },
+  {
+    key: "uncertainty",
+    label: "Uncertainty",
+    step: "03",
+    blurb:
+      "Treat the world as uncertain. Sample thousands of plausible worlds to get a distribution of profit per strategy, then invert it: what does a loss imply?",
+  },
+];
+
 
 export const Route = createFileRoute("/evaluator")({
   head: () => ({
