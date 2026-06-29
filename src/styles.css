@@ -665,35 +665,75 @@
  * ============================================================ */
 .exp-journey {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem 0;
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 1.25rem 1.5rem 0;
+  overflow-x: auto;
 }
 .exp-journey-step {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 96px;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.55rem;
-  border: 1px solid var(--exp-border);
-  background: var(--exp-bg);
+  gap: 0.45rem;
+  border: none;
+  background: transparent;
   color: var(--exp-muted);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  padding: 0.5rem 0.9rem;
-  border-radius: 7px;
+  padding: 0.4rem 0.5rem 0.6rem;
   cursor: pointer;
+  transition: color 0.12s ease;
+}
+/* connector line behind the numbers */
+.exp-journey-step::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--exp-border);
+  z-index: 0;
+}
+.exp-journey-step:first-child::before { display: none; }
+.exp-journey-step.done::before,
+.exp-journey-step.active::before { background: var(--exp-frontier); }
+.exp-journey-step:hover { color: var(--exp-ink); }
+.exp-journey-num {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--exp-border);
+  background: var(--exp-bg);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--exp-muted);
   transition: all 0.12s ease;
 }
-.exp-journey-step:hover { color: var(--exp-ink); border-color: var(--exp-axis); }
-.exp-journey-step.active {
-  background: var(--exp-ink);
-  color: var(--exp-bg);
-  border-color: var(--exp-ink);
+.exp-journey-label { line-height: 1.2; text-align: center; }
+.exp-journey-step.done .exp-journey-num {
+  border-color: var(--exp-frontier);
+  color: var(--exp-frontier);
 }
-.exp-journey-num {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.72rem;
-  opacity: 0.7;
+.exp-journey-step.done .exp-journey-label { color: var(--exp-ink); }
+.exp-journey-step.active .exp-journey-num {
+  border-color: var(--exp-frontier);
+  background: var(--exp-frontier);
+  color: var(--exp-bg);
+}
+.exp-journey-step.active {
+  color: var(--exp-ink);
+  font-weight: 600;
 }
 .exp-journey-blurb {
   max-width: 80ch;
@@ -1184,6 +1224,56 @@
 .exp-problem-q { font-size: 0.78rem; color: var(--exp-muted); font-variant-numeric: tabular-nums; }
 .exp-problem-stance { margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--exp-muted); }
 
+/* Crucial axes that make the decision hard */
+.exp-axis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+@media (max-width: 760px) { .exp-axis-grid { grid-template-columns: 1fr; } }
+.exp-axis-card {
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem;
+  background: var(--exp-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.exp-axis-head { display: flex; align-items: baseline; gap: 0.7rem; }
+.exp-axis-num {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--exp-frontier);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.exp-axis-title { font-weight: 600; font-size: 1rem; color: var(--exp-ink); }
+.exp-axis-q { margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--exp-ink); }
+.exp-axis-risks-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--exp-accent-2);
+  font-weight: 600;
+  border-top: 1px solid var(--exp-border);
+  padding-top: 0.7rem;
+}
+.exp-axis-risks { margin: 0; padding-left: 1.05rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.exp-axis-risks li { font-size: 0.82rem; line-height: 1.4; color: var(--exp-muted); }
+.exp-axis-note {
+  border: 1px solid var(--exp-border);
+  border-left: 3px solid var(--exp-accent-2);
+  border-radius: 8px;
+  background: var(--exp-surface);
+  padding: 1rem 1.15rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--exp-ink);
+  margin-top: 1.25rem;
+}
+
 /* ============================================================
  * How it works (model explainer)
  * ============================================================ */
@@ -1447,6 +1537,39 @@
   font-variant-numeric: tabular-nums;
 }
 .exp-mit-radar { display: flex; flex-direction: column; gap: 0.8rem; max-width: 360px; margin: 0 auto; }
+.exp-mit-radar-title {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+}
+.exp-mit-card.primary {
+  box-shadow: inset 0 0 0 1px var(--exp-axis);
+}
+.exp-mit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+}
+.exp-mit-table th {
+  text-align: left;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  font-weight: 600;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--exp-border);
+}
+.exp-mit-table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid var(--exp-border);
+  color: var(--exp-ink);
+}
+.exp-mit-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.exp-mit-table tr.primary td { font-weight: 600; }
+.exp-mit-table .exp-swatch { margin-right: 0.4rem; }
 .exp-mit-apply {
   display: flex;
   align-items: center;

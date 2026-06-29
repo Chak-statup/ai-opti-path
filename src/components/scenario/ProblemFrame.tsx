@@ -1,29 +1,69 @@
-// Problem-framing step. Sets up the strategic question and the core insight
-// before any chart, then introduces the three strategies.
-import type { StrategySpec } from "@/lib/scenario/model";
+// Problem-framing step. Sets up the strategic question and the core insight,
+// then lays out the crucial axes that make the decision genuinely hard before
+// inviting the reader into the evaluator.
 
-export function ProblemFrame({
-  strategies,
-  colors,
-  onStart,
-}: {
-  strategies: StrategySpec[];
-  colors: string[];
-  onStart: () => void;
-}) {
-  const stances = [
-    "Open, vendor-neutral. Lowest dependency, but quality and innovation lag.",
-    "Hybrid. Balances cost exposure against capability and control.",
-    "Frontier-first. Highest capability, but deepest cost and lock-in exposure.",
-  ];
+type Axis = {
+  n: string;
+  title: string;
+  question: string;
+  risks: string[];
+};
 
+const AXES: Axis[] = [
+  {
+    n: "01",
+    title: "Platform ecosystem",
+    question:
+      "Ship your own apps in the GPT or Claude store to millions of users. A competitive edge, or a dependency trap?",
+    risks: [
+      "Token price exposure at millions of users",
+      "Exit cost when switching vendor",
+      "Reputation cost of a forced shutdown",
+    ],
+  },
+  {
+    n: "02",
+    title: "Vendor choice",
+    question:
+      "A hyperscaler (OpenAI, Anthropic, Google) against open source models. Time to market against strategic control.",
+    risks: [
+      "Pricing sovereignty",
+      "Model quality over time",
+      "Regulatory approval",
+    ],
+  },
+  {
+    n: "03",
+    title: "Build versus buy",
+    question:
+      "In house capability and ownership against an API first stack. Sovereignty has a price.",
+    risks: [
+      "Time to build AI expertise",
+      "Ongoing development cost",
+      "Competition for talent",
+    ],
+  },
+  {
+    n: "04",
+    title: "Scaling strategy",
+    question:
+      "When does a pilot become a core system? Scaling without an exit path is structural risk.",
+    risks: [
+      "Cost structure tipping point",
+      "Technical debt",
+      "Governance gaps",
+    ],
+  },
+];
+
+export function ProblemFrame({ onStart }: { onStart: () => void }) {
   return (
     <div className="exp-problem">
       <section className="exp-section">
         <h2 className="exp-section-title">THE DECISION</h2>
         <p className="exp-prose">
-          Over the next 12&ndash;18 months a large company has to decide how aggressively to scale
-          AI: how far to commit to a single frontier vendor, how much to build in-house, and how many
+          Over the next 12 to 18 months a large company has to decide how aggressively to scale AI:
+          how far to commit to a single frontier vendor, how much to build in house, and how many
           apps to put in front of millions of users. These choices are made together and are hard to
           reverse.
         </p>
@@ -32,30 +72,47 @@ export function ProblemFrame({
       <section className="exp-section">
         <h2 className="exp-section-title">THE CORE INSIGHT</h2>
         <p className="exp-prose">
-          &ldquo;Margin per user&rdquo; is not a real thing you can manage. It is an output of two
-          inputs: margin and the number of users. Margin itself is an output of revenue and cost &mdash;
-          and cost depends on the vendor&rsquo;s pricing policy. So the real question is not &ldquo;what
-          is our margin per user&rdquo; but &ldquo;what happens to cost, users and dependency as the
-          world changes &mdash; and which strategy survives it.&rdquo;
+          Margin per user is not a thing you can manage. It is an output of two inputs: margin and
+          the number of users. Margin itself is an output of revenue and cost, and cost depends on
+          the vendor&rsquo;s pricing policy. So the real question is not what our margin per user is,
+          but what happens to cost, users and dependency as the world changes, and which strategy
+          survives it.
         </p>
       </section>
 
       <section className="exp-section">
-        <h2 className="exp-section-title">THREE STRATEGIES</h2>
-        <div className="exp-problem-cards">
-          {strategies.map((s, i) => (
-            <div key={s.label} className="exp-problem-card">
-              <span className="exp-problem-bar" style={{ background: colors[i] }} />
-              <div className="exp-problem-card-head">
-                <span className="exp-problem-name">{s.label}</span>
-                <span className="exp-problem-q">Q = {s.Q}</span>
+        <h2 className="exp-section-title">WHAT MAKES THIS HARD</h2>
+        <p className="exp-prose">
+          Four decisions are taken at the same time and reinforce one another. None can be tuned in
+          isolation, and each carries its own systemic risks.
+        </p>
+        <div className="exp-axis-grid">
+          {AXES.map((a) => (
+            <div key={a.n} className="exp-axis-card">
+              <div className="exp-axis-head">
+                <span className="exp-axis-num">{a.n}</span>
+                <span className="exp-axis-title">{a.title}</span>
               </div>
-              <p className="exp-problem-stance">{stances[i] ?? ""}</p>
+              <p className="exp-axis-q">{a.question}</p>
+              <div className="exp-axis-risks-label">Systemic risk factors</div>
+              <ul className="exp-axis-risks">
+                {a.risks.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
+
+        <div className="exp-axis-note">
+          <strong>Why a model.</strong> These options form a system of systems: each one shifts the
+          others, and their interaction creates tipping points that stay invisible in a standard
+          business plan. The evaluator makes those couplings explicit so you can simulate each path
+          and decide with the dynamics in view.
+        </div>
+
         <button type="button" className="exp-cta" onClick={onStart}>
-          Explore the causal pathway →
+          Open the evaluator &rarr;
         </button>
       </section>
     </div>

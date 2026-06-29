@@ -7,6 +7,7 @@
 // with an animated flow, larger legible labels, and column header pills. Colours
 // come entirely from the existing design tokens.
 import type { CausalState } from "@/lib/scenario/model";
+import { Tex } from "./Tex";
 
 type Shape = "rect" | "ellipse" | "diamond";
 type Role = "decision" | "lever" | "prior" | "map" | "flow" | "outcome";
@@ -17,21 +18,21 @@ interface NodeDef {
   y: number;
   w: number;
   h: number;
-  title: string;
+  title: string; // LaTeX source
   shape: Shape;
   role: Role;
 }
 
 const NODES: NodeDef[] = [
   { id: "Q", x: 150, y: 95, w: 188, h: 70, title: "Q", shape: "rect", role: "decision" },
-  { id: "Qstar", x: 150, y: 210, w: 188, h: 64, title: "Q*", shape: "ellipse", role: "lever" },
-  { id: "dm", x: 150, y: 320, w: 188, h: 64, title: "Δm", shape: "ellipse", role: "lever" },
-  { id: "phi", x: 150, y: 430, w: 188, h: 64, title: "φ", shape: "ellipse", role: "prior" },
-  { id: "chi", x: 490, y: 185, w: 188, h: 74, title: "χ", shape: "rect", role: "map" },
+  { id: "Qstar", x: 150, y: 210, w: 188, h: 64, title: "Q^{\\ast}", shape: "ellipse", role: "lever" },
+  { id: "dm", x: 150, y: 320, w: 188, h: 64, title: "\\Delta m", shape: "ellipse", role: "lever" },
+  { id: "phi", x: 150, y: 430, w: 188, h: 64, title: "\\varphi", shape: "ellipse", role: "prior" },
+  { id: "chi", x: 490, y: 185, w: 188, h: 74, title: "\\chi", shape: "rect", role: "map" },
   { id: "m", x: 490, y: 380, w: 188, h: 74, title: "m", shape: "rect", role: "map" },
   { id: "N", x: 790, y: 280, w: 196, h: 82, title: "N(t)", shape: "ellipse", role: "flow" },
-  { id: "Pi", x: 1010, y: 280, w: 168, h: 116, title: "Π", shape: "diamond", role: "outcome" },
-  { id: "shock", x: 790, y: 460, w: 188, h: 64, title: "shock", shape: "rect", role: "prior" },
+  { id: "Pi", x: 1010, y: 280, w: 168, h: 116, title: "\\Pi", shape: "diamond", role: "outcome" },
+  { id: "shock", x: 790, y: 460, w: 188, h: 64, title: "\\text{shock}", shape: "rect", role: "prior" },
 ];
 
 const GOOD = "var(--exp-hybrid)";
@@ -64,17 +65,25 @@ function curve(ax: number, ay: number, bx: number, by: number) {
   return `M ${ax},${ay} C ${mx},${ay} ${mx},${by} ${bx},${by}`;
 }
 
-function tex(text: string, color: string) {
-  return [...text].map((c, i) =>
-    /[\u0370-\u03FF]/.test(c) ? (
-      <tspan key={i} className="exp-tex" fill={color}>
-        {c}
-      </tspan>
-    ) : (
-      <tspan key={i} fill={color}>
-        {c}
-      </tspan>
-    ),
+// Render a LaTeX title centered inside a node via foreignObject, so every
+// symbol (Greek included) is typeset by KaTeX rather than a raw glyph.
+function NodeTitle({ n }: { n: NodeDef }) {
+  const fh = 34;
+  return (
+    <foreignObject x={n.x - n.w / 2} y={n.y - 26} width={n.w} height={fh}>
+      <div
+        style={{
+          height: fh,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--exp-ink)",
+          fontSize: "20px",
+        }}
+      >
+        <Tex>{n.title}</Tex>
+      </div>
+    </foreignObject>
   );
 }
 
@@ -222,10 +231,8 @@ export function CausalDiagram({
                 fill="var(--exp-surface)" stroke={col} strokeWidth={3} />
             )}
             <circle cx={left + 20} cy={top + 20} r={5} fill={col} />
-            <text x={n.x} y={n.y - 8} textAnchor="middle" dominantBaseline="central" className="cd-node-title">
-              {tex(n.title, "var(--exp-ink)")}
-            </text>
-            <text x={n.x} y={n.y + 18} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
+            <NodeTitle n={n} />
+            <text x={n.x} y={n.y + 20} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
               {nodeSub[n.id]}
             </text>
           </g>

@@ -44,7 +44,7 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
     label: "Causal pathway",
     step: "02",
     blurb:
-      "How a strategy plays out, end to end. Move a lever or pick a scenario and watch the pathway reshape — thicker, redder links mark where pressure builds.",
+      "How a strategy plays out, end to end. Move a lever or pick a scenario and watch the pathway reshape. Thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
@@ -65,7 +65,7 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
     label: "Mitigation",
     step: "05",
     blurb:
-      "A shock landed or the goal changed. The model proposes several new strategy vectors and simulates each — pick one and see the before vs after.",
+      "A shock landed or the goal changed. The model proposes several new strategy vectors and simulates each. Compare them and see the before vs after.",
   },
   {
     key: "recommend",
@@ -79,7 +79,7 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
 export const Route = createFileRoute("/evaluator")({
   head: () => ({
     meta: [
-      { title: "Scenario Evaluator — AI Product Economics" },
+      { title: "Scenario Evaluator, AI Product Economics" },
       {
         name: "description",
         content:
@@ -131,7 +131,7 @@ function Explorer() {
   }, []);
 
   if (err) return <div className="exp exp-loading">Could not load data: {err}</div>;
-  if (!data) return <div className="exp exp-loading">Loading exhibit…</div>;
+  if (!data) return <div className="exp exp-loading">Loading exhibit</div>;
 
   return <ExplorerView data={data} />;
 }
@@ -276,7 +276,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     2,
   )} and margin at $${causalState.margin.toFixed(1)}/user. That leaves about ${Math.round(
     causalState.usersEnd,
-  )}k active users and ${fmtMoney(causalState.cumProfit)} cumulative — ${
+  )}k active users and ${fmtMoney(causalState.cumProfit)} cumulative, so ${
     causalState.profitPos ? "the model stays profitable" : "the model slips into a loss"
   }.`;
 
@@ -302,27 +302,27 @@ function ExplorerView({ data }: { data: RunsData }) {
       </header>
 
       <nav className="exp-journey" aria-label="Evaluator journey">
-        {STAGES.map((s) => (
-          <button
-            key={s.key}
-            className={`exp-journey-step ${stage === s.key ? "active" : ""}`}
-            aria-current={stage === s.key}
-            onClick={() => setStage(s.key)}
-          >
-            <span className="exp-journey-num">{s.step}</span>
-            <span className="exp-journey-label">{s.label}</span>
-          </button>
-        ))}
+        {STAGES.map((s, i) => {
+          const activeIdx = STAGES.findIndex((x) => x.key === stage);
+          const state = i === activeIdx ? "active" : i < activeIdx ? "done" : "todo";
+          return (
+            <button
+              key={s.key}
+              className={`exp-journey-step ${state}`}
+              aria-current={stage === s.key}
+              onClick={() => setStage(s.key)}
+            >
+              <span className="exp-journey-num">{s.step}</span>
+              <span className="exp-journey-label">{s.label}</span>
+            </button>
+          );
+        })}
       </nav>
       <p className="exp-journey-blurb">{activeStage.blurb}</p>
 
       {stage === "problem" && (
         <div className="exp-stage">
-          <ProblemFrame
-            strategies={data.meta.strategies}
-            colors={STRAT_COLORS}
-            onStart={() => setStage("causal")}
-          />
+          <ProblemFrame onStart={() => setStage("causal")} />
         </div>
       )}
 
@@ -449,7 +449,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
               </div>
               <p className="exp-rail-note">
-                Regulatory pressure feeds through into the effective token price — now ×
+                Regulatory pressure feeds through into the effective token price, now ×
                 {causalState.tpfEff.toFixed(1)}.
               </p>
             </div>
@@ -494,7 +494,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 {causalView === "pathway" ? (
                   <>
                     <h2 className="exp-section-title">
-                      CAUSAL PATHWAY — {derived[traceStrat].label.toUpperCase()}
+                      CAUSAL PATHWAY: {derived[traceStrat].label.toUpperCase()}
                     </h2>
                     <div className="exp-causal-wrap">
                       <CausalDiagram cs={causalState} stratColor={STRAT_COLORS[traceStrat]} />
@@ -575,7 +575,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                       Cost, lock-in and regulatory load are <strong>risks</strong> (smaller is
                       better); innovation and resilience are <strong>strengths</strong> you invest in
                       directly (larger is better). The dashed grey outline is {derived[traceStrat].label}{" "}
-                      under today&rsquo;s status quo — the gap to the coloured shape is what the current
+                      under today&rsquo;s status quo, the gap to the coloured shape is what the current
                       strategy vector and scenario change.
                     </p>
                     <div className="exp-radar-legend">
@@ -599,7 +599,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               <section className="exp-section">
                 <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
                 <h2 className="exp-section-title">
-                  TIPPING POINTS — {derived[traceStrat].label.toUpperCase()}
+                  TIPPING POINTS: {derived[traceStrat].label.toUpperCase()}
                 </h2>
                 <TippingPoints points={tipping} />
               </section>
@@ -613,7 +613,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           <section className="exp-section">
             <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
             <h2 className="exp-section-title">
-              MITIGATION — FROM {derived[traceStrat].label.toUpperCase()}
+              MITIGATION FROM {derived[traceStrat].label.toUpperCase()}
             </h2>
             <Mitigation
               data={data}

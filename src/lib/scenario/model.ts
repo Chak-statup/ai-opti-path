@@ -339,7 +339,7 @@ export const PRESETS: ScenarioPreset[] = [
   {
     id: "oss-breakthrough",
     label: "Open-source breakthrough",
-    blurb: "An open model matches the frontier — token cost collapses.",
+    blurb: "An open model matches the frontier, token cost collapses.",
     ctx: { tokenPriceFactor: 0.6, regPressure: 30 },
     dm: 8,
     qstar: 0.5,
@@ -433,7 +433,7 @@ export function deriveTippingPoints(
       belowIsBad: false,
       crossed: r.cost >= 65,
       explanation:
-        "Past this line, token cost outruns product margin — every new user at full scale adds a loss, and shutting apps off costs reputation.",
+        "Past this line, token cost outruns product margin, every new user at full scale adds a loss, and shutting apps off costs reputation.",
     },
     {
       key: "lockin",
@@ -463,7 +463,7 @@ export function deriveTippingPoints(
       belowIsBad: true,
       crossed: r.innovation < 40,
       explanation:
-        "Below this line, the company loses pace with the market — competitors build a structural lead within a year.",
+        "Below this line, the company loses pace with the market, competitors build a structural lead within a year.",
     },
   ];
   return pts;
@@ -513,7 +513,7 @@ export function proposeMitigations(
       id: "hedge",
       label: "Hedge the vendor",
       rationale:
-        "Invest hard in resilience — multi-vendor serving and open-weight fallbacks — to absorb the token-price spike instead of passing it on.",
+        "Invest hard in resilience, multi-vendor serving and open-weight fallbacks, to absorb the token-price spike instead of passing it on.",
       strat: base.strat,
       dm: base.dm,
       qstar: base.qstar,

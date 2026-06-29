@@ -5,7 +5,7 @@ import { HomeChart } from "@/components/scenario/HomeChart";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AI Strategy Tool — Decision Intelligence" },
+      { title: "AI Strategy Tool, Decision Intelligence" },
       {
         name: "description",
         content:
@@ -41,13 +41,14 @@ function LandingPage() {
             <HomeChart />
           </div>
           <div className="lp-hero-content">
-            <p className="lp-steps">Plan, Evaluate, Decide</p>
+            <p className="lp-steps">Frame, Simulate, Decide</p>
             <h1 className="lp-hero-title">
               Scenario Evaluator
             </h1>
             <p className="lp-hero-lead">
-              AI Product economics. There are many paths to scaling AI. Here you
-              can simulate each one and make a better-informed decision.
+              AI Product economics. Scaling AI is a system of coupled decisions, not a single
+              yes or no. Set your strategy, stress it against the things you cannot control, and
+              see which path survives.
             </p>
             <div className="lp-cta-row">
               <Link to="/evaluator" className="lp-cta-primary">
@@ -60,11 +61,14 @@ function LandingPage() {
         <section className="lp-about">
           <h2 className="lp-section-title">What the evaluator shows</h2>
           <p className="lp-about-body">
-            This is an illustration, not a forecast. It extends a simple
-            word-of-mouth growth model to simulate the different dynamics each
-            strategy can produce. Two knobs drive everything: Quality knob and
-            Margin per user. Adjust them to see how active users, margin, cost and
-            revenue respond, and which strategy comes out ahead.
+            This is an illustration, not a forecast. It extends a simple word of mouth growth
+            model into a guided decision journey. You set a strategy vector you control (quality,
+            margin per customer, innovation and resilience) and an environment you do not (vendor
+            token price and regulatory pressure). The evaluator then traces the causal pathway,
+            profiles each strategy&rsquo;s risks, flags the tipping points, and when a shock hits it
+            proposes mitigations you can compare side by side. The point: margin per user is an
+            output of cost and user dynamics, not a lever, so the real question is which strategy
+            holds up as the world changes.
           </p>
         </section>
       </main>

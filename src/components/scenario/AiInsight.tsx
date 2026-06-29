@@ -102,7 +102,7 @@ export function AiInsight({
     <div className="exp-ai">
       <div className="exp-ai-head">
         <span className="exp-ai-title">AI-augmented advisory</span>
-        <span className="exp-ai-tag">Demo — uses your own key</span>
+        <span className="exp-ai-tag">Demo, uses your own key</span>
       </div>
       <p className="exp-ai-lead">
         Generate a written advisory from the live model state using Anthropic Claude. Your key is
@@ -122,7 +122,7 @@ export function AiInsight({
             spellCheck={false}
           />
           <button className="exp-ai-btn" onClick={generate} disabled={loading}>
-            {loading ? "Generating…" : "Generate insight"}
+            {loading ? "Generating" : "Generate insight"}
           </button>
         </div>
       )}
