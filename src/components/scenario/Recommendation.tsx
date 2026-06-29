@@ -62,13 +62,14 @@ export function Recommendation({
       <div className="exp-rec-block">
         <div className="exp-rec-block-title">What drives this</div>
         <ul className="exp-rec-list">
-          {topRisks.map((r) => (
+          {topRisks.map((r, i) => (
             <li key={r.k}>
-              <strong>{RISK_LABEL[r.k]}</strong> sits at {Math.round(r.v)}/100 — the main pressure
-              on this path.
+              <strong>{RISK_LABEL[r.k]}</strong> sits at {Math.round(r.v)}/100 —{" "}
+              {i === 0 ? "the dominant pressure on this path" : "the next risk to watch"}.
             </li>
           ))}
         </ul>
+
       </div>
 
       <div className="exp-rec-block">
