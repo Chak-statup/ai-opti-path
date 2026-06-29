@@ -175,9 +175,12 @@
   --exp-muted: #6b7177;
   --exp-grid: #e7e9ec;
   --exp-axis: #9aa0a6;
-  --exp-open: #8a8f98;
-  --exp-hybrid: #2e7d6b;
-  --exp-frontier: #1f4e79;
+  --exp-open: #2980B9;
+  --exp-hybrid: #16A085;
+  --exp-frontier: #4B2C50;
+  --exp-accent-1: #9BBB59;
+  --exp-accent-2: #F39C12;
+  --exp-accent-3: #C0392B;
   --exp-marker: #1a1d21;
   --exp-border: #e2e4e7;
   --exp-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
