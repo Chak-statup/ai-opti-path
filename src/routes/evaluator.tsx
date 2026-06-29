@@ -163,9 +163,10 @@ function ExplorerView({
           </Link>
           <span className="exp-brand-divider" />
           <div className="exp-titles">
-            <h1>AI Product Economics · Scenario Explorer</h1>
+            <h1>Scenario Evaluator</h1>
             <p>
-              Two levers, three strategies, over a {params.T}-step horizon.
+              AI Product economics. Two levers, three strategies, over a{" "}
+              {params.T}-step horizon.
             </p>
           </div>
         </div>
