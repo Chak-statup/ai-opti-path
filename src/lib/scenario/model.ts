@@ -203,6 +203,7 @@ export function computeCausalState(
   s: number,
   dm: number,
   qstar: number,
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
 ): CausalState {
   const p = data.meta.params;
   const qi = qstarIndex(qstar, data.qstar_grid);
@@ -218,13 +219,14 @@ export function computeCausalState(
 
   const comp = clamp01(p.phi / 0.5);
 
-  const d = deriveStrategy(data, s, dm, snapped);
+  const d = deriveStrategy(data, s, dm, snapped, ctx);
   const usersEnd = d.users[d.users.length - 1];
   const usersNorm = clamp01(usersEnd / (p.K / 1000));
 
   const cumProfit = d.cumProfit;
   const profitNorm = clamp01(Math.abs(cumProfit) / 600);
-  const shockNorm = clamp01(p.dm_shock / Math.max(margin, 0.1));
+  const shockNorm = clamp01((p.dm_shock + (ctx.tokenPriceFactor - 1) * 1.5) / Math.max(margin, 0.1));
+
 
   return {
     Q,
