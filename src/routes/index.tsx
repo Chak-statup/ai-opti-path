@@ -1,149 +1,269 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, LineChart, ShieldCheck, Coins, GitBranch } from "lucide-react";
-import { SiteHeader } from "@/components/SiteHeader";
-import { PRESETS } from "@/lib/sim/strategy";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { LineChart, type Series, type VGuide } from "@/components/scenario/LineChart";
+import {
+  deriveStrategy,
+  qstarIndex,
+  sweepCumProfit,
+  type RunsData,
+  type StrategyDerived,
+} from "@/lib/scenario/model";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AI Strategy Tool — What should your AI strategy be?" },
+      { title: "AI Strategy — Scenario Explorer" },
       {
         name: "description",
         content:
-          "Simulate the total cost-to-company of five AI strategies over 18 months under a token-price shock, quality-driven churn, and revenue latency.",
-      },
-      { property: "og:title", content: "AI Strategy Tool" },
-      {
-        property: "og:description",
-        content:
-          "A decision-intelligence demo: grounded pricing, Monte-Carlo simulation, and a clear answer to how aggressively to scale AI.",
+          "An interactive exhibit exploring the economics of an AI product across Open, Hybrid and Frontier strategies.",
       },
     ],
   }),
-  component: Index,
+  component: Explorer,
 });
 
-const CARDS = [
-  {
-    icon: Coins,
-    tone: "cost",
-    title: "Grounded pricing",
-    desc: "Per-app cost is drawn from a distribution anchored to real ranges — frontier API, hybrid routing, and self-hosted open-source.",
-  },
-  {
-    icon: ShieldCheck,
-    tone: "risk",
-    title: "External shocks",
-    desc: "A token-price spike at month 9 drives cost up. How hard it hits depends on how exposed each strategy is.",
-  },
-  {
-    icon: GitBranch,
-    tone: "quality",
-    title: "Quality & churn",
-    desc: "Open-source trails frontier on reasoning. Low quality trips a churn step-function that bleeds active users.",
-  },
+const STRAT_COLORS = ["var(--exp-open)", "var(--exp-hybrid)", "var(--exp-frontier)"];
+
+type MetricKey = "users" | "margin" | "cost" | "profit";
+type Focus = "all" | MetricKey;
+
+const PANELS: { key: MetricKey; title: string; yLabel: string; zero: boolean }[] = [
+  { key: "users", title: "Active users N(t)", yLabel: "users (000s)", zero: false },
+  { key: "margin", title: "Operating margin", yLabel: "$M / step", zero: false },
+  { key: "cost", title: "Cost (CAC + fixed)", yLabel: "$M / step", zero: false },
+  { key: "profit", title: "Net profit \u03A0(t)", yLabel: "$M / step", zero: true },
 ];
 
-function Index() {
+function fmtMoney(v: number): string {
+  const sign = v < 0 ? "\u2212" : "";
+  return `${sign}$${Math.abs(v).toFixed(1)}M`;
+}
+
+function Explorer() {
+  const [data, setData] = useState<RunsData | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [dm, setDm] = useState(6);
+  const [qstar, setQstar] = useState(0.5);
+  const [focus, setFocus] = useState<Focus>("all");
+
+  useEffect(() => {
+    fetch("/runs.json")
+      .then((r) => {
+        if (!r.ok) throw new Error(`runs.json ${r.status}`);
+        return r.json();
+      })
+      .then((d: RunsData) => {
+        setData(d);
+        setDm(d.meta.controls.dm.default);
+        setQstar(d.meta.controls.qstar.default);
+      })
+      .catch((e) => setErr(String(e)));
+  }, []);
+
+  if (err) {
+    return (
+      <div className="exp exp-loading">Could not load data: {err}</div>
+    );
+  }
+  if (!data) {
+    return <div className="exp exp-loading">Loading exhibit…</div>;
+  }
+
+  return <ExplorerView data={data} dm={dm} setDm={setDm} qstar={qstar} setQstar={setQstar} focus={focus} setFocus={setFocus} />;
+}
+
+function ExplorerView({
+  data,
+  dm,
+  setDm,
+  qstar,
+  setQstar,
+  focus,
+  setFocus,
+}: {
+  data: RunsData;
+  dm: number;
+  setDm: (n: number) => void;
+  qstar: number;
+  setQstar: (n: number) => void;
+  focus: Focus;
+  setFocus: (f: Focus) => void;
+}) {
+  const { params, controls } = data.meta;
+  const t = data.t;
+
+  const qi = qstarIndex(qstar, data.qstar_grid);
+  const snappedQ = data.qstar_grid[qi];
+
+  const derived = useMemo<StrategyDerived[]>(
+    () => data.meta.strategies.map((_, s) => deriveStrategy(data, s, dm, snappedQ)),
+    [data, dm, snappedQ],
+  );
+
+  const sweep = useMemo(() => sweepCumProfit(data, dm), [data, dm]);
+
+  const baseGuides: VGuide[] = [
+    { x: params.tau, label: "\u03C4 revenue", color: "var(--exp-axis)" },
+    { x: params.t_shock, label: "price shock", color: "var(--exp-axis)" },
+  ];
+
+  function panelSeries(key: MetricKey): Series[] {
+    const faint: Series[] = [];
+    const bold: Series[] = [];
+    derived.forEach((d, s) => {
+      d.samples.forEach((sm) => {
+        faint.push({ ys: sm[key], color: STRAT_COLORS[s], width: 1, opacity: 0.22 });
+      });
+      bold.push({ ys: d[key], color: STRAT_COLORS[s], width: 2 });
+    });
+    return [...faint, ...bold];
+  }
+
+  // View B series
+  const sweepSeries: Series[] = sweep.map((ys, s) => ({
+    ys,
+    color: STRAT_COLORS[s],
+    width: 2,
+  }));
+  const sweepGuides: VGuide[] = [
+    { x: snappedQ, label: `Q* = ${snappedQ.toFixed(2)}`, color: "var(--exp-marker)", dash: false },
+    ...data.meta.strategies.map((st, s) => ({
+      x: st.Q,
+      color: STRAT_COLORS[s],
+      dash: true,
+    })),
+  ];
+
+  const visiblePanels = focus === "all" ? PANELS : PANELS.filter((p) => p.key === focus);
+
   return (
-    <div className="min-h-screen">
-      <SiteHeader />
-      <main className="mx-auto max-w-6xl px-5">
-        {/* Hero */}
-        <section className="pt-16 pb-10 sm:pt-24">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-              <ShieldCheck className="h-3.5 w-3.5 text-quality" />
-              Decision intelligence · Scenario simulation
-            </span>
-            <h1 className="mt-5 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
-              What should your <span className="text-primary">AI strategy</span> be?
-            </h1>
-            <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-              A corporation must decide how aggressively to scale AI over the next 18
-              months. This tool simulates the total cost-to-company of five strategies —
-              from all-in frontier to fully sovereign open-source — under a realistic
-              token-price shock, quality trade-offs, and revenue latency.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/simulator"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Run the simulation <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#how"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-secondary"
-              >
-                How it works
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* What's modeled */}
-        <section id="how" className="grid gap-4 py-6 md:grid-cols-3">
-          {CARDS.map((c) => (
-            <div key={c.title} className="rounded-2xl border border-border bg-card p-5">
-              <span
-                className="flex h-11 w-11 items-center justify-center rounded-xl text-white"
-                style={{ background: `var(--${c.tone})` }}
-              >
-                <c.icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-4 font-display text-base font-semibold">{c.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.desc}</p>
-            </div>
-          ))}
-        </section>
-
-        {/* Strategy index cards */}
-        <section className="py-10">
-          <h2 className="font-display text-2xl font-semibold tracking-tight">
-            Five strategies, one scenario
-          </h2>
-          <p className="mt-1 text-muted-foreground">
-            Two extremes and three blends — all compared on the same shock and distributions.
+    <div className="exp">
+      <header className="exp-header">
+        <div className="exp-titles">
+          <h1>AI Product Economics — Scenario Explorer</h1>
+          <p>
+            How two strategic levers move the outcome across three operating
+            models, over a {params.T}-step horizon.
           </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {PRESETS.map((p) => (
-              <Link
-                key={p.id}
-                to="/simulator"
-                className="group rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg"
-                style={{ borderTopColor: `var(--${p.tone})`, borderTopWidth: 3 }}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full" style={{ background: `var(--${p.tone})` }} />
-                  <h3 className="font-display text-base font-semibold">{p.label}</h3>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.blurb}</p>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
-                  Simulate
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Link>
-            ))}
-            <Link
-              to="/simulator"
-              className="group flex flex-col items-start justify-center rounded-2xl border border-dashed border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        </div>
+        <div className="exp-segmented" role="tablist" aria-label="Metric focus">
+          {(["all", "users", "margin", "cost", "profit"] as Focus[]).map((f) => (
+            <button
+              key={f}
+              role="tab"
+              aria-selected={focus === f}
+              className={focus === f ? "active" : ""}
+              onClick={() => setFocus(f)}
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <LineChart className="h-5 w-5" />
-              </span>
-              <h3 className="mt-4 font-display text-base font-semibold">Compare all five</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                See the full simulation and the verdict.
-              </p>
-            </Link>
-          </div>
-        </section>
+              {f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+      </header>
 
-        <footer className="border-t border-border py-8 text-sm text-muted-foreground">
-          Illustrative demo · models are grounded but use demo-default parameters. Built local-first.
-        </footer>
-      </main>
+      <div className="exp-body">
+        {/* Control rail */}
+        <aside className="exp-rail">
+          <div className="exp-control">
+            <div className="exp-control-head">
+              <span className="exp-control-label">{"\u0394m"} — margin slope</span>
+              <span className="exp-control-val">{dm.toFixed(1)}</span>
+            </div>
+            <input
+              type="range"
+              min={controls.dm.min ?? 0}
+              max={controls.dm.max ?? 12}
+              step={controls.dm.step ?? 0.5}
+              value={dm}
+              onChange={(e) => setDm(parseFloat(e.target.value))}
+            />
+            <p className="exp-control-note">Per-user margin gain per unit quality.</p>
+          </div>
+
+          <div className="exp-control">
+            <div className="exp-control-head">
+              <span className="exp-control-label">Q* — churn threshold</span>
+              <span className="exp-control-val">{snappedQ.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min={data.qstar_grid[0]}
+              max={data.qstar_grid[data.qstar_grid.length - 1]}
+              step={0.02}
+              value={qstar}
+              onChange={(e) => setQstar(parseFloat(e.target.value))}
+            />
+            <p className="exp-control-note">Quality at which churn falls; snaps to grid.</p>
+          </div>
+
+          <div className="exp-legend">
+            <div className="exp-legend-title">Strategy</div>
+            {derived.map((d, s) => (
+              <div className="exp-legend-row" key={d.label}>
+                <span className="exp-swatch" style={{ background: STRAT_COLORS[s] }} />
+                <span className="exp-legend-name">{d.label}</span>
+                <span className="exp-legend-q">Q={d.Q}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="exp-readout">
+            <div className="exp-readout-title">Cumulative profit</div>
+            {derived.map((d, s) => (
+              <div className="exp-readout-row" key={d.label}>
+                <span className="exp-readout-name">{d.label}</span>
+                <span
+                  className="exp-readout-val"
+                  style={{ color: STRAT_COLORS[s] }}
+                >
+                  {fmtMoney(d.cumProfit)}
+                </span>
+              </div>
+            ))}
+            <p className="exp-readout-note">over {params.T} time steps</p>
+          </div>
+        </aside>
+
+        {/* Charts */}
+        <main className="exp-main">
+          <section className="exp-section">
+            <h2 className="exp-section-title">A · Trajectories</h2>
+            <div className={focus === "all" ? "exp-grid" : "exp-grid single"}>
+              {visiblePanels.map((p) => (
+                <LineChart
+                  key={p.key}
+                  xs={t}
+                  series={panelSeries(p.key)}
+                  title={p.title}
+                  xLabel="time steps"
+                  yLabel={p.yLabel}
+                  vGuides={baseGuides}
+                  zeroLine={p.zero}
+                  xFormat={(v) => `${Math.round(v)}`}
+                  yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
+                  height={focus === "all" ? 200 : 320}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="exp-section">
+            <h2 className="exp-section-title">B · Cumulative profit vs quality threshold</h2>
+            <LineChart
+              xs={data.qstar_grid}
+              series={sweepSeries}
+              xLabel="Q* — churn quality threshold"
+              yLabel="$M over horizon"
+              vGuides={sweepGuides}
+              zeroLine
+              xFormat={(v) => v.toFixed(1)}
+              yFormat={(v) => v.toFixed(0)}
+              height={260}
+            />
+          </section>
+        </main>
+      </div>
     </div>
   );
 }
