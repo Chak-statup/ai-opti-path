@@ -93,6 +93,7 @@ function deriveRaw(
   dm: number,
   p: Params,
   t: number[],
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
 ) {
   const n = N.length;
   const margin = new Array<number>(n);
@@ -100,19 +101,24 @@ function deriveRaw(
   const profit = new Array<number>(n);
   const chiVal = chi(Q, qstar, p);
   const m = p.m0 + dm * Q;
+  // Token price factor scales the variable (per-user) cost — the "vendor
+  // doubles token prices" lever. Regulatory pressure inflates fixed cost.
+  const tpf = ctx.tokenPriceFactor;
+  const F = p.F * (1 + ctx.regPressure / 100);
   for (let i = 0; i < n; i++) {
     const ti = t[i];
     const gate = ti >= p.tau ? 1 : 0;
     const shock = ti >= p.t_shock ? 1 : 0;
     const comp = (p.phi * ti) / p.T;
     const om = gate * (m - p.dm_shock * shock) * N[i];
-    const c = p.c_ac * (chiVal + comp) * N[i] + p.F;
+    const c = p.c_ac * tpf * (chiVal + comp) * N[i] + F;
     margin[i] = om;
     cost[i] = c;
     profit[i] = om - c;
   }
   return { margin, cost, profit };
 }
+
 
 const M = 1e6;
 const K_UNIT = 1e3;
