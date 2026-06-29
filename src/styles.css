@@ -163,3 +163,22 @@
     letter-spacing: -0.015em;
   }
 }
+
+/* ============================================================
+ * Scenario Explorer palette — the ONLY place these colors live.
+ * Swap the whole exhibit palette here.
+ * ============================================================ */
+.exp {
+  --exp-bg: #ffffff;
+  --exp-surface: #f7f8f9;
+  --exp-ink: #1a1d21;
+  --exp-muted: #6b7177;
+  --exp-grid: #e7e9ec;
+  --exp-axis: #9aa0a6;
+  --exp-open: #8a8f98;
+  --exp-hybrid: #2e7d6b;
+  --exp-frontier: #1f4e79;
+  --exp-marker: #1a1d21;
+  --exp-border: #e2e4e7;
+  --exp-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
