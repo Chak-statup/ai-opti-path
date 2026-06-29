@@ -16,6 +16,9 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-1">
+          <NavLink to="/evaluator" icon={<LineChart className="h-4 w-4" />}>
+            Explorer
+          </NavLink>
           <NavLink to="/simulator" icon={<LineChart className="h-4 w-4" />}>
             Simulator
           </NavLink>
