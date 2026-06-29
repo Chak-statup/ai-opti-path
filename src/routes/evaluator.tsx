@@ -234,7 +234,7 @@ function ExplorerView({
           </div>
         </aside>
 
-        {/* Chart area — one view at a time */}
+        {/* Chart area · one view at a time */}
         <main className="exp-main">
           <div className="exp-tabs" role="tablist" aria-label="Chart view">
             {TABS.map((x) => (
