@@ -659,3 +659,140 @@
   .lp-hero-title { font-size: 1.25rem; }
 }
 
+
+/* ============================================================
+ * Evaluator journey + causal + uncertainty stages
+ * ============================================================ */
+.exp-journey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 0;
+}
+.exp-journey-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--exp-border);
+  background: var(--exp-bg);
+  color: var(--exp-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 0.9rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.exp-journey-step:hover { color: var(--exp-ink); border-color: var(--exp-axis); }
+.exp-journey-step.active {
+  background: var(--exp-ink);
+  color: var(--exp-bg);
+  border-color: var(--exp-ink);
+}
+.exp-journey-num {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+.exp-journey-blurb {
+  max-width: 80ch;
+  margin: 0.65rem 0 0;
+  padding: 0 1.5rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--exp-muted);
+}
+.exp-stage {
+  padding: 1.25rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+.exp-causal-wrap {
+  border: 1px solid var(--exp-border);
+  border-radius: 8px;
+  background: var(--exp-bg);
+  padding: 0.75rem;
+}
+.cd-col {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--exp-font);
+}
+.cd-node-label {
+  font-size: 12px;
+  font-family: var(--exp-font);
+}
+.cd-note {
+  font-size: 10px;
+  font-family: var(--exp-font);
+}
+.exp-prose {
+  max-width: 80ch;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--exp-ink);
+}
+.exp-uncert {
+  padding: 1.25rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+.exp-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0.85rem;
+}
+.exp-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+.exp-stat-name { font-weight: 600; }
+.exp-stat-vals {
+  color: var(--exp-muted);
+  font-variant-numeric: tabular-nums;
+}
+.exp-inf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0.5rem 0 1.25rem;
+}
+.exp-inf-controls .exp-tabs { margin-bottom: 0; }
+.exp-inf-ploss {
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+  font-variant-numeric: tabular-nums;
+}
+.exp-inf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem 2rem;
+}
+.exp-inf-shift {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  color: var(--exp-muted);
+  font-variant-numeric: tabular-nums;
+}
+.exp-inf-legend {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+}
+.exp-inf-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+@media (max-width: 900px) {
+  .exp-inf-grid { grid-template-columns: 1fr; }
+}
