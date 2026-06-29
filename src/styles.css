@@ -555,6 +555,13 @@
   color: var(--exp-muted);
   max-width: 52ch;
 }
+.lp-hero-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
 .lp-cta-row {
   margin-top: 1.75rem;
 }
