@@ -405,6 +405,39 @@
   .exp-grid { grid-template-columns: 1fr; }
 }
 
+/* View tabs */
+.exp-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.exp-tab {
+  border: 1px solid var(--exp-border);
+  background: var(--exp-bg);
+  color: var(--exp-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.exp-tab:hover { color: var(--exp-ink); border-color: var(--exp-axis); }
+.exp-tab.active {
+  background: var(--exp-ink);
+  color: var(--exp-bg);
+  border-color: var(--exp-ink);
+}
+.exp-home-link {
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.exp-home-link:hover { color: var(--exp-ink); }
+
 /* ============================================================
  * Landing page
  * ============================================================ */
