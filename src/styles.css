@@ -425,6 +425,17 @@
   }
 }
 
+/* On tablets the stacked rail lays its two groups side by side so the
+   controls don't become an over-long column of full-width sliders. */
+@media (max-width: 900px) and (min-width: 641px) {
+  .exp-rail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 2rem;
+    align-items: start;
+  }
+}
+
 @media (max-width: 640px) {
   .exp-header { flex-wrap: wrap; gap: 0.5rem 1rem; padding: 0.75rem 1rem; }
   .exp-journey { padding: 1rem 1rem 0; }
