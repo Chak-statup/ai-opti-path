@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, type Series, type VGuide } from "@/components/scenario/LineChart";
+import { StatupLogo } from "@/components/StatupLogo";
 import {
   deriveStrategy,
   qstarIndex,
@@ -26,13 +27,21 @@ export const Route = createFileRoute("/evaluator")({
 const STRAT_COLORS = ["var(--exp-open)", "var(--exp-hybrid)", "var(--exp-frontier)"];
 
 type MetricKey = "users" | "margin" | "cost" | "profit";
-type Focus = "all" | MetricKey;
+type Tab = "strategy" | MetricKey;
 
-const PANELS: { key: MetricKey; title: string; yLabel: string; zero: boolean }[] = [
-  { key: "users", title: "Active users N(t)", yLabel: "users (000s)", zero: false },
-  { key: "margin", title: "Operating margin", yLabel: "$M / step", zero: false },
-  { key: "cost", title: "Cost (CAC + fixed)", yLabel: "$M / step", zero: false },
-  { key: "profit", title: "Net profit Π(t)", yLabel: "$M / step", zero: true },
+const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
+  users: { title: "Active users N(t)", yLabel: "users (000s)", zero: false },
+  margin: { title: "Operating margin", yLabel: "$M / step", zero: false },
+  cost: { title: "Cost (CAC + fixed)", yLabel: "$M / step", zero: false },
+  profit: { title: "Net profit Π(t)", yLabel: "$M / step", zero: true },
+};
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: "strategy", label: "Strategy" },
+  { key: "users", label: "Users" },
+  { key: "margin", label: "Margin" },
+  { key: "cost", label: "Cost" },
+  { key: "profit", label: "Profit" },
 ];
 
 function fmtMoney(v: number): string {
@@ -45,7 +54,7 @@ function Explorer() {
   const [err, setErr] = useState<string | null>(null);
   const [dm, setDm] = useState(6);
   const [qstar, setQstar] = useState(0.5);
-  const [focus, setFocus] = useState<Focus>("all");
+  const [tab, setTab] = useState<Tab>("strategy");
 
   useEffect(() => {
     fetch("/runs.json")
@@ -62,15 +71,23 @@ function Explorer() {
   }, []);
 
   if (err) {
-    return (
-      <div className="exp exp-loading">Could not load data: {err}</div>
-    );
+    return <div className="exp exp-loading">Could not load data: {err}</div>;
   }
   if (!data) {
     return <div className="exp exp-loading">Loading exhibit…</div>;
   }
 
-  return <ExplorerView data={data} dm={dm} setDm={setDm} qstar={qstar} setQstar={setQstar} focus={focus} setFocus={setFocus} />;
+  return (
+    <ExplorerView
+      data={data}
+      dm={dm}
+      setDm={setDm}
+      qstar={qstar}
+      setQstar={setQstar}
+      tab={tab}
+      setTab={setTab}
+    />
+  );
 }
 
 function ExplorerView({
@@ -79,16 +96,16 @@ function ExplorerView({
   setDm,
   qstar,
   setQstar,
-  focus,
-  setFocus,
+  tab,
+  setTab,
 }: {
   data: RunsData;
   dm: number;
   setDm: (n: number) => void;
   qstar: number;
   setQstar: (n: number) => void;
-  focus: Focus;
-  setFocus: (f: Focus) => void;
+  tab: Tab;
+  setTab: (t: Tab) => void;
 }) {
   const { params, controls } = data.meta;
   const t = data.t;
@@ -120,7 +137,7 @@ function ExplorerView({
     return [...faint, ...bold];
   }
 
-  // View B series
+  // Strategy view (cumulative profit vs Q*)
   const sweepSeries: Series[] = sweep.map((ys, s) => ({
     ys,
     color: STRAT_COLORS[s],
@@ -135,31 +152,27 @@ function ExplorerView({
     })),
   ];
 
-  const visiblePanels = focus === "all" ? PANELS : PANELS.filter((p) => p.key === focus);
+  const activeTab = TABS.find((x) => x.key === tab)!;
 
   return (
     <div className="exp">
       <header className="exp-header">
-        <div className="exp-titles">
-          <h1>AI Product Economics — Scenario Explorer</h1>
-          <p>
-            How two strategic levers move the outcome across three operating
-            models, over a {params.T}-step horizon.
-          </p>
+        <div className="exp-brand">
+          <Link to="/" className="exp-logo-link" aria-label="STAT UP home">
+            <StatupLogo />
+          </Link>
+          <span className="exp-brand-divider" />
+          <div className="exp-titles">
+            <h1>AI Product Economics — Scenario Explorer</h1>
+            <p>
+              How two strategic levers move the outcome across three operating
+              models, over a {params.T}-step horizon.
+            </p>
+          </div>
         </div>
-        <div className="exp-segmented" role="tablist" aria-label="Metric focus">
-          {(["all", "users", "margin", "cost", "profit"] as Focus[]).map((f) => (
-            <button
-              key={f}
-              role="tab"
-              aria-selected={focus === f}
-              className={focus === f ? "active" : ""}
-              onClick={() => setFocus(f)}
-            >
-              {f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
+        <Link to="/" className="exp-home-link">
+          ← Home
+        </Link>
       </header>
 
       <div className="exp-body">
@@ -213,10 +226,7 @@ function ExplorerView({
             {derived.map((d, s) => (
               <div className="exp-readout-row" key={d.label}>
                 <span className="exp-readout-name">{d.label}</span>
-                <span
-                  className="exp-readout-val"
-                  style={{ color: STRAT_COLORS[s] }}
-                >
+                <span className="exp-readout-val" style={{ color: STRAT_COLORS[s] }}>
                   {fmtMoney(d.cumProfit)}
                 </span>
               </div>
@@ -225,42 +235,59 @@ function ExplorerView({
           </div>
         </aside>
 
-        {/* Charts */}
+        {/* Chart area — one view at a time */}
         <main className="exp-main">
-          <section className="exp-section">
-            <h2 className="exp-section-title">A · Trajectories</h2>
-            <div className={focus === "all" ? "exp-grid" : "exp-grid single"}>
-              {visiblePanels.map((p) => (
-                <LineChart
-                  key={p.key}
-                  xs={t}
-                  series={panelSeries(p.key)}
-                  title={p.title}
-                  xLabel="time steps"
-                  yLabel={p.yLabel}
-                  vGuides={baseGuides}
-                  zeroLine={p.zero}
-                  xFormat={(v) => `${Math.round(v)}`}
-                  yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
-                  height={focus === "all" ? 200 : 320}
-                />
-              ))}
-            </div>
-          </section>
+          <div className="exp-tabs" role="tablist" aria-label="Chart view">
+            {TABS.map((x) => (
+              <button
+                key={x.key}
+                role="tab"
+                aria-selected={tab === x.key}
+                className={`exp-tab ${tab === x.key ? "active" : ""}`}
+                onClick={() => setTab(x.key)}
+              >
+                {x.label}
+              </button>
+            ))}
+          </div>
 
           <section className="exp-section">
-            <h2 className="exp-section-title">B · Cumulative profit vs quality threshold</h2>
-            <LineChart
-              xs={data.qstar_grid}
-              series={sweepSeries}
-              xLabel="Q* — churn quality threshold"
-              yLabel="$M over horizon"
-              vGuides={sweepGuides}
-              zeroLine
-              xFormat={(v) => v.toFixed(1)}
-              yFormat={(v) => v.toFixed(0)}
-              height={260}
-            />
+            {tab === "strategy" ? (
+              <>
+                <h2 className="exp-section-title">
+                  Strategy · Cumulative profit vs quality threshold
+                </h2>
+                <LineChart
+                  xs={data.qstar_grid}
+                  series={sweepSeries}
+                  xLabel="Q* — churn quality threshold"
+                  yLabel="$M over horizon"
+                  vGuides={sweepGuides}
+                  zeroLine
+                  xFormat={(v) => v.toFixed(1)}
+                  yFormat={(v) => v.toFixed(0)}
+                  height={360}
+                />
+              </>
+            ) : (
+              <>
+                <h2 className="exp-section-title">
+                  Trajectory · {activeTab.label}
+                </h2>
+                <LineChart
+                  xs={t}
+                  series={panelSeries(tab)}
+                  title={METRIC_PANELS[tab].title}
+                  xLabel="time steps"
+                  yLabel={METRIC_PANELS[tab].yLabel}
+                  vGuides={baseGuides}
+                  zeroLine={METRIC_PANELS[tab].zero}
+                  xFormat={(v) => `${Math.round(v)}`}
+                  yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
+                  height={360}
+                />
+              </>
+            )}
           </section>
         </main>
       </div>

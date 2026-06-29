@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { StatupLogo } from "@/components/StatupLogo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,8 +20,13 @@ function LandingPage() {
     <div className="lp">
       <header className="lp-nav">
         <div className="lp-nav-inner">
-          <span className="lp-logo">AI Strategy Tool</span>
+          <Link to="/" className="lp-logo exp-logo-link" aria-label="STAT UP home">
+            <StatupLogo />
+          </Link>
           <nav className="lp-nav-links">
+            <Link to="/" className="lp-nav-link">
+              Home
+            </Link>
             <Link to="/evaluator" className="lp-nav-link">
               Explorer
             </Link>
