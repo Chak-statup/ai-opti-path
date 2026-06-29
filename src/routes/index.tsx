@@ -29,10 +29,7 @@ function LandingPage() {
               Home
             </Link>
             <Link to="/evaluator" className="lp-nav-link">
-              Explorer
-            </Link>
-            <Link to="/simulator" className="lp-nav-link">
-              Simulator
+              Evaluator
             </Link>
           </nav>
         </div>
