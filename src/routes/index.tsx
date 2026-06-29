@@ -67,7 +67,7 @@ function Explorer() {
     );
   }
   if (!data) {
-    return <div className="exp exp-loading">Loading exhibit\u2026</div>;
+    return <div className="exp exp-loading">Loading exhibit…</div>;
   }
 
   return <ExplorerView data={data} dm={dm} setDm={setDm} qstar={qstar} setQstar={setQstar} focus={focus} setFocus={setFocus} />;
