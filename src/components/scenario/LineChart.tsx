@@ -167,7 +167,7 @@ export function LineChart({
                 className="exp-guide-label"
                 fill={g.color ?? "var(--exp-muted)"}
               >
-                {g.label}
+                {renderTex(g.label)}
               </text>
             )}
           </g>
