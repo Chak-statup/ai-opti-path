@@ -7,6 +7,7 @@
 // with an animated flow, larger legible labels, and column header pills. Colours
 // come entirely from the existing design tokens.
 import type { CausalState } from "@/lib/scenario/model";
+import { Tex } from "./Tex";
 
 type Shape = "rect" | "ellipse" | "diamond";
 type Role = "decision" | "lever" | "prior" | "map" | "flow" | "outcome";
@@ -17,21 +18,21 @@ interface NodeDef {
   y: number;
   w: number;
   h: number;
-  title: string;
+  title: string; // LaTeX source
   shape: Shape;
   role: Role;
 }
 
 const NODES: NodeDef[] = [
   { id: "Q", x: 150, y: 95, w: 188, h: 70, title: "Q", shape: "rect", role: "decision" },
-  { id: "Qstar", x: 150, y: 210, w: 188, h: 64, title: "Q*", shape: "ellipse", role: "lever" },
-  { id: "dm", x: 150, y: 320, w: 188, h: 64, title: "Δm", shape: "ellipse", role: "lever" },
-  { id: "phi", x: 150, y: 430, w: 188, h: 64, title: "φ", shape: "ellipse", role: "prior" },
-  { id: "chi", x: 490, y: 185, w: 188, h: 74, title: "χ", shape: "rect", role: "map" },
+  { id: "Qstar", x: 150, y: 210, w: 188, h: 64, title: "Q^{\\ast}", shape: "ellipse", role: "lever" },
+  { id: "dm", x: 150, y: 320, w: 188, h: 64, title: "\\Delta m", shape: "ellipse", role: "lever" },
+  { id: "phi", x: 150, y: 430, w: 188, h: 64, title: "\\varphi", shape: "ellipse", role: "prior" },
+  { id: "chi", x: 490, y: 185, w: 188, h: 74, title: "\\chi", shape: "rect", role: "map" },
   { id: "m", x: 490, y: 380, w: 188, h: 74, title: "m", shape: "rect", role: "map" },
   { id: "N", x: 790, y: 280, w: 196, h: 82, title: "N(t)", shape: "ellipse", role: "flow" },
-  { id: "Pi", x: 1010, y: 280, w: 168, h: 116, title: "Π", shape: "diamond", role: "outcome" },
-  { id: "shock", x: 790, y: 460, w: 188, h: 64, title: "shock", shape: "rect", role: "prior" },
+  { id: "Pi", x: 1010, y: 280, w: 168, h: 116, title: "\\Pi", shape: "diamond", role: "outcome" },
+  { id: "shock", x: 790, y: 460, w: 188, h: 64, title: "\\text{shock}", shape: "rect", role: "prior" },
 ];
 
 const GOOD = "var(--exp-hybrid)";
