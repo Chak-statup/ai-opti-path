@@ -214,6 +214,9 @@
   gap: 1.5rem;
   padding: 0.85rem 1.5rem;
   border-bottom: 1px solid var(--exp-border);
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
 }
 .exp-brand {
   display: flex;
