@@ -204,7 +204,50 @@ function ExplorerView({
         </Link>
       </header>
 
+      <nav className="exp-journey" aria-label="Evaluator journey">
+        {STAGES.map((s) => (
+          <button
+            key={s.key}
+            className={`exp-journey-step ${stage === s.key ? "active" : ""}`}
+            aria-current={stage === s.key}
+            onClick={() => setStage(s.key)}
+          >
+            <span className="exp-journey-num">{s.step}</span>
+            <span className="exp-journey-label">{s.label}</span>
+          </button>
+        ))}
+      </nav>
+      <p className="exp-journey-blurb">{activeStage.blurb}</p>
+
+      {stage === "causal" && (
+        <div className="exp-stage">
+          <section className="exp-section">
+            <h2 className="exp-section-title">
+              CAUSAL BAYESIAN NETWORK — PRIORS FLOW THROUGH THE MECHANISM TO PROFIT
+            </h2>
+            <div className="exp-causal-wrap">
+              <CausalDiagram />
+            </div>
+            <p className="exp-prose">
+              The decision is a single number, the quality level Q. Three things about the world are
+              uncertain and get priors: the market quality bar Q*, competition intensity φ, and the
+              margin slope Δm. They pass through two exact maps — the churn cliff χ(Q, Q*) and the
+              per-user margin m(Q, Δm) — into the noisy user trajectory N(t), and finally into
+              cumulative profit Π. A one-off price shock hits the margin near the end of the horizon.
+            </p>
+          </section>
+        </div>
+      )}
+
+      {stage === "uncertainty" && (
+        <div className="exp-stage">
+          <UncertaintyView data={data} />
+        </div>
+      )}
+
+      {stage === "ode" && (
       <div className="exp-body">
+
         {/* Control rail */}
         <aside className="exp-rail">
           <div className="exp-control">
