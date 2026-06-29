@@ -132,8 +132,10 @@ function ExplorerView({
 }) {
   const { params, controls } = data.meta;
   const t = data.t;
-  const [stage, setStage] = useState<Stage>("ode");
+  const [stage, setStage] = useState<Stage>("causal");
+  const [traceStrat, setTraceStrat] = useState(1);
   const activeStage = STAGES.find((s) => s.key === stage)!;
+
 
 
   const qi = qstarIndex(qstar, data.qstar_grid);
