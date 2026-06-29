@@ -41,24 +41,24 @@ function LandingPage() {
             <HomeChart />
           </div>
           <div className="lp-hero-content">
-            <p className="lp-steps">Plan · Evaluate · Decide</p>
+            <p className="lp-steps">Plan, Evaluate, Decide</p>
             <h1 className="lp-hero-title">
-              Choosing your next AI-first strategy
+              Scenario Evaluator
             </h1>
             <p className="lp-hero-lead">
-              There are many paths to scaling AI. Here you can simulate each one
-              and make a better-informed decision.
+              AI Product economics. There are many paths to scaling AI. Here you
+              can simulate each one and make a better-informed decision.
             </p>
             <div className="lp-cta-row">
               <Link to="/evaluator" className="lp-cta-primary">
-                Open the Scenario Explorer
+                Open the Scenario Evaluator
               </Link>
             </div>
           </div>
         </section>
 
         <section className="lp-about">
-          <h2 className="lp-section-title">What the explorer shows</h2>
+          <h2 className="lp-section-title">What the evaluator shows</h2>
           <p className="lp-about-body">
             This is an illustration, not a forecast. It extends a simple
             word-of-mouth growth model to simulate the different dynamics each
