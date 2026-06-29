@@ -1014,7 +1014,98 @@
 .exp-tp-explain { margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--exp-muted); }
 
 /* Recommendation */
+.exp-ai {
+  margin-top: 1.5rem;
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  padding: 1.5rem 1.75rem;
+  background: var(--exp-bg);
+  max-width: 70ch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.exp-ai-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.exp-ai-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--exp-fg);
+}
+.exp-ai-tag {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--exp-muted);
+  border: 1px solid var(--exp-border);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+}
+.exp-ai-lead {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--exp-muted);
+  margin: 0;
+}
+.exp-ai-form {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.exp-ai-key {
+  flex: 1 1 16rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--exp-border);
+  border-radius: 8px;
+  background: var(--exp-panel, #fff);
+  color: var(--exp-fg);
+}
+.exp-ai-btn {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  border: none;
+  background: #dc6f64;
+  color: #fff;
+  cursor: pointer;
+}
+.exp-ai-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.exp-ai-btn-ghost {
+  align-self: flex-start;
+  background: transparent;
+  color: var(--exp-muted);
+  border: 1px solid var(--exp-border);
+}
+.exp-ai-error {
+  font-size: 0.8rem;
+  color: #c0392b;
+  word-break: break-word;
+}
+.exp-ai-out {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.exp-ai-out p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--exp-fg);
+}
+
 .exp-rec {
+
   border: 1px solid var(--exp-border);
   border-radius: 10px;
   padding: 1.5rem 1.75rem;
