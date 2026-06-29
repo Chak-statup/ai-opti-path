@@ -6,6 +6,7 @@ import { RadarChart, type RadarSeries } from "@/components/scenario/RadarChart";
 import { ScenarioPresets } from "@/components/scenario/ScenarioPresets";
 import { TippingPoints } from "@/components/scenario/TippingPoints";
 import { Recommendation } from "@/components/scenario/Recommendation";
+import { AiInsight } from "@/components/scenario/AiInsight";
 import { ProblemFrame } from "@/components/scenario/ProblemFrame";
 import { HowItWorks } from "@/components/scenario/HowItWorks";
 import { StatupLogo } from "@/components/StatupLogo";
