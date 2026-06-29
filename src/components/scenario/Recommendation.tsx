@@ -38,12 +38,12 @@ export function Recommendation({
     ctx.tokenPriceFactor >= 2.5
       ? "If token prices return to today's level, the higher-quality strategy regains the lead — most of the gap here is the vendor's pricing, not the product."
       : ctx.regPressure >= 70
-        ? "If regulatory load eases, the build-heavy strategy pays off faster — compliance is currently the binding constraint."
+        ? "If regulatory load eases, the build-heavy strategy pays off faster, compliance is currently the binding constraint."
         : "If the vendor doubles token prices, the ranking flips toward the open, lower-exposure strategy.";
 
   return (
     <div className="exp-rec">
-      <div className="exp-rec-tag">Illustrative — generated from the model state</div>
+      <div className="exp-rec-tag">Illustrative, generated from the model state</div>
 
       <div className="exp-rec-headline">
         <span>Recommended path</span>

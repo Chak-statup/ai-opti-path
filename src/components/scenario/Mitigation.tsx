@@ -277,7 +277,7 @@ export function Mitigation({
                   <span className="exp-swatch" style={{ background: "var(--exp-axis)" }} /> Before
                 </td>
                 <td className="num">{fmt(baseDerived.cumProfit)}</td>
-                <td className="num">—</td>
+                <td className="num">n/a</td>
               </tr>
               {selected.map((c) => (
                 <tr key={c.id} className={c.id === primaryId ? "primary" : ""}>

@@ -79,7 +79,7 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
 export const Route = createFileRoute("/evaluator")({
   head: () => ({
     meta: [
-      { title: "Scenario Evaluator — AI Product Economics" },
+      { title: "Scenario Evaluator, AI Product Economics" },
       {
         name: "description",
         content:
@@ -131,7 +131,7 @@ function Explorer() {
   }, []);
 
   if (err) return <div className="exp exp-loading">Could not load data: {err}</div>;
-  if (!data) return <div className="exp exp-loading">Loading exhibit…</div>;
+  if (!data) return <div className="exp exp-loading">Loading exhibit</div>;
 
   return <ExplorerView data={data} />;
 }
@@ -449,7 +449,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
               </div>
               <p className="exp-rail-note">
-                Regulatory pressure feeds through into the effective token price — now ×
+                Regulatory pressure feeds through into the effective token price, now ×
                 {causalState.tpfEff.toFixed(1)}.
               </p>
             </div>
@@ -494,7 +494,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 {causalView === "pathway" ? (
                   <>
                     <h2 className="exp-section-title">
-                      CAUSAL PATHWAY — {derived[traceStrat].label.toUpperCase()}
+                      CAUSAL PATHWAY: {derived[traceStrat].label.toUpperCase()}
                     </h2>
                     <div className="exp-causal-wrap">
                       <CausalDiagram cs={causalState} stratColor={STRAT_COLORS[traceStrat]} />
@@ -575,7 +575,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                       Cost, lock-in and regulatory load are <strong>risks</strong> (smaller is
                       better); innovation and resilience are <strong>strengths</strong> you invest in
                       directly (larger is better). The dashed grey outline is {derived[traceStrat].label}{" "}
-                      under today&rsquo;s status quo — the gap to the coloured shape is what the current
+                      under today&rsquo;s status quo, the gap to the coloured shape is what the current
                       strategy vector and scenario change.
                     </p>
                     <div className="exp-radar-legend">
@@ -599,7 +599,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               <section className="exp-section">
                 <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
                 <h2 className="exp-section-title">
-                  TIPPING POINTS — {derived[traceStrat].label.toUpperCase()}
+                  TIPPING POINTS: {derived[traceStrat].label.toUpperCase()}
                 </h2>
                 <TippingPoints points={tipping} />
               </section>
@@ -613,7 +613,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           <section className="exp-section">
             <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
             <h2 className="exp-section-title">
-              MITIGATION — FROM {derived[traceStrat].label.toUpperCase()}
+              MITIGATION FROM {derived[traceStrat].label.toUpperCase()}
             </h2>
             <Mitigation
               data={data}

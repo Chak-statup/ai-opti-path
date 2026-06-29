@@ -5,7 +5,7 @@ import { HomeChart } from "@/components/scenario/HomeChart";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AI Strategy Tool — Decision Intelligence" },
+      { title: "AI Strategy Tool, Decision Intelligence" },
       {
         name: "description",
         content:
