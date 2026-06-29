@@ -68,6 +68,6 @@ out=dict(
   N=np.rint(N).astype(int).tolist(),
   N_samples=np.rint(N_samples).astype(int).tolist()
 )
-with open('public/runs.json','w') as f:
+with open('../data/runs.json','w') as f:
     json.dump(out,f)
 print("written", )
