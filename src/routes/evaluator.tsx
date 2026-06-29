@@ -276,7 +276,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     2,
   )} and margin at $${causalState.margin.toFixed(1)}/user. That leaves about ${Math.round(
     causalState.usersEnd,
-  )}k active users and ${fmtMoney(causalState.cumProfit)} cumulative — ${
+  )}k active users and ${fmtMoney(causalState.cumProfit)} cumulative, so ${
     causalState.profitPos ? "the model stays profitable" : "the model slips into a loss"
   }.`;
 
