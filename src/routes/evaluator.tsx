@@ -144,7 +144,7 @@ function ExplorerView({
     width: 2,
   }));
   const sweepGuides: VGuide[] = [
-    { x: snappedQ, label: `Strategy ${snappedQ.toFixed(2)}`, color: "var(--exp-marker)", dash: false },
+    { x: snappedQ, label: `threshold ${snappedQ.toFixed(2)}`, color: "var(--exp-marker)", dash: false },
     ...data.meta.strategies.map((st, s) => ({
       x: st.Q,
       color: STRAT_COLORS[s],
@@ -257,7 +257,7 @@ function ExplorerView({
                 <LineChart
                   xs={data.qstar_grid}
                   series={sweepSeries}
-                  xLabel="Strategy"
+                  xLabel="Quality threshold"
                   yLabel="$M over horizon"
                   vGuides={sweepGuides}
                   zeroLine
