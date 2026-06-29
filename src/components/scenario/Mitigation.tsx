@@ -117,6 +117,47 @@ export function Mitigation({
         Model-proposed mitigations — generated from the live scenario, ranked by cumulative profit
       </div>
 
+      <div className="exp-mit-ai">
+        <div className="exp-mit-ai-head">
+          <span className="exp-mit-ai-title">AI-mitigated strategy</span>
+          <span className="exp-mit-ai-tag">Demo — mocked advisory</span>
+        </div>
+        {!aiDone ? (
+          <>
+            <p className="exp-prose">
+              Let the assistant read the live scenario, pick a mitigated strategy vector and apply it
+              to the before vs after below — human stays in the loop.
+            </p>
+            <button
+              type="button"
+              className="exp-mit-ai-btn"
+              onClick={runAi}
+              disabled={aiLoading || candidates.length === 0}
+            >
+              {aiLoading ? "Analysing scenario…" : "Generate AI mitigation"}
+            </button>
+          </>
+        ) : (
+          <div className="exp-mit-ai-out">
+            <div className="exp-mit-ai-pick">
+              Recommended vector: <strong>{selected.label}</strong>{" "}
+              <span style={{ color: selected.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}>
+                {fmtDelta(selected.deltaVsBaseline)}
+              </span>
+            </div>
+            {aiBriefing(selected, baseDerived.cumProfit).map((p, i) => (
+              <p key={i} className="exp-mit-ai-line">
+                {p}
+              </p>
+            ))}
+            <button type="button" className="exp-mit-ai-reset" onClick={() => setAiDone(false)}>
+              Re-run advisory
+            </button>
+          </div>
+        )}
+      </div>
+
+
       <div className="exp-mit-cards">
         {candidates.map((c) => (
           <button
