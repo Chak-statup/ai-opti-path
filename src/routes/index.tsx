@@ -70,7 +70,7 @@ function LandingPage() {
       </main>
 
       <footer className="lp-footer">
-        <p>Interactive decision-intelligence demo · built for live executive review</p>
+        <p>Interactive decision-intelligence demo, built for live executive review</p>
       </footer>
     </div>
   );
