@@ -28,11 +28,11 @@ function buildPrompt(
   });
   return [
     "You are a sober strategy advisor briefing a corporate executive on how aggressively to scale an AI product over the next 12-18 months.",
-    "The three candidate strategies differ only in product quality (a single quality knob). Higher quality means higher token cost and higher vendor dependency.",
+    "The candidate strategies differ in product quality (a single quality knob). Internal levers the company controls are the strategy vector: quality, quality threshold, margin per customer, innovation orientation and resilience orientation. External factors it does not control are vendor token price and regulatory pressure. Regulatory pressure feeds through into the effective token price (compliance overhead the vendor passes on).",
     "",
-    "Current scenario assumptions:",
+    "Current scenario assumptions (external):",
     `- Token price factor (vs. today): ${ctx.tokenPriceFactor}x`,
-    `- Regulatory pressure: ${ctx.regPressure}/100`,
+    `- Regulatory pressure: ${ctx.regPressure}/100 (raises the effective token price)`,
     "",
     "Model output for each strategy:",
     ...lines,
@@ -40,7 +40,7 @@ function buildPrompt(
     `The model currently favours "${derived[best].label}" on cumulative profit.`,
     "",
     "Write a crisp executive briefing (max ~180 words). Be direct, no marketing language, no headings.",
-    "Cover: (1) which path you recommend and why, (2) the single biggest risk and what would flip the decision, (3) one concrete watch-out for vendor pricing / lock-in.",
+    "Cover: (1) which path you recommend and why, (2) the single biggest risk and what would flip the decision, (3) a concrete adjustment to the strategy vector (innovation / resilience) to mitigate the dominant external risk.",
     "Emphasise that 'margin per user' is an output of cost and user dynamics, not a real lever.",
   ].join("\n");
 }
