@@ -51,7 +51,7 @@ function LandingPage() {
             </p>
             <div className="lp-cta-row">
               <Link to="/evaluator" className="lp-cta-primary">
-                To Evaluator &gt;
+                To the Evaluator &rarr;
               </Link>
             </div>
           </div>
@@ -62,8 +62,8 @@ function LandingPage() {
           <p className="lp-about-body">
             This is an illustration, not a forecast. It extends a simple
             word-of-mouth growth model to simulate the different dynamics each
-            strategy can produce. Two knobs drive everything: Strategy and Margin
-            per user. Adjust them to see how active users, margin, cost and
+            strategy can produce. Two knobs drive everything: Quality knob and
+            Margin per user. Adjust them to see how active users, margin, cost and
             revenue respond, and which strategy comes out ahead.
           </p>
         </section>
