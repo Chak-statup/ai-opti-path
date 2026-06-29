@@ -672,6 +672,9 @@
   gap: 0;
   padding: 1.25rem 1.5rem 0;
   overflow-x: auto;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
 }
 .exp-journey-step {
   position: relative;
