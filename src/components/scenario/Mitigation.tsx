@@ -26,6 +26,20 @@ function fmtDelta(v: number): string {
   return `${sign}$${Math.abs(v).toFixed(0)}M`;
 }
 
+// Mocked AI briefing — composed locally from the chosen candidate's numbers.
+// No network call, no key. Stands in for the human-in-the-loop advisory until
+// the live model is wired in.
+function aiBriefing(
+  c: { label: string; rationale: string; cumProfit: number; deltaVsBaseline: number; vec: { innovation: number; resilience: number } },
+  baseProfit: number,
+): string[] {
+  return [
+    `I read the live scenario and stress-tested the candidate vectors against the same environment. "${c.label}" is the strongest response: it moves the cumulative result from ${fmt(baseProfit)} to ${fmt(c.cumProfit)} (${fmtDelta(c.deltaVsBaseline)}).`,
+    `The decisive move is to ${c.rationale.charAt(0).toLowerCase()}${c.rationale.slice(1)}`,
+    `Watch-out: this leans on innovation ${Math.round(c.vec.innovation)} and resilience ${Math.round(c.vec.resilience)}. If the external shock deepens, raise resilience first — it is the cheapest hedge against vendor pricing pass-through.`,
+  ];
+}
+
 export function Mitigation({
   data,
   ctx,
