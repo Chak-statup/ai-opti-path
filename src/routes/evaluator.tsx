@@ -254,12 +254,12 @@ function ExplorerView({
             {tab === "strategy" ? (
               <>
                 <h2 className="exp-section-title">
-                  Strategy · Cumulative profit vs quality threshold
+                  Cumulative profit vs strategy
                 </h2>
                 <LineChart
                   xs={data.qstar_grid}
                   series={sweepSeries}
-                  xLabel="Q* — churn quality threshold"
+                  xLabel="Strategy"
                   yLabel="$M over horizon"
                   vGuides={sweepGuides}
                   zeroLine
