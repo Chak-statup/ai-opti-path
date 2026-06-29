@@ -796,3 +796,58 @@
 @media (max-width: 900px) {
   .exp-inf-grid { grid-template-columns: 1fr; }
 }
+
+/* ---- Interactive causal pathway additions ---- */
+.exp-legend-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.3rem 0.4rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--exp-ink);
+  transition: all 0.12s ease;
+}
+.exp-legend-btn:hover { background: var(--exp-surface); }
+.exp-legend-btn.active {
+  border-color: var(--exp-axis);
+  background: var(--exp-surface);
+  font-weight: 600;
+}
+.exp-causal-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin: 0.85rem 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+}
+.exp-causal-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.exp-edge-sample {
+  display: inline-block;
+  width: 22px;
+  height: 0;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+.exp-edge-sample.good { border-top-color: var(--exp-hybrid); }
+.exp-edge-sample.bad { border-top-color: var(--exp-accent-3); }
+.cd-node-title {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--exp-font);
+}
+.cd-node-sub {
+  font-size: 10px;
+  font-family: var(--exp-font);
+  font-variant-numeric: tabular-nums;
+}
