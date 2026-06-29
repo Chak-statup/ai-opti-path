@@ -44,7 +44,7 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
     label: "Causal pathway",
     step: "02",
     blurb:
-      "How a strategy plays out, end to end. Move a lever or pick a scenario and watch the pathway reshape — thicker, redder links mark where pressure builds.",
+      "How a strategy plays out, end to end. Move a lever or pick a scenario and watch the pathway reshape. Thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
@@ -65,7 +65,7 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
     label: "Mitigation",
     step: "05",
     blurb:
-      "A shock landed or the goal changed. The model proposes several new strategy vectors and simulates each — pick one and see the before vs after.",
+      "A shock landed or the goal changed. The model proposes several new strategy vectors and simulates each. Compare them and see the before vs after.",
   },
   {
     key: "recommend",
