@@ -13,7 +13,7 @@ import {
 export const Route = createFileRoute("/evaluator")({
   head: () => ({
     meta: [
-      { title: "AI Strategy — Scenario Explorer" },
+      { title: "Scenario Evaluator — AI Product Economics" },
       {
         name: "description",
         content:
