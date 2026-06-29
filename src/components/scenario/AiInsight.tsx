@@ -122,7 +122,7 @@ export function AiInsight({
             spellCheck={false}
           />
           <button className="exp-ai-btn" onClick={generate} disabled={loading}>
-            {loading ? "Generating…" : "Generate insight"}
+            {loading ? "Generating" : "Generate insight"}
           </button>
         </div>
       )}
