@@ -282,6 +282,12 @@ function ExplorerView({ data }: { data: RunsData }) {
       </nav>
       <p className="exp-journey-blurb">{activeStage.blurb}</p>
 
+      {stage === "howto" && (
+        <div className="exp-stage">
+          <HowItWorks />
+        </div>
+      )}
+
       {stage === "problem" && (
         <div className="exp-stage">
           <ProblemFrame
@@ -292,7 +298,7 @@ function ExplorerView({ data }: { data: RunsData }) {
         </div>
       )}
 
-      {stage !== "problem" && stage !== "recommend" && (
+      {stage !== "howto" && stage !== "problem" && stage !== "recommend" && (
         <div className="exp-body">
           {showRail && (
             <aside className="exp-rail">
