@@ -572,8 +572,8 @@
   padding: 0.65rem 1.35rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--exp-bg);
-  background: var(--exp-ink);
+  color: #ffffff;
+  background: #F39C12;
   border-radius: 4px;
   text-decoration: none;
   transition: opacity 0.15s ease;
