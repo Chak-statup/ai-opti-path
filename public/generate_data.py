@@ -1,7 +1,7 @@
 import numpy as np, json
 
 P = dict(K=100000, N0=200, p=0.01, r=0.35, chi_min=0.02, chi_max=0.35,
-         kappa=12, m0=8, dm_shock=4, phi=0.35, sigma=0.12, c_ac=15,
+         kappa=12, m0=8, dm_shock=4, phi=0.35, sigma=0.30, c_ac=15,
          F=30000, tau=6, t_shock=16, T=54)
 SEED=12345
 T=P['T']; STEPS=361
@@ -68,6 +68,6 @@ out=dict(
   N=np.rint(N).astype(int).tolist(),
   N_samples=np.rint(N_samples).astype(int).tolist()
 )
-with open('/tmp/runs.json','w') as f:
+with open('public/runs.json','w') as f:
     json.dump(out,f)
 print("written", )
