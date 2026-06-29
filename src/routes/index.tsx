@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { StatupLogo } from "@/components/StatupLogo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
