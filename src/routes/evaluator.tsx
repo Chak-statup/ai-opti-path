@@ -6,6 +6,7 @@ import { RadarChart, type RadarSeries } from "@/components/scenario/RadarChart";
 import { ScenarioPresets } from "@/components/scenario/ScenarioPresets";
 import { TippingPoints } from "@/components/scenario/TippingPoints";
 import { Recommendation } from "@/components/scenario/Recommendation";
+import { Mitigation } from "@/components/scenario/Mitigation";
 import { AiInsight } from "@/components/scenario/AiInsight";
 import { ProblemFrame } from "@/components/scenario/ProblemFrame";
 import { HowItWorks } from "@/components/scenario/HowItWorks";
@@ -19,49 +20,52 @@ import {
   sweepCumProfit,
   PRESETS,
   DEFAULT_CONTEXT,
+  DEFAULT_VECTOR,
+  type MitigationBaseline,
   type RunsData,
   type ScenarioContext,
   type ScenarioPreset,
   type StrategyDerived,
+  type StrategyVector,
 } from "@/lib/scenario/model";
 
-type Stage = "howto" | "problem" | "causal" | "risk" | "tipping" | "recommend";
+type Stage = "problem" | "causal" | "risk" | "tipping" | "mitigate" | "recommend";
 
 const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
   {
-    key: "howto",
-    label: "How it works",
-    step: "01",
-    blurb:
-      "The model behind the demo: what it is for, the equations, every parameter, and the findings that carry the decision.",
-  },
-  {
     key: "problem",
     label: "Problem",
-    step: "02",
+    step: "01",
     blurb:
       "The strategic question and why a single margin-per-user number hides the real decision.",
   },
   {
     key: "causal",
     label: "Causal pathway",
-    step: "03",
+    step: "02",
     blurb:
       "How a strategy plays out, end to end. Move a lever or pick a scenario and watch the pathway reshape — thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
     label: "Risk profile",
-    step: "04",
+    step: "03",
     blurb:
       "Every parameter collapses into one five-axis fingerprint per strategy, drawn against the status-quo baseline.",
   },
   {
     key: "tipping",
     label: "Tipping points",
-    step: "05",
+    step: "04",
     blurb:
       "Each risk against its critical line. Past a tipping point the dynamic reinforces itself and is hard to reverse.",
+  },
+  {
+    key: "mitigate",
+    label: "Mitigation",
+    step: "05",
+    blurb:
+      "A shock landed or the goal changed. The model proposes several new strategy vectors and simulates each — pick one and see the before vs after.",
   },
   {
     key: "recommend",
@@ -79,7 +83,7 @@ export const Route = createFileRoute("/evaluator")({
       {
         name: "description",
         content:
-          "Guided decision journey for AI product economics: causal pathway, risk profile and tipping points across three strategies.",
+          "Guided decision journey for AI product economics: causal pathway, risk profile, tipping points and mitigation across three strategies.",
       },
     ],
   }),
@@ -136,44 +140,59 @@ function ExplorerView({ data }: { data: RunsData }) {
   const { params, controls } = data.meta;
   const t = data.t;
 
-  const [stage, setStage] = useState<Stage>("howto");
+  const [stage, setStage] = useState<Stage>("problem");
   const [traceStrat, setTraceStrat] = useState(1);
   const [dm, setDm] = useState(PRESETS[0].dm);
   const [qstar, setQstar] = useState(PRESETS[0].qstar);
+  const [innov, setInnov] = useState(DEFAULT_VECTOR.innovation);
+  const [resil, setResil] = useState(DEFAULT_VECTOR.resilience);
   const [tpf, setTpf] = useState(DEFAULT_CONTEXT.tokenPriceFactor);
   const [reg, setReg] = useState(DEFAULT_CONTEXT.regPressure);
   const [activePreset, setActivePreset] = useState<string | null>("status-quo");
   const [tab, setTab] = useState<Tab>("profit");
   const [causalView, setCausalView] = useState<"pathway" | "charts">("pathway");
+  const [showHow, setShowHow] = useState(false);
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
   const ctx: ScenarioContext = useMemo(
     () => ({ tokenPriceFactor: tpf, regPressure: reg }),
     [tpf, reg],
   );
+  const vec: StrategyVector = useMemo(
+    () => ({ innovation: innov, resilience: resil }),
+    [innov, resil],
+  );
 
   const qi = qstarIndex(qstar, data.qstar_grid);
   const snappedQ = data.qstar_grid[qi];
 
   const derived = useMemo<StrategyDerived[]>(
-    () => data.meta.strategies.map((_, s) => deriveStrategy(data, s, dm, snappedQ, ctx)),
-    [data, dm, snappedQ, ctx],
+    () => data.meta.strategies.map((_, s) => deriveStrategy(data, s, dm, snappedQ, ctx, vec)),
+    [data, dm, snappedQ, ctx, vec],
   );
-  const sweep = useMemo(() => sweepCumProfit(data, dm, ctx), [data, dm, ctx]);
+  const sweep = useMemo(() => sweepCumProfit(data, dm, ctx, vec), [data, dm, ctx, vec]);
   const causalState = useMemo(
-    () => computeCausalState(data, traceStrat, dm, snappedQ, ctx),
-    [data, traceStrat, dm, snappedQ, ctx],
+    () => computeCausalState(data, traceStrat, dm, snappedQ, ctx, vec),
+    [data, traceStrat, dm, snappedQ, ctx, vec],
   );
   const riskAll = useMemo(
-    () => data.meta.strategies.map((_, s) => deriveRiskScores(data, s, dm, snappedQ, ctx)),
-    [data, dm, snappedQ, ctx],
+    () => data.meta.strategies.map((_, s) => deriveRiskScores(data, s, dm, snappedQ, ctx, vec)),
+    [data, dm, snappedQ, ctx, vec],
   );
   const tipping = useMemo(
-    () => deriveTippingPoints(data, traceStrat, dm, snappedQ, ctx),
-    [data, traceStrat, dm, snappedQ, ctx],
+    () => deriveTippingPoints(data, traceStrat, dm, snappedQ, ctx, vec),
+    [data, traceStrat, dm, snappedQ, ctx, vec],
   );
   const baselineRisk = useMemo(
-    () => deriveRiskScores(data, traceStrat, PRESETS[0].dm, PRESETS[0].qstar, PRESETS[0].ctx),
+    () =>
+      deriveRiskScores(
+        data,
+        traceStrat,
+        PRESETS[0].dm,
+        PRESETS[0].qstar,
+        PRESETS[0].ctx,
+        PRESETS[0].vec,
+      ),
     [data, traceStrat],
   );
 
@@ -187,9 +206,20 @@ function ExplorerView({ data }: { data: RunsData }) {
   function applyPreset(p: ScenarioPreset) {
     setDm(p.dm);
     setQstar(p.qstar);
+    setInnov(p.vec.innovation);
+    setResil(p.vec.resilience);
     setTpf(p.ctx.tokenPriceFactor);
     setReg(p.ctx.regPressure);
     setActivePreset(p.id);
+  }
+  function applyVector(c: MitigationBaseline) {
+    setTraceStrat(c.strat);
+    setDm(c.dm);
+    setQstar(c.qstar);
+    setInnov(c.vec.innovation);
+    setResil(c.vec.resilience);
+    setActivePreset(null);
+    setStage("causal");
   }
 
   const baseGuides: VGuide[] = [
@@ -238,7 +268,9 @@ function ExplorerView({ data }: { data: RunsData }) {
     },
   ];
 
-  const reading = `With token price at ${tpf.toFixed(1)}× and the quality threshold at ${snappedQ.toFixed(
+  const reading = `With the effective token price at ${causalState.tpfEff.toFixed(
+    1,
+  )}× (vendor ${tpf.toFixed(1)}× plus regulatory pass-through) and the quality threshold at ${snappedQ.toFixed(
     2,
   )}, ${derived[traceStrat].label} holds churn at ${causalState.churn.toFixed(
     2,
@@ -249,6 +281,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   }.`;
 
   const showRail = stage === "causal" || stage === "risk" || stage === "tipping";
+  const mitBase: MitigationBaseline = { strat: traceStrat, dm, qstar: snappedQ, vec };
 
   return (
     <div className="exp">
@@ -283,12 +316,6 @@ function ExplorerView({ data }: { data: RunsData }) {
       </nav>
       <p className="exp-journey-blurb">{activeStage.blurb}</p>
 
-      {stage === "howto" && (
-        <div className="exp-stage">
-          <HowItWorks />
-        </div>
-      )}
-
       {stage === "problem" && (
         <div className="exp-stage">
           <ProblemFrame
@@ -299,10 +326,47 @@ function ExplorerView({ data }: { data: RunsData }) {
         </div>
       )}
 
-      {stage !== "howto" && stage !== "problem" && stage !== "recommend" && (
+      {showRail && (
         <div className="exp-body">
-          {showRail && (
-            <aside className="exp-rail">
+          <aside className="exp-rail">
+            <div className="exp-rail-group">
+              <div className="exp-rail-group-head">
+                <span className="exp-rail-group-title">Strategy vector</span>
+                <span className="exp-rail-group-tag">you control</span>
+              </div>
+
+              <div className="exp-legend">
+                <div className="exp-legend-title">Strategy (quality Q)</div>
+                {derived.map((d, s) => (
+                  <button
+                    type="button"
+                    className={`exp-legend-row exp-legend-btn ${traceStrat === s ? "active" : ""}`}
+                    key={d.label}
+                    onClick={() => setTraceStrat(s)}
+                    aria-pressed={traceStrat === s}
+                  >
+                    <span className="exp-swatch" style={{ background: STRAT_COLORS[s] }} />
+                    <span className="exp-legend-name">{d.label}</span>
+                    <span className="exp-legend-q">Q={d.Q}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="exp-control">
+                <div className="exp-control-head">
+                  <span className="exp-control-label">Quality threshold</span>
+                  <span className="exp-control-val">{snappedQ.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={data.qstar_grid[0]}
+                  max={data.qstar_grid[data.qstar_grid.length - 1]}
+                  step={0.02}
+                  value={qstar}
+                  onChange={(e) => onKnob(setQstar)(parseFloat(e.target.value))}
+                />
+              </div>
+
               <div className="exp-control">
                 <div className="exp-control-head">
                   <span className="exp-control-label">Margin per customer</span>
@@ -320,17 +384,39 @@ function ExplorerView({ data }: { data: RunsData }) {
 
               <div className="exp-control">
                 <div className="exp-control-head">
-                  <span className="exp-control-label">Quality threshold</span>
-                  <span className="exp-control-val">{snappedQ.toFixed(2)}</span>
+                  <span className="exp-control-label">Innovation orientation</span>
+                  <span className="exp-control-val">{Math.round(innov)}</span>
                 </div>
                 <input
                   type="range"
-                  min={data.qstar_grid[0]}
-                  max={data.qstar_grid[data.qstar_grid.length - 1]}
-                  step={0.02}
-                  value={qstar}
-                  onChange={(e) => onKnob(setQstar)(parseFloat(e.target.value))}
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={innov}
+                  onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
                 />
+              </div>
+
+              <div className="exp-control">
+                <div className="exp-control-head">
+                  <span className="exp-control-label">Resilience orientation</span>
+                  <span className="exp-control-val">{Math.round(resil)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={resil}
+                  onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
+                />
+              </div>
+            </div>
+
+            <div className="exp-rail-group">
+              <div className="exp-rail-group-head">
+                <span className="exp-rail-group-title">Environment</span>
+                <span className="exp-rail-group-tag external">you don't control</span>
               </div>
 
               <div className="exp-control">
@@ -362,38 +448,25 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setReg)(parseFloat(e.target.value))}
                 />
               </div>
+              <p className="exp-rail-note">
+                Regulatory pressure feeds through into the effective token price — now ×
+                {causalState.tpfEff.toFixed(1)}.
+              </p>
+            </div>
 
-              <div className="exp-legend">
-                <div className="exp-legend-title">Trace strategy</div>
-                {derived.map((d, s) => (
-                  <button
-                    type="button"
-                    className={`exp-legend-row exp-legend-btn ${traceStrat === s ? "active" : ""}`}
-                    key={d.label}
-                    onClick={() => setTraceStrat(s)}
-                    aria-pressed={traceStrat === s}
-                  >
-                    <span className="exp-swatch" style={{ background: STRAT_COLORS[s] }} />
-                    <span className="exp-legend-name">{d.label}</span>
-                    <span className="exp-legend-q">Q={d.Q}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="exp-readout">
-                <div className="exp-readout-title">Cumulative profit</div>
-                {derived.map((d, s) => (
-                  <div className="exp-readout-row" key={d.label}>
-                    <span className="exp-readout-name">{d.label}</span>
-                    <span className="exp-readout-val" style={{ color: STRAT_COLORS[s] }}>
-                      {fmtMoney(d.cumProfit)}
-                    </span>
-                  </div>
-                ))}
-                <p className="exp-readout-note">over {params.T} time steps</p>
-              </div>
-            </aside>
-          )}
+            <div className="exp-readout">
+              <div className="exp-readout-title">Cumulative profit</div>
+              {derived.map((d, s) => (
+                <div className="exp-readout-row" key={d.label}>
+                  <span className="exp-readout-name">{d.label}</span>
+                  <span className="exp-readout-val" style={{ color: STRAT_COLORS[s] }}>
+                    {fmtMoney(d.cumProfit)}
+                  </span>
+                </div>
+              ))}
+              <p className="exp-readout-note">over {params.T} time steps</p>
+            </div>
+          </aside>
 
           <main className="exp-main">
             {stage === "causal" && (
@@ -500,9 +573,10 @@ function ExplorerView({ data }: { data: RunsData }) {
                   <div className="exp-radar-side">
                     <p className="exp-prose">
                       Cost, lock-in and regulatory load are <strong>risks</strong> (smaller is
-                      better); innovation and resilience are <strong>strengths</strong> (larger is
-                      better). The dashed grey outline is {derived[traceStrat].label} under today&rsquo;s
-                      status quo — the gap to the coloured shape is what the current scenario changes.
+                      better); innovation and resilience are <strong>strengths</strong> you invest in
+                      directly (larger is better). The dashed grey outline is {derived[traceStrat].label}{" "}
+                      under today&rsquo;s status quo — the gap to the coloured shape is what the current
+                      strategy vector and scenario change.
                     </p>
                     <div className="exp-radar-legend">
                       {derived.map((d, s) => (
@@ -534,6 +608,24 @@ function ExplorerView({ data }: { data: RunsData }) {
         </div>
       )}
 
+      {stage === "mitigate" && (
+        <div className="exp-stage">
+          <section className="exp-section">
+            <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
+            <h2 className="exp-section-title">
+              MITIGATION — FROM {derived[traceStrat].label.toUpperCase()}
+            </h2>
+            <Mitigation
+              data={data}
+              ctx={ctx}
+              base={mitBase}
+              stratColors={STRAT_COLORS}
+              onApply={applyVector}
+            />
+          </section>
+        </div>
+      )}
+
       {stage === "recommend" && (
         <div className="exp-stage">
           <section className="exp-section">
@@ -547,6 +639,36 @@ function ExplorerView({ data }: { data: RunsData }) {
             />
             <AiInsight derived={derived} riskAll={riskAll} ctx={ctx} />
           </section>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="exp-howto-fab"
+        aria-expanded={showHow}
+        onClick={() => setShowHow((v) => !v)}
+      >
+        {showHow ? "Close" : "How it works"}
+      </button>
+
+      {showHow && (
+        <div className="exp-howto-overlay" role="dialog" aria-label="How it works">
+          <div className="exp-howto-panel">
+            <div className="exp-howto-panel-head">
+              <span>How it works</span>
+              <button
+                type="button"
+                className="exp-howto-close"
+                onClick={() => setShowHow(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="exp-howto-panel-body">
+              <HowItWorks />
+            </div>
+          </div>
         </div>
       )}
     </div>

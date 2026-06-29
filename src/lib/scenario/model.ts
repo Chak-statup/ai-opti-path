@@ -1,5 +1,14 @@
 // Scenario-explorer model: pure arithmetic on top of precomputed N trajectories.
 // No simulation at runtime — runs.json carries the user trajectories.
+//
+// Two families of inputs:
+//   • Strategy vector (INTERNAL — the company controls these): strategy Q,
+//     quality threshold Q*, margin lever Δm, plus innovation and resilience
+//     orientation. These are the levers the demo lets you move.
+//   • Environment / context (EXTERNAL — the company does NOT control these):
+//     vendor token price and regulatory pressure. Regulatory pressure feeds
+//     through into the effective token price (compliance overhead the vendor
+//     passes on), so the two are coupled, not independent.
 
 export interface Params {
   K: number;
@@ -59,6 +68,23 @@ export interface StrategyDerived extends MetricSeries {
   samples: MetricSeries[]; // 10 noisy paths
 }
 
+// ---- Internal strategy vector -------------------------------------------
+// Innovation and resilience are company-level investments, not outcomes you
+// read off — they are levers. Innovation buys product quality (lower churn,
+// richer margin) at a higher fixed cost. Resilience buys vendor independence
+// (shields the effective token price from shocks, lowers lock-in) at a
+// smaller fixed cost.
+export interface StrategyVector {
+  innovation: number; // 0..100
+  resilience: number; // 0..100
+}
+
+export const DEFAULT_VECTOR: StrategyVector = { innovation: 50, resilience: 50 };
+
+// How strongly regulatory pressure feeds through into the effective token
+// price. At full regulatory pressure the effective token price is +60%.
+const REG_TO_TOKEN = 0.6;
+
 export function chi(Q: number, qstar: number, p: Params): number {
   return p.chi_min + (p.chi_max - p.chi_min) / (1 + Math.exp(p.kappa * (Q - qstar)));
 }
@@ -75,6 +101,22 @@ export function qstarIndex(qstar: number, grid: number[]): number {
     }
   }
   return best;
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v));
+}
+
+// Effective per-token cost multiplier the company actually faces. Regulatory
+// pressure raises it (compliance cost passed through by the vendor); resilience
+// investment shields the *upside* part of any spike.
+export function effectiveTpf(ctx: ScenarioContext, vec: StrategyVector): number {
+  const reg = clamp01(ctx.regPressure / 100);
+  const raw = ctx.tokenPriceFactor * (1 + REG_TO_TOKEN * reg);
+  const excess = raw - 1;
+  const shield = 1 - 0.6 * (vec.resilience / 100); // up to 60% of the spike hedged away
+  const shielded = excess > 0 ? excess * shield : excess;
+  return 1 + shielded;
 }
 
 function trapezoid(y: number[], x: number[]): number {
@@ -94,17 +136,21 @@ function deriveRaw(
   p: Params,
   t: number[],
   ctx: ScenarioContext = DEFAULT_CONTEXT,
+  vec: StrategyVector = DEFAULT_VECTOR,
 ) {
   const n = N.length;
   const margin = new Array<number>(n);
   const cost = new Array<number>(n);
   const profit = new Array<number>(n);
-  const chiVal = chi(Q, qstar, p);
-  const m = p.m0 + dm * Q;
-  // Token price factor scales the variable (per-user) cost — the "vendor
-  // doubles token prices" lever. Regulatory pressure inflates fixed cost.
-  const tpf = ctx.tokenPriceFactor;
-  const F = p.F * (1 + ctx.regPressure / 100);
+
+  const innov = (vec.innovation - 50) / 50; // -1..1
+  // Innovation lowers churn and lifts margin; resilience shields token cost.
+  const chiVal = chi(Q, qstar, p) * (1 - 0.15 * innov);
+  const m = (p.m0 + dm * Q) * (1 + 0.25 * innov);
+  const tpf = effectiveTpf(ctx, vec);
+  // Investing in innovation and resilience raises fixed cost.
+  const F = p.F * (1 + 0.4 * (vec.innovation / 100) + 0.2 * (vec.resilience / 100));
+
   for (let i = 0; i < n; i++) {
     const ti = t[i];
     const gate = ti >= p.tau ? 1 : 0;
@@ -118,7 +164,6 @@ function deriveRaw(
   }
   return { margin, cost, profit };
 }
-
 
 const M = 1e6;
 const K_UNIT = 1e3;
@@ -138,6 +183,7 @@ export function deriveStrategy(
   dm: number,
   qstar: number,
   ctx: ScenarioContext = DEFAULT_CONTEXT,
+  vec: StrategyVector = DEFAULT_VECTOR,
 ): StrategyDerived {
   const p = data.meta.params;
   const t = data.t;
@@ -147,12 +193,12 @@ export function deriveStrategy(
   const Q = strat.Q;
 
   const N = data.N[s][qi];
-  const rawDet = deriveRaw(N, Q, snapped, dm, p, t, ctx);
+  const rawDet = deriveRaw(N, Q, snapped, dm, p, t, ctx, vec);
   const det = toUnits(rawDet, N);
   const cumProfit = trapezoid(rawDet.profit, t) / M;
 
   const samples: MetricSeries[] = data.N_samples[s][qi].map((Ns) =>
-    toUnits(deriveRaw(Ns, Q, snapped, dm, p, t, ctx), Ns),
+    toUnits(deriveRaw(Ns, Q, snapped, dm, p, t, ctx, vec), Ns),
   );
 
   return { label: strat.label, Q, cumProfit, samples, ...det };
@@ -163,22 +209,19 @@ export function sweepCumProfit(
   data: RunsData,
   dm: number,
   ctx: ScenarioContext = DEFAULT_CONTEXT,
+  vec: StrategyVector = DEFAULT_VECTOR,
 ): number[][] {
   const p = data.meta.params;
   const t = data.t;
   return data.meta.strategies.map((strat, s) =>
     data.qstar_grid.map((qstar, qi) => {
-      const raw = deriveRaw(data.N[s][qi], strat.Q, qstar, dm, p, t, ctx);
+      const raw = deriveRaw(data.N[s][qi], strat.Q, qstar, dm, p, t, ctx, vec);
       return trapezoid(raw.profit, t) / M;
     }),
   );
 }
 
-
 // ---- Interactive causal state -------------------------------------------
-// Live values that drive the causal pathway diagram. Everything here is a
-// direct read of the same arithmetic used for the trajectories, so the graph
-// and the charts can never disagree.
 export interface CausalState {
   Q: number;
   churn: number; // χ value
@@ -191,11 +234,8 @@ export interface CausalState {
   cumProfit: number; // $M over horizon
   profitNorm: number; // 0 .. 1 magnitude
   shockNorm: number; // 0 .. 1 size of price-shock hit
+  tpfEff: number; // effective token price multiplier
   profitPos: boolean;
-}
-
-function clamp01(v: number): number {
-  return Math.max(0, Math.min(1, v));
 }
 
 export function computeCausalState(
@@ -204,29 +244,31 @@ export function computeCausalState(
   dm: number,
   qstar: number,
   ctx: ScenarioContext = DEFAULT_CONTEXT,
+  vec: StrategyVector = DEFAULT_VECTOR,
 ): CausalState {
   const p = data.meta.params;
   const qi = qstarIndex(qstar, data.qstar_grid);
   const snapped = data.qstar_grid[qi];
   const Q = data.meta.strategies[s].Q;
 
-  const churn = chi(Q, snapped, p);
+  const innov = (vec.innovation - 50) / 50;
+  const churn = chi(Q, snapped, p) * (1 - 0.15 * innov);
   const churnNorm = clamp01((churn - p.chi_min) / (p.chi_max - p.chi_min));
 
-  const margin = p.m0 + dm * Q;
+  const margin = (p.m0 + dm * Q) * (1 + 0.25 * innov);
   const dmMax = data.meta.controls.dm.max ?? 12;
   const marginNorm = clamp01((margin - p.m0) / (dmMax * 1));
 
   const comp = clamp01(p.phi / 0.5);
 
-  const d = deriveStrategy(data, s, dm, snapped, ctx);
+  const d = deriveStrategy(data, s, dm, snapped, ctx, vec);
   const usersEnd = d.users[d.users.length - 1];
   const usersNorm = clamp01(usersEnd / (p.K / 1000));
 
   const cumProfit = d.cumProfit;
   const profitNorm = clamp01(Math.abs(cumProfit) / 600);
-  const shockNorm = clamp01((p.dm_shock + (ctx.tokenPriceFactor - 1) * 1.5) / Math.max(margin, 0.1));
-
+  const tpfEff = effectiveTpf(ctx, vec);
+  const shockNorm = clamp01((p.dm_shock + (tpfEff - 1) * 1.5) / Math.max(margin, 0.1));
 
   return {
     Q,
@@ -240,13 +282,12 @@ export function computeCausalState(
     cumProfit,
     profitNorm,
     shockNorm,
+    tpfEff,
     profitPos: cumProfit >= 0,
   };
 }
 
 // ---- Scenario context, risk radar & tipping points ----------------------
-// Two extra knobs ground the "what could change" question. They feed the same
-// arithmetic, so the radar and tipping points never disagree with the charts.
 export interface ScenarioContext {
   tokenPriceFactor: number; // 1 = today, 3 = vendor triples token price
   regPressure: number; // 0..100 regulatory / compliance load
@@ -264,16 +305,18 @@ export interface ScenarioPreset {
   ctx: ScenarioContext;
   dm: number;
   qstar: number;
+  vec: StrategyVector;
 }
 
 export const PRESETS: ScenarioPreset[] = [
   {
     id: "status-quo",
     label: "Status quo",
-    blurb: "Today's prices, moderate compliance, balanced margin.",
+    blurb: "Today's prices, moderate compliance, balanced strategy vector.",
     ctx: { tokenPriceFactor: 1.5, regPressure: 30 },
     dm: 6,
     qstar: 0.5,
+    vec: { innovation: 50, resilience: 50 },
   },
   {
     id: "pricing-shock",
@@ -282,14 +325,16 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 3, regPressure: 30 },
     dm: 6,
     qstar: 0.5,
+    vec: { innovation: 50, resilience: 50 },
   },
   {
     id: "regulatory-stress",
     label: "Regulatory stress test",
-    blurb: "Full audit duty for every AI app on an 18-month deadline.",
+    blurb: "Heavy audit duty raises the effective token price for every AI app.",
     ctx: { tokenPriceFactor: 1.5, regPressure: 80 },
     dm: 6,
     qstar: 0.5,
+    vec: { innovation: 50, resilience: 50 },
   },
   {
     id: "oss-breakthrough",
@@ -298,11 +343,19 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 0.6, regPressure: 30 },
     dm: 8,
     qstar: 0.5,
+    vec: { innovation: 60, resilience: 60 },
   },
 ];
 
-function totals(data: RunsData, s: number, dm: number, qstar: number, ctx: ScenarioContext) {
-  const d = deriveStrategy(data, s, dm, qstar, ctx);
+function totals(
+  data: RunsData,
+  s: number,
+  dm: number,
+  qstar: number,
+  ctx: ScenarioContext,
+  vec: StrategyVector,
+) {
+  const d = deriveStrategy(data, s, dm, qstar, ctx, vec);
   const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
   return {
     cumMargin: sum(d.margin),
@@ -320,29 +373,34 @@ export interface RiskScores {
   resilience: number; // strength
 }
 
-// Each axis 0..100. Cost / lock-in / regulatory are risks; innovation /
-// resilience are strengths. Plain-language text carries the direction.
 export function deriveRiskScores(
   data: RunsData,
   s: number,
   dm: number,
   qstar: number,
   ctx: ScenarioContext = DEFAULT_CONTEXT,
+  vec: StrategyVector = DEFAULT_VECTOR,
 ): RiskScores {
-  const p = data.meta.params;
   const Q = data.meta.strategies[s].Q;
-  const tt = totals(data, s, dm, qstar, ctx);
+  const tt = totals(data, s, dm, qstar, ctx, vec);
+  const tpfEff = effectiveTpf(ctx, vec);
 
   const costRatio = tt.cumCost / Math.max(tt.cumMargin, 1e-9);
   const cost = clamp01(costRatio / 1.4) * 100;
 
-  const lockin = clamp01(Q * (0.55 + 0.45 * (ctx.tokenPriceFactor / 4))) * 100;
+  // Lock-in grows with quality and effective price, but resilience investment
+  // (multi-vendor / hedging) buys it back down.
+  const lockin =
+    clamp01(Q * (0.55 + 0.45 * (tpfEff / 4)) * (1 - 0.5 * (vec.resilience / 100))) * 100;
 
   const regulatory = clamp01(ctx.regPressure / 100) * 100;
 
-  const innovation = clamp01(Q * 1.05 - ctx.regPressure / 220) * 100;
+  // Innovation strength is mostly the investment, with a quality contribution
+  // and a regulatory drag.
+  const innovation = clamp01(0.6 * (vec.innovation / 100) + 0.4 * Q - ctx.regPressure / 300) * 100;
 
-  const resilience = clamp01(0.5 + tt.cumProfit / 600) * 100;
+  // Resilience strength is the investment plus a profit cushion.
+  const resilience = clamp01(0.3 + 0.5 * (vec.resilience / 100) + tt.cumProfit / 1000) * 100;
 
   return { cost, lockin, regulatory, innovation, resilience };
 }
@@ -363,8 +421,9 @@ export function deriveTippingPoints(
   dm: number,
   qstar: number,
   ctx: ScenarioContext = DEFAULT_CONTEXT,
+  vec: StrategyVector = DEFAULT_VECTOR,
 ): TippingPoint[] {
-  const r = deriveRiskScores(data, s, dm, qstar, ctx);
+  const r = deriveRiskScores(data, s, dm, qstar, ctx, vec);
   const pts: TippingPoint[] = [
     {
       key: "cost",
@@ -408,4 +467,94 @@ export function deriveTippingPoints(
     },
   ];
   return pts;
+}
+
+// ---- Mitigation engine --------------------------------------------------
+// Given the current (possibly shocked) scenario, propose several alternative
+// strategy vectors and simulate each against the same environment. This is the
+// "what do we change, and what happens" engine behind the before/after view.
+export interface MitigationCandidate {
+  id: string;
+  label: string;
+  rationale: string;
+  strat: number;
+  dm: number;
+  qstar: number;
+  vec: StrategyVector;
+  cumProfit: number;
+  deltaVsBaseline: number;
+}
+
+export interface MitigationBaseline {
+  strat: number;
+  dm: number;
+  qstar: number;
+  vec: StrategyVector;
+}
+
+export function proposeMitigations(
+  data: RunsData,
+  base: MitigationBaseline,
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
+): MitigationCandidate[] {
+  const dmMax = data.meta.controls.dm.max ?? 12;
+  const dmMin = data.meta.controls.dm.min ?? 0;
+  const grid = data.qstar_grid;
+  const lo = grid[0];
+  const hi = grid[grid.length - 1];
+  const nStrat = data.meta.strategies.length;
+  const clampDm = (v: number) => Math.max(dmMin, Math.min(dmMax, v));
+  const clampQ = (v: number) => Math.max(lo, Math.min(hi, v));
+
+  const baseProfit = deriveStrategy(data, base.strat, base.dm, base.qstar, ctx, base.vec).cumProfit;
+
+  const raw: Omit<MitigationCandidate, "cumProfit" | "deltaVsBaseline">[] = [
+    {
+      id: "hedge",
+      label: "Hedge the vendor",
+      rationale:
+        "Invest hard in resilience — multi-vendor serving and open-weight fallbacks — to absorb the token-price spike instead of passing it on.",
+      strat: base.strat,
+      dm: base.dm,
+      qstar: base.qstar,
+      vec: { innovation: base.vec.innovation, resilience: 90 },
+    },
+    {
+      id: "retain",
+      label: "Defend through retention",
+      rationale:
+        "Push innovation and per-customer margin to keep users longer, so you refill a smaller, cheaper churn bucket as cost rises.",
+      strat: base.strat,
+      dm: clampDm(base.dm + 3),
+      qstar: clampQ(base.qstar - 0.1),
+      vec: { innovation: 85, resilience: Math.max(60, base.vec.resilience) },
+    },
+    {
+      id: "trim",
+      label: "Trim exposure",
+      rationale:
+        "Step down to a lighter strategy and a lower quality bar, cutting the per-user serving cost most exposed to the shock.",
+      strat: Math.max(0, base.strat - 1),
+      dm: base.dm,
+      qstar: clampQ(base.qstar - 0.12),
+      vec: { innovation: Math.min(60, base.vec.innovation), resilience: 75 },
+    },
+    {
+      id: "balance",
+      label: "Balanced reset",
+      rationale:
+        "Re-center the whole vector: mid strategy, balanced margin, and a healthy lift in both innovation and resilience.",
+      strat: Math.min(nStrat - 1, 1),
+      dm: clampDm(6),
+      qstar: clampQ(0.5),
+      vec: { innovation: 65, resilience: 70 },
+    },
+  ];
+
+  return raw
+    .map((c) => {
+      const cumProfit = deriveStrategy(data, c.strat, c.dm, c.qstar, ctx, c.vec).cumProfit;
+      return { ...c, cumProfit, deltaVsBaseline: cumProfit - baseProfit };
+    })
+    .sort((a, b) => b.cumProfit - a.cumProfit);
 }
