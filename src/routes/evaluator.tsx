@@ -54,7 +54,7 @@ function Explorer() {
   const [err, setErr] = useState<string | null>(null);
   const [dm, setDm] = useState(6);
   const [qstar, setQstar] = useState(0.5);
-  const [tab, setTab] = useState<Tab>("strategy");
+  const [tab, setTab] = useState<Tab>("profit");
 
   useEffect(() => {
     fetch("/runs.json")
