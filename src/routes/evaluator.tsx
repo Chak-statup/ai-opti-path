@@ -221,35 +221,7 @@ function ExplorerView({
       </nav>
       <p className="exp-journey-blurb">{activeStage.blurb}</p>
 
-      {stage === "causal" && (
-        <div className="exp-stage">
-          <section className="exp-section">
-            <h2 className="exp-section-title">
-              CAUSAL BAYESIAN NETWORK — PRIORS FLOW THROUGH THE MECHANISM TO PROFIT
-            </h2>
-            <div className="exp-causal-wrap">
-              <CausalDiagram />
-            </div>
-            <p className="exp-prose">
-              The decision is a single number, the quality level Q. Three things about the world are
-              uncertain and get priors: the market quality bar Q*, competition intensity φ, and the
-              margin slope Δm. They pass through two exact maps — the churn cliff χ(Q, Q*) and the
-              per-user margin m(Q, Δm) — into the noisy user trajectory N(t), and finally into
-              cumulative profit Π. A one-off price shock hits the margin near the end of the horizon.
-            </p>
-          </section>
-        </div>
-      )}
-
-      {stage === "uncertainty" && (
-        <div className="exp-stage">
-          <UncertaintyView data={data} />
-        </div>
-      )}
-
-      {stage === "ode" && (
       <div className="exp-body">
-
         {/* Control rail */}
         <aside className="exp-rail">
           <div className="exp-control">
@@ -265,7 +237,6 @@ function ExplorerView({
               value={dm}
               onChange={(e) => setDm(parseFloat(e.target.value))}
             />
-            
           </div>
 
           <div className="exp-control">
@@ -281,17 +252,26 @@ function ExplorerView({
               value={qstar}
               onChange={(e) => setQstar(parseFloat(e.target.value))}
             />
-            
           </div>
 
           <div className="exp-legend">
-            <div className="exp-legend-title">Strategy</div>
+            <div className="exp-legend-title">
+              {stage === "causal" ? "Trace strategy" : "Strategy"}
+            </div>
             {derived.map((d, s) => (
-              <div className="exp-legend-row" key={d.label}>
+              <button
+                type="button"
+                className={`exp-legend-row exp-legend-btn ${
+                  stage === "causal" && traceStrat === s ? "active" : ""
+                }`}
+                key={d.label}
+                onClick={() => setTraceStrat(s)}
+                aria-pressed={traceStrat === s}
+              >
                 <span className="exp-swatch" style={{ background: STRAT_COLORS[s] }} />
                 <span className="exp-legend-name">{d.label}</span>
                 <span className="exp-legend-q">Q={d.Q}</span>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -309,63 +289,85 @@ function ExplorerView({
           </div>
         </aside>
 
-        {/* Chart area · one view at a time */}
+        {/* Main panel */}
         <main className="exp-main">
-          <div className="exp-tabs" role="tablist" aria-label="Chart view">
-            {TABS.map((x) => (
-              <button
-                key={x.key}
-                role="tab"
-                aria-selected={tab === x.key}
-                className={`exp-tab ${tab === x.key ? "active" : ""}`}
-                onClick={() => setTab(x.key)}
-              >
-                {x.label}
-              </button>
-            ))}
-          </div>
-
-          <section className="exp-section">
-            {tab === "strategy" ? (
-              <>
-                <h2 className="exp-section-title">
-                  CUMULATIVE PROFIT VS QUALITY THRESHOLD
-                </h2>
-                <LineChart
-                  xs={data.qstar_grid}
-                  series={sweepSeries}
-                  xLabel="Quality threshold"
-                  yLabel="$M over horizon"
-                  vGuides={sweepGuides}
-                  zeroLine
-                  xFormat={(v) => v.toFixed(1)}
-                  yFormat={(v) => v.toFixed(0)}
-                  height={360}
-                />
-              </>
-            ) : (
-              <>
-                <h2 className="exp-section-title">
-                  Trajectory, {activeTab.label}
-                </h2>
-                <LineChart
-                  xs={t}
-                  series={panelSeries(tab)}
-                  title={METRIC_PANELS[tab].title}
-                  xLabel="time steps"
-                  yLabel={METRIC_PANELS[tab].yLabel}
-                  vGuides={baseGuides}
-                  zeroLine={METRIC_PANELS[tab].zero}
-                  xFormat={(v) => `${Math.round(v)}`}
-                  yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
-                  height={360}
-                />
-              </>
-            )}
-          </section>
+          {stage === "causal" ? (
+            <section className="exp-section">
+              <h2 className="exp-section-title">
+                CAUSAL PATHWAY — {derived[traceStrat].label.toUpperCase()}
+              </h2>
+              <div className="exp-causal-wrap">
+                <CausalDiagram cs={causalState} stratColor={STRAT_COLORS[traceStrat]} />
+              </div>
+              <div className="exp-causal-key">
+                <span className="exp-causal-key-item">
+                  <span className="exp-edge-sample good" /> reinforcing link
+                </span>
+                <span className="exp-causal-key-item">
+                  <span className="exp-edge-sample bad" /> pressure / risk
+                </span>
+                <span className="exp-causal-key-item">thicker line = stronger effect</span>
+              </div>
+              <p className="exp-prose">
+                The decision is the quality level Q (set by the strategy you trace). It flows through
+                the churn map χ(Q, Q*) and the margin map m(Q, Δm), then into the user trajectory N(t)
+                and finally cumulative profit Π. Competition φ erodes users and a one-off price shock
+                hits margin near the end of the horizon. Move the two levers and watch links thicken,
+                redden, and node states flip from safe to critical.
+              </p>
+            </section>
+          ) : (
+            <section className="exp-section">
+              <div className="exp-tabs" role="tablist" aria-label="Chart view">
+                {TABS.map((x) => (
+                  <button
+                    key={x.key}
+                    role="tab"
+                    aria-selected={tab === x.key}
+                    className={`exp-tab ${tab === x.key ? "active" : ""}`}
+                    onClick={() => setTab(x.key)}
+                  >
+                    {x.label}
+                  </button>
+                ))}
+              </div>
+              {tab === "strategy" ? (
+                <>
+                  <h2 className="exp-section-title">CUMULATIVE PROFIT VS QUALITY THRESHOLD</h2>
+                  <LineChart
+                    xs={data.qstar_grid}
+                    series={sweepSeries}
+                    xLabel="Quality threshold"
+                    yLabel="$M over horizon"
+                    vGuides={sweepGuides}
+                    zeroLine
+                    xFormat={(v) => v.toFixed(1)}
+                    yFormat={(v) => v.toFixed(0)}
+                    height={360}
+                  />
+                </>
+              ) : (
+                <>
+                  <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
+                  <LineChart
+                    xs={t}
+                    series={panelSeries(tab)}
+                    title={METRIC_PANELS[tab].title}
+                    xLabel="time steps"
+                    yLabel={METRIC_PANELS[tab].yLabel}
+                    vGuides={baseGuides}
+                    zeroLine={METRIC_PANELS[tab].zero}
+                    xFormat={(v) => `${Math.round(v)}`}
+                    yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
+                    height={360}
+                  />
+                </>
+              )}
+            </section>
+          )}
         </main>
       </div>
-      )}
+
     </div>
 
   );
