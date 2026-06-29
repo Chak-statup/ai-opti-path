@@ -788,6 +788,9 @@
   display: flex;
   flex-direction: column;
   gap: 2.25rem;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
 }
 .exp-stat-row {
   display: flex;
