@@ -137,6 +137,7 @@ export function deriveStrategy(
   s: number,
   dm: number,
   qstar: number,
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
 ): StrategyDerived {
   const p = data.meta.params;
   const t = data.t;
@@ -146,28 +147,33 @@ export function deriveStrategy(
   const Q = strat.Q;
 
   const N = data.N[s][qi];
-  const rawDet = deriveRaw(N, Q, snapped, dm, p, t);
+  const rawDet = deriveRaw(N, Q, snapped, dm, p, t, ctx);
   const det = toUnits(rawDet, N);
   const cumProfit = trapezoid(rawDet.profit, t) / M;
 
   const samples: MetricSeries[] = data.N_samples[s][qi].map((Ns) =>
-    toUnits(deriveRaw(Ns, Q, snapped, dm, p, t), Ns),
+    toUnits(deriveRaw(Ns, Q, snapped, dm, p, t, ctx), Ns),
   );
 
   return { label: strat.label, Q, cumProfit, samples, ...det };
 }
 
 // View B: cumulative profit ($M) for every Q* in the grid, per strategy.
-export function sweepCumProfit(data: RunsData, dm: number): number[][] {
+export function sweepCumProfit(
+  data: RunsData,
+  dm: number,
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
+): number[][] {
   const p = data.meta.params;
   const t = data.t;
   return data.meta.strategies.map((strat, s) =>
     data.qstar_grid.map((qstar, qi) => {
-      const raw = deriveRaw(data.N[s][qi], strat.Q, qstar, dm, p, t);
+      const raw = deriveRaw(data.N[s][qi], strat.Q, qstar, dm, p, t, ctx);
       return trapezoid(raw.profit, t) / M;
     }),
   );
 }
+
 
 // ---- Interactive causal state -------------------------------------------
 // Live values that drive the causal pathway diagram. Everything here is a
