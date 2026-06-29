@@ -415,6 +415,27 @@
   .exp-grid { grid-template-columns: 1fr; }
 }
 
+/* Stack the control rail above the main panel on tablets and phones so the
+   chart / diagram area gets the full width instead of being squeezed. */
+@media (max-width: 900px) {
+  .exp-body { grid-template-columns: 1fr; }
+  .exp-rail {
+    border-right: none;
+    border-bottom: 1px solid var(--exp-border);
+  }
+}
+
+@media (max-width: 640px) {
+  .exp-header { flex-wrap: wrap; gap: 0.5rem 1rem; padding: 0.75rem 1rem; }
+  .exp-journey { padding: 1rem 1rem 0; }
+  .exp-journey-step { min-width: 80px; font-size: 0.72rem; }
+  .exp-journey-blurb { padding: 0 1rem; }
+  .exp-stage,
+  .exp-uncert { padding: 1rem 1rem 2rem; }
+  .exp-rail { padding: 1rem; }
+  .exp-main { padding: 1rem 1rem 2rem; }
+}
+
 /* View tabs */
 .exp-tabs {
   display: inline-flex;
