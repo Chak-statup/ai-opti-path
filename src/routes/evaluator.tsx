@@ -318,11 +318,7 @@ function ExplorerView({ data }: { data: RunsData }) {
 
       {stage === "problem" && (
         <div className="exp-stage">
-          <ProblemFrame
-            strategies={data.meta.strategies}
-            colors={STRAT_COLORS}
-            onStart={() => setStage("causal")}
-          />
+          <ProblemFrame onStart={() => setStage("causal")} />
         </div>
       )}
 
