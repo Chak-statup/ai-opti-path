@@ -231,10 +231,8 @@ export function CausalDiagram({
                 fill="var(--exp-surface)" stroke={col} strokeWidth={3} />
             )}
             <circle cx={left + 20} cy={top + 20} r={5} fill={col} />
-            <text x={n.x} y={n.y - 8} textAnchor="middle" dominantBaseline="central" className="cd-node-title">
-              {tex(n.title, "var(--exp-ink)")}
-            </text>
-            <text x={n.x} y={n.y + 18} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
+            <NodeTitle n={n} />
+            <text x={n.x} y={n.y + 20} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
               {nodeSub[n.id]}
             </text>
           </g>
