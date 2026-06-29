@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, type Series, type VGuide } from "@/components/scenario/LineChart";
+import { CausalDiagram } from "@/components/scenario/CausalDiagram";
+import { UncertaintyView } from "@/components/scenario/UncertaintyView";
 import { StatupLogo } from "@/components/StatupLogo";
 import {
   deriveStrategy,
@@ -9,6 +11,33 @@ import {
   type RunsData,
   type StrategyDerived,
 } from "@/lib/scenario/model";
+
+type Stage = "ode" | "causal" | "uncertainty";
+
+const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
+  {
+    key: "ode",
+    label: "ODE model",
+    step: "01",
+    blurb:
+      "The working dynamical model. Two levers — Margin per customer and the Quality threshold — drive users, margin, cost and revenue across three strategies.",
+  },
+  {
+    key: "causal",
+    label: "Causal model",
+    step: "02",
+    blurb:
+      "The same model as a structural causal graph: a decision and three uncertain priors flow through deterministic churn and margin maps into profit.",
+  },
+  {
+    key: "uncertainty",
+    label: "Uncertainty",
+    step: "03",
+    blurb:
+      "Treat the world as uncertain. Sample thousands of plausible worlds to get a distribution of profit per strategy, then invert it: what does a loss imply?",
+  },
+];
+
 
 export const Route = createFileRoute("/evaluator")({
   head: () => ({
@@ -109,6 +138,9 @@ function ExplorerView({
 }) {
   const { params, controls } = data.meta;
   const t = data.t;
+  const [stage, setStage] = useState<Stage>("ode");
+  const activeStage = STAGES.find((s) => s.key === stage)!;
+
 
   const qi = qstarIndex(qstar, data.qstar_grid);
   const snappedQ = data.qstar_grid[qi];
@@ -172,7 +204,50 @@ function ExplorerView({
         </Link>
       </header>
 
+      <nav className="exp-journey" aria-label="Evaluator journey">
+        {STAGES.map((s) => (
+          <button
+            key={s.key}
+            className={`exp-journey-step ${stage === s.key ? "active" : ""}`}
+            aria-current={stage === s.key}
+            onClick={() => setStage(s.key)}
+          >
+            <span className="exp-journey-num">{s.step}</span>
+            <span className="exp-journey-label">{s.label}</span>
+          </button>
+        ))}
+      </nav>
+      <p className="exp-journey-blurb">{activeStage.blurb}</p>
+
+      {stage === "causal" && (
+        <div className="exp-stage">
+          <section className="exp-section">
+            <h2 className="exp-section-title">
+              CAUSAL BAYESIAN NETWORK — PRIORS FLOW THROUGH THE MECHANISM TO PROFIT
+            </h2>
+            <div className="exp-causal-wrap">
+              <CausalDiagram />
+            </div>
+            <p className="exp-prose">
+              The decision is a single number, the quality level Q. Three things about the world are
+              uncertain and get priors: the market quality bar Q*, competition intensity φ, and the
+              margin slope Δm. They pass through two exact maps — the churn cliff χ(Q, Q*) and the
+              per-user margin m(Q, Δm) — into the noisy user trajectory N(t), and finally into
+              cumulative profit Π. A one-off price shock hits the margin near the end of the horizon.
+            </p>
+          </section>
+        </div>
+      )}
+
+      {stage === "uncertainty" && (
+        <div className="exp-stage">
+          <UncertaintyView data={data} />
+        </div>
+      )}
+
+      {stage === "ode" && (
       <div className="exp-body">
+
         {/* Control rail */}
         <aside className="exp-rail">
           <div className="exp-control">
@@ -288,6 +363,8 @@ function ExplorerView({
           </section>
         </main>
       </div>
+      )}
     </div>
+
   );
 }
