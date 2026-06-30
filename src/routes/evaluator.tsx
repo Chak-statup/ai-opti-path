@@ -365,6 +365,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={qstar}
                   onChange={(e) => onKnob(setQstar)(parseFloat(e.target.value))}
                 />
+                <p className="exp-control-note">
+                  The quality bar users expect. Fall below it and churn spikes; clear it comfortably and retention holds.
+                </p>
               </div>
 
               <div className="exp-control">
@@ -380,6 +383,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={dm}
                   onChange={(e) => onKnob(setDm)(parseFloat(e.target.value))}
                 />
+                <p className="exp-control-note">
+                  Base margin earned per active customer, scaled by strategy quality. Higher values improve unit economics but do not guarantee aggregate profit.
+                </p>
               </div>
 
               <div className="exp-control">
@@ -395,6 +401,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={innov}
                   onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
                 />
+                <p className="exp-control-note">
+                  Investment in product development that lowers churn and lifts per-user margin, but raises fixed cost.
+                </p>
               </div>
 
               <div className="exp-control">
@@ -410,6 +419,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={resil}
                   onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
                 />
+                <p className="exp-control-note">
+                  Investment in vendor independence that cushions token-price shocks and reduces lock-in risk.
+                </p>
               </div>
             </div>
 
@@ -432,6 +444,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={tpf}
                   onChange={(e) => onKnob(setTpf)(parseFloat(e.target.value))}
                 />
+                <p className="exp-control-note">
+                  Multiplier on vendor token costs. 1× is today; higher values mimic a price shock or market consolidation.
+                </p>
               </div>
 
               <div className="exp-control">
@@ -447,10 +462,12 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={reg}
                   onChange={(e) => onKnob(setReg)(parseFloat(e.target.value))}
                 />
+                <p className="exp-control-note">
+                  External compliance burden the vendor passes through. Adds to the effective token price and raises total cost.
+                </p>
               </div>
               <p className="exp-rail-note">
-                Regulatory pressure feeds through into the effective token price, now ×
-                {causalState.tpfEff.toFixed(1)}.
+                Effective token price is now ×{causalState.tpfEff.toFixed(1)}.
               </p>
             </div>
 
