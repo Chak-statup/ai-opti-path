@@ -1416,7 +1416,9 @@
   color: var(--exp-ink);
   display: inline-flex;
   align-items: center;
+  gap: 0.5rem;
 }
+.exp-axis-map-item .exp-tex-inline { margin: 0 0.15em; }
 .exp-axis-map-item em { font-style: italic; color: var(--exp-muted); }
 .exp-axis-note {
   border: 1px solid var(--exp-border);
