@@ -163,6 +163,52 @@ export function HowItWorks() {
       </section>
 
       <section className="exp-howto-sec">
+        <h3 className="exp-howto-h">From risk factors to model variables</h3>
+        <p className="exp-prose">
+          The four strategic decisions each carry specific risks, and every risk is translated
+          into a model lever so you can stress it numerically.
+        </p>
+        <div className="exp-howto-eq">
+          <p className="exp-howto-cap">
+            <strong>Platform ecosystem.</strong> Shipping at scale exposes you to token price
+            spikes and exit costs. In the model this is <Tex>{"N(t)"}</Tex> — active users —
+            scaled by <strong>Platform reach</strong>. A wider reach grows the base but magnifies
+            any later price shock. The shock itself enters through the token price factor, which
+            knocks down per-user margin after month&nbsp;16.
+          </p>
+        </div>
+        <div className="exp-howto-eq">
+          <p className="exp-howto-cap">
+            <strong>Vendor choice.</strong> Betting on a single hyperscaler creates pricing
+            sovereignty and regulatory risk. <strong>Vendor independence</strong> (resilience{" "}
+            <Tex>{"\\rho"}</Tex>) hedges the effective token multiplier: up to 60&nbsp;% of a
+            price spike can be absorbed by multi-vendor or open-weight fallbacks. Regulatory
+            pressure is an external variable that feeds directly into the raw token multiplier,
+            representing compliance costs the vendor passes on.
+          </p>
+        </div>
+        <div className="exp-howto-eq">
+          <p className="exp-howto-cap">
+            <strong>Build versus buy.</strong> In-house capability costs talent and time, but it
+            raises product quality and retention. <strong>In-house build</strong> (innovation{" "}
+            <Tex>{"\\iota"}</Tex>) lowers churn <Tex>{"\\chi"}</Tex> by about 15&nbsp;% at full
+            investment and lifts per-user margin <Tex>{"m"}</Tex> by about 25&nbsp;%. The trade-off
+            is higher fixed cost.
+          </p>
+        </div>
+        <div className="exp-howto-eq">
+          <p className="exp-howto-cap">
+            <strong>Scaling strategy.</strong> Aggressive scaling means higher quality and higher
+            margin per customer, but also a steeper cliff if the market bar moves. This is
+            captured by coupling the <strong>Quality threshold</strong> <Tex>{"Q^{*}"}</Tex> (where
+            churn accelerates) and the <strong>Margin per customer</strong> slope{" "}
+            <Tex>{"\\Delta m"}</Tex>. Turning both up raises short-run revenue but raises the
+            tipping-point risk.
+          </p>
+        </div>
+      </section>
+
+      <section className="exp-howto-sec">
         <h3 className="exp-howto-h">Parameters</h3>
         <table className="exp-param-table">
           <thead>
