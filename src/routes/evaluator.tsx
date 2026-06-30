@@ -220,6 +220,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     setQstar(p.qstar);
     setInnov(p.vec.innovation);
     setResil(p.vec.resilience);
+    setReach(p.vec.platformReach ?? 50);
     setTpf(p.ctx.tokenPriceFactor);
     setReg(p.ctx.regPressure);
     setActivePreset(p.id);
@@ -230,6 +231,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     setQstar(c.qstar);
     setInnov(c.vec.innovation);
     setResil(c.vec.resilience);
+    setReach(c.vec.platformReach ?? 50);
     setActivePreset(null);
     setStage("causal");
   }
