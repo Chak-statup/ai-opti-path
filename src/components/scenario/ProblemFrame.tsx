@@ -115,7 +115,8 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
                 Evaluator lever <span className="exp-axis-lever-name">{a.lever}</span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="exp-axis-note">
