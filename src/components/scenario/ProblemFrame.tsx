@@ -6,6 +6,7 @@ type Axis = {
   n: string;
   title: string;
   question: string;
+  lever: string;
   risks: string[];
 };
 
