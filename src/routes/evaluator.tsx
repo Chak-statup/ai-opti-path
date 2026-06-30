@@ -543,6 +543,21 @@ function ExplorerView({ data }: { data: RunsData }) {
                     <div className="exp-causal-wrap">
                       <CausalDiagram cs={causalState} stratColor={STRAT_COLORS[traceStrat]} />
                     </div>
+                    <div className="exp-axis-map">
+                      <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
+                      <span className="exp-axis-map-item">
+                        <span className="exp-axis-chip">01</span> Platform reach &rarr; user base <em>N(t)</em>
+                      </span>
+                      <span className="exp-axis-map-item">
+                        <span className="exp-axis-chip">02</span> Vendor independence &rarr; token-price shock
+                      </span>
+                      <span className="exp-axis-map-item">
+                        <span className="exp-axis-chip">03</span> In-house build &rarr; churn <em>&chi;</em> &amp; margin <em>m</em>
+                      </span>
+                      <span className="exp-axis-map-item">
+                        <span className="exp-axis-chip">04</span> Scaling &rarr; quality bar <em>Q*</em> &amp; margin <em>m</em>
+                      </span>
+                    </div>
                     <div className="exp-causal-key">
                       <span className="exp-causal-key-item">
                         <span className="exp-edge-sample good" /> reinforcing link
