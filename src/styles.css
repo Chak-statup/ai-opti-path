@@ -692,6 +692,20 @@
   color: var(--exp-muted);
 }
 
+.exp-footer {
+  border-top: 1px solid var(--exp-border);
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+.exp-footer p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--exp-muted);
+}
+
 @media (max-width: 800px) {
   .lp-cards { grid-template-columns: 1fr; }
   .lp-hero-title { font-size: 1.25rem; }

@@ -252,7 +252,7 @@ function SimulatorPage() {
         </section>
 
         <footer className="mt-10 border-t border-border py-8 text-sm text-muted-foreground">
-          Illustrative demo · seeded Monte-Carlo (240 runs) · built local-first for a FastAPI port.
+          © STAT-UP · for demo purpose only
         </footer>
       </main>
     </div>
