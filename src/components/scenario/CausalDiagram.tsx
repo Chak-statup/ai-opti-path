@@ -67,25 +67,29 @@ function curve(ax: number, ay: number, bx: number, by: number) {
   return `M ${ax},${ay} C ${mx},${ay} ${mx},${by} ${bx},${by}`;
 }
 
-// Render a LaTeX title centered inside a node via foreignObject, so every
-// symbol (Greek included) is typeset by KaTeX rather than a raw glyph.
+// Render the node title as native SVG text. Using <text> (instead of KaTeX in
+// a foreignObject) guarantees the label stays centered and scales with the
+// viewBox on every browser, including mobile Safari/Firefox. The KaTeX math
+// font keeps the LaTeX look for Greek and italic math symbols.
 function NodeTitle({ n }: { n: NodeDef }) {
-  const fh = 34;
   return (
-    <foreignObject x={n.x - n.w / 2} y={n.y - 26} width={n.w} height={fh}>
-      <div
-        style={{
-          height: fh,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--exp-ink)",
-          fontSize: "20px",
-        }}
-      >
-        <Tex>{n.title}</Tex>
-      </div>
-    </foreignObject>
+    <text
+      x={n.x}
+      y={n.y - 8}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      fill="var(--exp-ink)"
+      style={{
+        fontFamily: n.italic
+          ? '"KaTeX_Math", "Latin Modern Math", "Cambria Math", serif'
+          : "var(--exp-font)",
+        fontStyle: n.italic ? "italic" : "normal",
+        fontSize: "24px",
+        fontWeight: 500,
+      }}
+    >
+      {n.glyph}
+    </text>
   );
 }
 
