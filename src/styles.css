@@ -956,6 +956,25 @@
   font-variant-numeric: tabular-nums;
 }
 .cd-svg { display: block; }
+.cd-region-num {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--exp-font);
+}
+.cd-region-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-family: var(--exp-font);
+}
+.exp-edge-sample.risk {
+  border-top: none;
+  width: 16px;
+  height: 12px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--exp-accent-3) 24%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--exp-accent-3) 45%, transparent);
+}
 .cd-flow {
   animation: cd-dash 1.4s linear infinite;
 }
