@@ -139,7 +139,7 @@ function Explorer() {
 }
 
 function ExplorerView({ data }: { data: RunsData }) {
-  const { params, controls } = data.meta;
+  const { params } = data.meta;
   const t = data.t;
 
   const [stage, setStage] = useState<Stage>("problem");
