@@ -16,6 +16,7 @@ const AXES: Axis[] = [
     title: "Platform ecosystem",
     question:
       "Ship your own apps in the GPT or Claude store to millions of users. A competitive edge, or a dependency trap?",
+    lever: "Platform reach",
     risks: [
       "Token price exposure at millions of users",
       "Exit cost when switching vendor",
@@ -27,6 +28,7 @@ const AXES: Axis[] = [
     title: "Vendor choice",
     question:
       "A hyperscaler (OpenAI, Anthropic, Google) against open source models. Time to market against strategic control.",
+    lever: "Vendor independence",
     risks: [
       "Pricing sovereignty",
       "Model quality over time",
@@ -38,6 +40,7 @@ const AXES: Axis[] = [
     title: "Build versus buy",
     question:
       "In house capability and ownership against an API first stack. Sovereignty has a price.",
+    lever: "In-house build",
     risks: [
       "Time to build AI expertise",
       "Ongoing development cost",
@@ -49,6 +52,7 @@ const AXES: Axis[] = [
     title: "Scaling strategy",
     question:
       "When does a pilot become a core system? Scaling without an exit path is structural risk.",
+    lever: "Scaling aggressiveness",
     risks: [
       "Cost structure tipping point",
       "Technical debt",
