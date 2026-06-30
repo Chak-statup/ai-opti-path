@@ -62,7 +62,7 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
       <section className="exp-section">
         <h2 className="exp-section-title">THE DECISION</h2>
         <p className="exp-prose">
-          Over the next 12 to 18 months a large company has to decide how aggressively to scale AI:
+          Over the next 12 to 18 months you have to decide how aggressively to scale AI:
           how far to commit to a single frontier vendor, how much to build in house, and how many
           apps to put in front of millions of users. These choices are made together and are hard to
           reverse.
@@ -72,19 +72,19 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
       <section className="exp-section">
         <h2 className="exp-section-title">THE CORE INSIGHT</h2>
         <p className="exp-prose">
-          Margin per user is not a thing you can manage. It is an output of two inputs: margin and
-          the number of users. Margin itself is an output of revenue and cost, and cost depends on
-          the vendor&rsquo;s pricing policy. So the real question is not what our margin per user is,
-          but what happens to cost, users and dependency as the world changes, and which strategy
-          survives it.
+          To convert qualitative reasoning to quantitative models we define some metrics that
+          correlate with the business model. For ex: Margin per user is an estimated output of two
+          inputs: margin and the number of users. Margin itself is an output of revenue and cost, and
+          cost depends on the vendor&rsquo;s pricing policy. Constructing estimated causal
+          dependencies for such cases is important and this is what we do.&nbsp;
         </p>
       </section>
 
       <section className="exp-section">
         <h2 className="exp-section-title">WHAT MAKES THIS HARD</h2>
         <p className="exp-prose">
-          Four decisions are taken at the same time and reinforce one another. None can be tuned in
-          isolation, and each carries its own systemic risks.
+          Considering our use case: Four decisions are to be taken at the same time and reinforce
+          one another. None can be tuned in isolation, and each carries its own systemic risks.
         </p>
         <div className="exp-axis-grid">
           {AXES.map((a) => (
