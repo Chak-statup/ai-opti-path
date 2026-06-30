@@ -345,12 +345,12 @@ function ExplorerView({ data }: { data: RunsData }) {
           <aside className="exp-rail">
             <div className="exp-rail-group">
               <div className="exp-rail-group-head">
-                <span className="exp-rail-group-title">Strategy vector</span>
+                <span className="exp-rail-group-title">Your four decisions</span>
                 <span className="exp-rail-group-tag">you control</span>
               </div>
 
               <div className="exp-legend">
-                <div className="exp-legend-title">Strategy (quality Q)</div>
+                <div className="exp-legend-title">Strategy to trace</div>
                 {derived.map((d, s) => (
                   <button
                     type="button"
@@ -368,61 +368,30 @@ function ExplorerView({ data }: { data: RunsData }) {
 
               <div className="exp-control">
                 <div className="exp-control-head">
-                  <span className="exp-control-label">Quality threshold</span>
-                  <span className="exp-control-val">{snappedQ.toFixed(2)}</span>
-                </div>
-                <input
-                  type="range"
-                  min={data.qstar_grid[0]}
-                  max={data.qstar_grid[data.qstar_grid.length - 1]}
-                  step={0.02}
-                  value={qstar}
-                  onChange={(e) => onKnob(setQstar)(parseFloat(e.target.value))}
-                />
-                <p className="exp-control-note">
-                  The quality bar users expect. Fall below it and churn spikes; clear it comfortably and retention holds.
-                </p>
-              </div>
-
-              <div className="exp-control">
-                <div className="exp-control-head">
-                  <span className="exp-control-label">Margin per customer</span>
-                  <span className="exp-control-val">{dm.toFixed(1)}</span>
-                </div>
-                <input
-                  type="range"
-                  min={controls.dm.min ?? 0}
-                  max={controls.dm.max ?? 12}
-                  step={controls.dm.step ?? 0.5}
-                  value={dm}
-                  onChange={(e) => onKnob(setDm)(parseFloat(e.target.value))}
-                />
-                <p className="exp-control-note">
-                  Base margin earned per active customer, scaled by strategy quality. Higher values improve unit economics but do not guarantee aggregate profit.
-                </p>
-              </div>
-
-              <div className="exp-control">
-                <div className="exp-control-head">
-                  <span className="exp-control-label">Innovation orientation</span>
-                  <span className="exp-control-val">{Math.round(innov)}</span>
+                  <span className="exp-control-label">
+                    <span className="exp-axis-chip">01</span> Platform reach
+                  </span>
+                  <span className="exp-control-val">{Math.round(reach)}</span>
                 </div>
                 <input
                   type="range"
                   min={0}
                   max={100}
                   step={1}
-                  value={innov}
-                  onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
+                  value={reach}
+                  onChange={(e) => onKnob(setReach)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  Investment in product development that lowers churn and lifts per-user margin, but raises fixed cost.
+                  <strong>Platform ecosystem.</strong> Contained pilots to mass-market apps. More
+                  reach grows the user base, lifting revenue but also token-cost exposure when prices spike.
                 </p>
               </div>
 
               <div className="exp-control">
                 <div className="exp-control-head">
-                  <span className="exp-control-label">Resilience orientation</span>
+                  <span className="exp-control-label">
+                    <span className="exp-axis-chip">02</span> Vendor independence
+                  </span>
                   <span className="exp-control-val">{Math.round(resil)}</span>
                 </div>
                 <input
@@ -434,7 +403,51 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  Investment in vendor independence that cushions token-price shocks and reduces lock-in risk.
+                  <strong>Vendor choice.</strong> Single frontier vendor to open / multi-vendor.
+                  Higher independence shields token-price shocks and lowers lock-in, at a higher fixed cost.
+                </p>
+              </div>
+
+              <div className="exp-control">
+                <div className="exp-control-head">
+                  <span className="exp-control-label">
+                    <span className="exp-axis-chip">03</span> In-house build
+                  </span>
+                  <span className="exp-control-val">{Math.round(innov)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={innov}
+                  onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
+                />
+                <p className="exp-control-note">
+                  <strong>Build vs buy.</strong> API-first to in-house. More in-house build lowers
+                  churn and lifts per-user margin, but raises fixed cost.
+                </p>
+              </div>
+
+              <div className="exp-control">
+                <div className="exp-control-head">
+                  <span className="exp-control-label">
+                    <span className="exp-axis-chip">04</span> Scaling aggressiveness
+                  </span>
+                  <span className="exp-control-val">{Math.round(scaling)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={scaling}
+                  onChange={(e) => setScaling(parseFloat(e.target.value))}
+                />
+                <p className="exp-control-note">
+                  <strong>Scaling strategy.</strong> Cautious to aggressive. Pushes per-customer
+                  margin (Δm {dm.toFixed(1)}) and the quality bar you commit to (Q* {snappedQ.toFixed(2)})
+                  together: more upside, more churn risk if you miss the bar.
                 </p>
               </div>
             </div>
