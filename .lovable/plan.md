@@ -1,50 +1,36 @@
+# Connect controls to the four decision axes
+
 ## Goal
+Make every lever map cleanly to one of the four decision axes a C-level exec already saw in Problem 01, so the strategy vector, spider chart, and causal pathway all speak the same language.
 
-Add one new tab to the Scenario Evaluator that clearly explains how the underlying model works — its purpose, the equations, every parameter, and the key findings — sourced directly from the uploaded model card ("A Driven Dynamical Model of AI Product Economics"). This makes the demo self-explanatory for executives.
+## The mapping (decision axis → lever → model effect)
 
-## Where it goes
+| # | Decision axis | Slider label (new) | Model wiring (mostly existing) |
+|---|---|---|---|
+| 01 | Platform Ecosystem | **Platform reach** (contained pilots ↔ mass-market apps) | NEW: scales the user base N (upside + token-cost exposure both grow) |
+| 02 | Vendor Choice | **Vendor independence** (single frontier vendor ↔ open / multi-vendor) | = existing Resilience: shields token-price spike, lowers lock-in |
+| 03 | Build vs Buy | **In-house build** (API-first ↔ in-house) | = existing Innovation: lowers churn, lifts margin, raises fixed cost |
+| 04 | Scaling Strategy | **Scaling aggressiveness** (cautious ↔ aggressive) | = existing Δm (margin push) + Q* (quality bar committed to) |
 
-Add a new stage to the existing 5-step journey in `src/routes/evaluator.tsx`, placed first so it reads as the primer:
+Environment stays separate and unchanged: **Token price factor** and **Regulatory pressure** (external, "you don't control").
 
-```text
-01 How it works · 02 Problem · 03 Causal pathway · 04 Risk profile · 05 Tipping points · 06 Recommendation
-```
+## What changes in the model (`src/lib/scenario/model.ts`)
+- Rename `innovation` → keep math, surfaced as **In-house build (Build vs Buy)**.
+- Rename `resilience` → keep math, surfaced as **Vendor independence (Vendor Choice)**.
+- Couple `Δm` and `Q*` under one **Scaling aggressiveness** axis (one slider drives both; existing equations untouched).
+- Add a single new `platformReach` input (0–100) that multiplies the user base N (e.g. N scaled by 0.6×–1.4×). This is the only new coupling; churn/margin/cost/profit equations keep their shape. Bigger reach amplifies both revenue and shock exposure.
+- The three **Strategy 1/2/3** options become **presets of the 4-axis vector** (three shapes on the spider), with their quality Q derived from the axis vector. The discrete selector stays for comparison.
 
-(Renumbering the existing `step` strings 01→06.) The new stage shows a full-width explainer panel with no control rail — same layout treatment as the Problem and Recommendation stages.
+## What changes in the UI
+- **Control rail** (`src/routes/evaluator.tsx`): regroup the internal levers into the four numbered axes (01–04) with the new labels above, each keeping its 1–2 line definition tied to the model. Environment group unchanged.
+- **Spider/Radar chart** (`RadarChart.tsx`): plot the four decision axes (one strategy = one shape), reinforcing "four choices → one strategy."
+- **Causal pathway** (`CausalDiagram.tsx`): tag the lever nodes with their axis number/name (01–04) and group/color them so the exec can trace each decision axis → churn/margin/cost → users → profit. Labels stay LaTeX/SVG-native per the existing mobile-safe approach.
+- **Problem frame** (`ProblemFrame.tsx`): on each of the four axis cards, add a "controlled by → <slider>" line so Problem 01 and the evaluator are explicitly linked.
 
-## Content (from the model card)
+## Dynamics impact summary
+- Axes 02, 03, 04: pure relabel/recombination — identical math, identical trajectories.
+- Axis 01 (Platform reach): one new multiplier on N — changes magnitude, not the shape of any curve. Honest and executive-intuitive (scale cuts both ways).
+- Charts (Revenue/Users/Margin/Cost/Strategy) and presets continue to work; only labels and the N-scaling differ.
 
-A new component `src/components/scenario/HowItWorks.tsx` with clean, restrained sections matching the consulting aesthetic:
-
-1. **What the model is for** — one compact paragraph: a driven dynamical model of how one strategic choice (quality Q) drives users and profit over time; one state variable N(t); quality is a chosen input, not solved for; produces legible curves, not emergent chaos. Strategy reduces to a single number Q (Strategy 1 ≈ 0.3, Strategy 2 ≈ 0.6, Strategy 3 ≈ 0.9).
-
-2. **The equations** — three rendered LaTeX blocks with a plain-language caption under each:
-   - User dynamics dN (external acquisition + word-of-mouth − churn − competition + demand noise).
-   - Quality maps: churn cliff χ(Q) and linear margin m(Q).
-   - Profit Π(t): gated, shock-hit margin − cost to replace lost users − fixed overhead. Note cumulative profit = time-integral (trapezoidal).
-   - Short note on where the price shock acts (a token-price spike hits margin, not the CAC line).
-
-3. **Parameters** — a clean table (Symbol · Meaning · Value) for all rows in the model card: N(t), Q, K=100,000, p=0.01/mo, r=0.35/mo, χmin/χmax=0.02/0.35, κ=12, Q*=0.5, m0/Δm=$8/$6, Δm_shock=$4, φ=0.35, σ=0.12, c_ac=$15, F=$30,000, τ=6mo, t_shock=16mo, T=54mo. App-facing labels noted where relevant (Q = "Strategy", Δm = "Margin per customer", Q* = "Quality threshold").
-
-4. **What drives winners and losers** — short list: strategy levers (Q, Q*) vs. calibration parameters (φ, c_ac, F, churn-cliff shape, Δm); the rest is background.
-
-5. **Key findings** — the four results: users rise/peak/decline; low-quality apps can lose money; a critical churn threshold turns profit negative; quality pays mainly through retention, not price.
-
-6. **This is illustrative** — one-line honesty note: plausible placeholder parameters, not calibrated; meant for strategy discussion.
-
-## LaTeX rendering
-
-KaTeX is already installed (`katex` dependency) and its CSS is already linked in `src/routes/__root.tsx`. Add a tiny helper `src/components/scenario/Tex.tsx` that calls `katex.renderToString(...)` and injects via `dangerouslySetInnerHTML`, supporting inline and block (display) mode. Used for the equation blocks and inline symbols so all math uses real LaTeX (consistent with the existing preference).
-
-## Styling
-
-Add scoped styles to `src/styles.css` under the `exp-` namespace (e.g. `exp-howto`, `exp-howto-eq`, `exp-param-table`) reusing existing tokens — muted text, thin rules, high data-ink, no cards/gradients. Equation blocks centered on a faint surface; parameter table with light row separators.
-
-## Files
-
-- `src/routes/evaluator.tsx` — add `howto` stage to `STAGES`, render `HowItWorks` for that stage, default the journey to it, renumber steps.
-- `src/components/scenario/HowItWorks.tsx` — new explainer component.
-- `src/components/scenario/Tex.tsx` — new KaTeX render helper.
-- `src/styles.css` — styles for the new sections.
-
-No business-logic or model changes — this is a presentation/explainer addition only.
+## Open choice
+If you'd rather not touch dynamics at all, we drop Axis 01's N-scaling and show Platform Ecosystem as a framing-only axis (3 live sliders + 1 displayed). Default plan assumes the live version.
