@@ -62,11 +62,12 @@ function LandingPage() {
           <h2 className="lp-section-title">What the evaluator shows</h2>
           <p className="lp-about-body">
             This is an illustration, not a forecast. It extends a simple word-of-mouth growth
-            model into a guided decision journey. You set a strategy vector you control (quality,
-            margin per customer, in-house build and vendor independence) and an environment you do not
-            (token price and regulatory pressure). The evaluator then traces the causal pathway,
-            profiles each strategy&rsquo;s risks, flags the tipping points, and when a shock hits it
-            proposes mitigations you can compare side by side.
+            model into a guided decision journey. You set a strategy vector you have some control
+            over for example: quality, margin per customer, in-house build and vendor
+            independence, and an environment you do not (token price and regulatory pressure).
+            The evaluator then traces the causal pathway, profiles each strategy&rsquo;s risks,
+            flags the tipping points, and when a shock hits it proposes mitigations you can
+            compare side by side.
           </p>
           <p className="lp-about-body">
             Every risk factor in the four decision axes is wired to a model variable. Platform
