@@ -379,7 +379,7 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 1.5, regPressure: 80 },
     dm: 6,
     qstar: 0.5,
-    vec: { innovation: 50, resilience: 50 },
+    vec: { innovation: 50, resilience: 50, platformReach: 50 },
   },
   {
     id: "oss-breakthrough",
