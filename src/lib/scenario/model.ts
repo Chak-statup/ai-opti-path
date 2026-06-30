@@ -388,7 +388,7 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 0.6, regPressure: 30 },
     dm: 8,
     qstar: 0.5,
-    vec: { innovation: 60, resilience: 60 },
+    vec: { innovation: 60, resilience: 60, platformReach: 65 },
   },
 ];
 
