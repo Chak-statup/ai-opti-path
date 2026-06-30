@@ -1,36 +1,61 @@
-# Connect controls to the four decision axes
 
-## Goal
-Make every lever map cleanly to one of the four decision axes a C-level exec already saw in Problem 01, so the strategy vector, spider chart, and causal pathway all speak the same language.
+# Causal pathway redesign + Problem-tab icons
 
-## The mapping (decision axis → lever → model effect)
+Two visual upgrades, both presentation-only (no model math changes).
 
-| # | Decision axis | Slider label (new) | Model wiring (mostly existing) |
-|---|---|---|---|
-| 01 | Platform Ecosystem | **Platform reach** (contained pilots ↔ mass-market apps) | NEW: scales the user base N (upside + token-cost exposure both grow) |
-| 02 | Vendor Choice | **Vendor independence** (single frontier vendor ↔ open / multi-vendor) | = existing Resilience: shields token-price spike, lowers lock-in |
-| 03 | Build vs Buy | **In-house build** (API-first ↔ in-house) | = existing Innovation: lowers churn, lifts margin, raises fixed cost |
-| 04 | Scaling Strategy | **Scaling aggressiveness** (cautious ↔ aggressive) | = existing Δm (margin push) + Q* (quality bar committed to) |
+## Part A — Causal pathway diagram (`CausalDiagram.tsx` + styles)
 
-Environment stays separate and unchanged: **Token price factor** and **Regulatory pressure** (external, "you don't control").
+### Remove
+- The four gray column bands (`var(--exp-grid)` rectangles).
+- The four column caption pills: "decision & levers", "causal maps", "dynamics", "outcome".
 
-## What changes in the model (`src/lib/scenario/model.ts`)
-- Rename `innovation` → keep math, surfaced as **In-house build (Build vs Buy)**.
-- Rename `resilience` → keep math, surfaced as **Vendor independence (Vendor Choice)**.
-- Couple `Δm` and `Q*` under one **Scaling aggressiveness** axis (one slider drives both; existing equations untouched).
-- Add a single new `platformReach` input (0–100) that multiplies the user base N (e.g. N scaled by 0.6×–1.4×). This is the only new coupling; churn/margin/cost/profit equations keep their shape. Bigger reach amplifies both revenue and shock exposure.
-- The three **Strategy 1/2/3** options become **presets of the 4-axis vector** (three shapes on the spider), with their quality Q derived from the axis vector. The discrete selector stays for comparison.
+### Add: lever "influence regions" (the headline change)
+Each of the four decisions gets its own soft, rounded, color-tinted region that visually encloses the nodes it drives, so a first-time viewer instantly sees "this lever moves these things." Concept:
 
-## What changes in the UI
-- **Control rail** (`src/routes/evaluator.tsx`): regroup the internal levers into the four numbered axes (01–04) with the new labels above, each keeping its 1–2 line definition tied to the model. Environment group unchanged.
-- **Spider/Radar chart** (`RadarChart.tsx`): plot the four decision axes (one strategy = one shape), reinforcing "four choices → one strategy."
-- **Causal pathway** (`CausalDiagram.tsx`): tag the lever nodes with their axis number/name (01–04) and group/color them so the exec can trace each decision axis → churn/margin/cost → users → profit. Labels stay LaTeX/SVG-native per the existing mobile-safe approach.
-- **Problem frame** (`ProblemFrame.tsx`): on each of the four axis cards, add a "controlled by → <slider>" line so Problem 01 and the evaluator are explicitly linked.
+```text
+ ┌── 04 Scaling ─────────┐
+ │   Q*      Δm          │──────► χ (churn) ──┐
+ └───────────────────────┘                    ├─► N(t) ──► Π
+ ┌── 03 In-house build ──┐     m (margin) ────┘
+ │   drives χ + m        │
+ └───────────────────────┘
+ ┌ 02 Vendor ┐  shock ──────────────────────────► Π
+ └───────────┘
+ ┌ 01 Platform reach ┐ ── scales ── N(t)
+ └───────────────────┘
+```
 
-## Dynamics impact summary
-- Axes 02, 03, 04: pure relabel/recombination — identical math, identical trajectories.
-- Axis 01 (Platform reach): one new multiplier on N — changes magnitude, not the shape of any curve. Honest and executive-intuitive (scale cuts both ways).
-- Charts (Revenue/Users/Margin/Cost/Strategy) and presets continue to work; only labels and the N-scaling differ.
+- Region 04 **Scaling** encloses `Q*` and `Δm` (your example — driven together).
+- Region 03 **In-house build** highlights its drive into `χ` and `m`.
+- Region 02 **Vendor independence** ties to the `shock` node.
+- Region 01 **Platform reach** ties to `N(t)`.
+- Each region: rounded translucent fill in its axis color, a thin matching border, and a small numbered chip (01–04) + short label on the region edge. Colors reuse the existing decision/axis tokens, kept muted.
 
-## Open choice
-If you'd rather not touch dynamics at all, we drop Axis 01's N-scaling and show Platform Ecosystem as a framing-only axis (3 live sliders + 1 displayed). Default plan assumes the live version.
+### Add: risk shading
+- Nodes currently carrying pressure (the "bad" state) get a distinct **red-tinted halo / soft glow** behind the card, not just a colored border — so risk reads at a glance. This applies live: e.g. when `χ` (churn), `shock`, or a negative `Π` cross into the bad band, their halo appears/intensifies.
+- A single compact legend row stays: "reinforcing link / pressure / thicker = stronger", plus a new "shaded = risk under pressure" swatch.
+
+### Polish for "more elaborate / better"
+- Slightly larger node cards, more breathing room, cleaner curved edges (keep existing bezier + animated flow dashes).
+- Keep native SVG `<text>` labels (mobile-safe, current approach) — no KaTeX-in-foreignObject regression.
+- The `exp-axis-map` legend block below the diagram is now partly redundant with on-diagram region labels; I'll keep a slimmed version (or fold it into the diagram) so nothing is lost.
+
+### What does NOT change
+- All node math, edge intensities, colors-by-state logic, and `CausalState` stay identical. This is layout + new region/halo overlays only.
+
+## Part B — Problem tab icons (`ProblemFrame.tsx` + styles)
+
+Add a distinctive icon to each of the four axis cards (01–04). Goal: modern, technical, structural — not the generic "sparkle/robot/brain" AI look. Plan to use **custom hand-drawn line SVGs** (thin stroke, geometric, matching the diagram's restrained style) rather than off-the-shelf rounded icons:
+
+| Axis | Icon concept |
+|---|---|
+| 01 Platform ecosystem | nested app tiles / stacked panels radiating outward (reach) |
+| 02 Vendor choice | a single trunk splitting into multiple plug endpoints (one vendor vs many) |
+| 03 Build vs buy | a blueprint bracket / module being assembled vs a sealed box |
+| 04 Scaling strategy | a throttle/dial sweeping up a stepped ramp |
+
+- Mono-stroke, `currentColor`, ~28px, sit in the card header next to the number.
+- Subtle hover treatment consistent with existing card styling.
+
+## Open question before build
+For Part B icons: do you want **(a)** custom line SVGs as described (most control, on-brand, non-generic), or **(b)** curated Lucide icons chosen to look technical (faster, but slightly more "standard")? My recommendation is (a).

@@ -1,6 +1,9 @@
 // Problem-framing step. Sets up the strategic question and the core insight,
 // then lays out the crucial axes that make the decision genuinely hard before
 // inviting the reader into the evaluator.
+import { AXIS_ICONS } from "./AxisIcons";
+
+
 
 type Axis = {
   n: string;
@@ -92,10 +95,13 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
           one another. None can be tuned in isolation, and each carries its own systemic risks.
         </p>
         <div className="exp-axis-grid">
-          {AXES.map((a) => (
+          {AXES.map((a) => {
+            const Icon = AXIS_ICONS[a.n as keyof typeof AXIS_ICONS];
+            return (
             <div key={a.n} className="exp-axis-card">
               <div className="exp-axis-head">
                 <span className="exp-axis-num">{a.n}</span>
+                <span className="exp-axis-icon">{Icon ? <Icon /> : null}</span>
                 <span className="exp-axis-title">{a.title}</span>
               </div>
               <p className="exp-axis-q">{a.question}</p>
@@ -109,7 +115,8 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
                 Evaluator lever <span className="exp-axis-lever-name">{a.lever}</span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="exp-axis-note">

@@ -956,6 +956,25 @@
   font-variant-numeric: tabular-nums;
 }
 .cd-svg { display: block; }
+.cd-region-num {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--exp-font);
+}
+.cd-region-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-family: var(--exp-font);
+}
+.exp-edge-sample.risk {
+  border-top: none;
+  width: 16px;
+  height: 12px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--exp-accent-3) 24%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--exp-accent-3) 45%, transparent);
+}
 .cd-flow {
   animation: cd-dash 1.4s linear infinite;
 }
@@ -1303,13 +1322,29 @@
   flex-direction: column;
   gap: 0.65rem;
 }
-.exp-axis-head { display: flex; align-items: baseline; gap: 0.7rem; }
+.exp-axis-head { display: flex; align-items: center; gap: 0.7rem; }
 .exp-axis-num {
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--exp-frontier);
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+.exp-axis-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  color: var(--exp-frontier);
+  background: color-mix(in srgb, var(--exp-frontier) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--exp-frontier) 22%, transparent);
+  flex: 0 0 auto;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.exp-axis-card:hover .exp-axis-icon {
+  background: color-mix(in srgb, var(--exp-frontier) 14%, transparent);
 }
 .exp-axis-title { font-weight: 600; font-size: 1rem; color: var(--exp-ink); }
 .exp-axis-q { margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--exp-ink); }

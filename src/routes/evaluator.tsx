@@ -566,6 +566,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                         <span className="exp-edge-sample bad" /> pressure / risk
                       </span>
                       <span className="exp-causal-key-item">thicker line = stronger effect</span>
+                      <span className="exp-causal-key-item">
+                        <span className="exp-edge-sample risk" /> shaded node = under pressure
+                      </span>
                     </div>
                     <p className="exp-prose">{reading}</p>
                   </>
