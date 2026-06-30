@@ -75,11 +75,52 @@ export interface StrategyDerived extends MetricSeries {
 // (shields the effective token price from shocks, lowers lock-in) at a
 // smaller fixed cost.
 export interface StrategyVector {
-  innovation: number; // 0..100
-  resilience: number; // 0..100
+  innovation: number; // 0..100  — Build vs Buy axis (in-house build)
+  resilience: number; // 0..100  — Vendor Choice axis (vendor independence)
+  platformReach?: number; // 0..100 — Platform Ecosystem axis (scale of user base)
 }
 
-export const DEFAULT_VECTOR: StrategyVector = { innovation: 50, resilience: 50 };
+export const DEFAULT_VECTOR: StrategyVector = {
+  innovation: 50,
+  resilience: 50,
+  platformReach: 50,
+};
+
+// Platform Ecosystem axis: scales the user base N. Contained pilots (low reach)
+// shrink the base; mass-market apps (high reach) grow it. Both revenue and the
+// variable token cost scale with N, so reach amplifies upside and shock
+// exposure alike — the shape of every curve is unchanged, only its magnitude.
+export function reachMul(vec: StrategyVector): number {
+  return 0.6 + 0.8 * ((vec.platformReach ?? 50) / 100); // 0.6× .. 1.4×
+}
+
+// Scaling Strategy axis: a single 0..100 "aggressiveness" dial drives both the
+// margin push (Δm) and the quality bar committed to (Q*) together. Cautious
+// scaling keeps both low; aggressive scaling pushes margin and commits to a
+// higher quality bar (more upside, more churn risk if the bar is missed).
+export function scalingToKnobs(
+  aggression: number,
+  data: RunsData,
+): { dm: number; qstar: number } {
+  const a = Math.max(0, Math.min(100, aggression)) / 100;
+  const dmMin = data.meta.controls.dm.min ?? 0;
+  const dmMax = data.meta.controls.dm.max ?? 12;
+  const grid = data.qstar_grid;
+  const qLo = grid[0];
+  const qHi = grid[grid.length - 1];
+  return {
+    dm: dmMin + (dmMax - dmMin) * a,
+    qstar: qLo + (qHi - qLo) * a,
+  };
+}
+
+// Inverse: recover the aggressiveness dial (0..100) from the current Δm.
+export function knobsToScaling(dm: number, data: RunsData): number {
+  const dmMin = data.meta.controls.dm.min ?? 0;
+  const dmMax = data.meta.controls.dm.max ?? 12;
+  if (dmMax === dmMin) return 50;
+  return Math.max(0, Math.min(100, ((dm - dmMin) / (dmMax - dmMin)) * 100));
+}
 
 // How strongly regulatory pressure feeds through into the effective token
 // price. At full regulatory pressure the effective token price is +60%.
@@ -192,14 +233,16 @@ export function deriveStrategy(
   const strat = data.meta.strategies[s];
   const Q = strat.Q;
 
-  const N = data.N[s][qi];
+  const reach = reachMul(vec);
+  const N = data.N[s][qi].map((v) => v * reach);
   const rawDet = deriveRaw(N, Q, snapped, dm, p, t, ctx, vec);
   const det = toUnits(rawDet, N);
   const cumProfit = trapezoid(rawDet.profit, t) / M;
 
-  const samples: MetricSeries[] = data.N_samples[s][qi].map((Ns) =>
-    toUnits(deriveRaw(Ns, Q, snapped, dm, p, t, ctx, vec), Ns),
-  );
+  const samples: MetricSeries[] = data.N_samples[s][qi].map((Ns0) => {
+    const Ns = Ns0.map((v) => v * reach);
+    return toUnits(deriveRaw(Ns, Q, snapped, dm, p, t, ctx, vec), Ns);
+  });
 
   return { label: strat.label, Q, cumProfit, samples, ...det };
 }
@@ -213,9 +256,11 @@ export function sweepCumProfit(
 ): number[][] {
   const p = data.meta.params;
   const t = data.t;
+  const reach = reachMul(vec);
   return data.meta.strategies.map((strat, s) =>
     data.qstar_grid.map((qstar, qi) => {
-      const raw = deriveRaw(data.N[s][qi], strat.Q, qstar, dm, p, t, ctx, vec);
+      const N = data.N[s][qi].map((v) => v * reach);
+      const raw = deriveRaw(N, strat.Q, qstar, dm, p, t, ctx, vec);
       return trapezoid(raw.profit, t) / M;
     }),
   );
@@ -316,7 +361,7 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 1.5, regPressure: 30 },
     dm: 6,
     qstar: 0.5,
-    vec: { innovation: 50, resilience: 50 },
+    vec: { innovation: 50, resilience: 50, platformReach: 50 },
   },
   {
     id: "pricing-shock",
@@ -325,7 +370,7 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 3, regPressure: 30 },
     dm: 6,
     qstar: 0.5,
-    vec: { innovation: 50, resilience: 50 },
+    vec: { innovation: 50, resilience: 50, platformReach: 70 },
   },
   {
     id: "regulatory-stress",
@@ -334,7 +379,7 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 1.5, regPressure: 80 },
     dm: 6,
     qstar: 0.5,
-    vec: { innovation: 50, resilience: 50 },
+    vec: { innovation: 50, resilience: 50, platformReach: 50 },
   },
   {
     id: "oss-breakthrough",
@@ -343,7 +388,7 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 0.6, regPressure: 30 },
     dm: 8,
     qstar: 0.5,
-    vec: { innovation: 60, resilience: 60 },
+    vec: { innovation: 60, resilience: 60, platformReach: 65 },
   },
 ];
 

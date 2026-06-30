@@ -15,7 +15,7 @@ import {
   type ScenarioContext,
 } from "@/lib/scenario/model";
 
-const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "Innovation", "Resilience"];
+const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "In-house build", "Vendor indep."];
 
 // Distinct trend colors for overlaying several candidates at once.
 const CAND_COLORS = ["#2980B9", "#16A085", "#F39C12", "#4B2C50", "#C0392B"];
