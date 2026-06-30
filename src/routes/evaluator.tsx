@@ -347,7 +347,7 @@ function ExplorerView({ data }: { data: RunsData }) {
             <div className="exp-rail-group">
               <div className="exp-rail-group-head">
                 <span className="exp-rail-group-title">Your four decisions</span>
-                <span className="exp-rail-group-tag">you control</span>
+                <span className="exp-rail-group-tag">{"\n"}</span>
               </div>
 
               <div className="exp-legend">
