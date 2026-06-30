@@ -1,6 +1,9 @@
 // Problem-framing step. Sets up the strategic question and the core insight,
 // then lays out the crucial axes that make the decision genuinely hard before
 // inviting the reader into the evaluator.
+import { AXIS_ICONS } from "./AxisIcons";
+
+
 
 type Axis = {
   n: string;
