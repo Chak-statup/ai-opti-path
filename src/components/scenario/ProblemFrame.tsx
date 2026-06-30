@@ -62,7 +62,7 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
       <section className="exp-section">
         <h2 className="exp-section-title">THE DECISION</h2>
         <p className="exp-prose">
-          Over the next 12 to 18 months a large company has to decide how aggressively to scale AI:
+          Over the next 12 to 18 months you have to decide how aggressively to scale AI:
           how far to commit to a single frontier vendor, how much to build in house, and how many
           apps to put in front of millions of users. These choices are made together and are hard to
           reverse.
