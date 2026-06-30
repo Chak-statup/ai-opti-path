@@ -233,14 +233,16 @@ export function deriveStrategy(
   const strat = data.meta.strategies[s];
   const Q = strat.Q;
 
-  const N = data.N[s][qi];
+  const reach = reachMul(vec);
+  const N = data.N[s][qi].map((v) => v * reach);
   const rawDet = deriveRaw(N, Q, snapped, dm, p, t, ctx, vec);
   const det = toUnits(rawDet, N);
   const cumProfit = trapezoid(rawDet.profit, t) / M;
 
-  const samples: MetricSeries[] = data.N_samples[s][qi].map((Ns) =>
-    toUnits(deriveRaw(Ns, Q, snapped, dm, p, t, ctx, vec), Ns),
-  );
+  const samples: MetricSeries[] = data.N_samples[s][qi].map((Ns0) => {
+    const Ns = Ns0.map((v) => v * reach);
+    return toUnits(deriveRaw(Ns, Q, snapped, dm, p, t, ctx, vec), Ns);
+  });
 
   return { label: strat.label, Q, cumProfit, samples, ...det };
 }
