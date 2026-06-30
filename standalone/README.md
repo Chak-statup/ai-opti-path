@@ -16,12 +16,35 @@ standalone/
     ├── evaluator.html     the Scenario Evaluator
     ├── css/styles.css     design system (exhibit + landing), ported from src/styles.css
     ├── js/
-    │   ├── model.js       pure model arithmetic (port of model.ts)
+    │   ├── model.js       pure model arithmetic + strategy vector, risk, tipping
+    │   │                  points and mitigation engine (port of model.ts)
     │   ├── linechart.js   hand-rolled SVG line chart (port of LineChart.tsx)
-    │   ├── evaluator.js   evaluator UI logic (port of evaluator.tsx)
+    │   ├── causal.js      interactive structural causal diagram (port of CausalDiagram.tsx)
+    │   ├── radar.js       hand-rolled SVG risk radar (port of RadarChart.tsx)
+    │   ├── axisicons.js   custom mono-stroke decision-axis icons
+    │   ├── tex.js         KaTeX render helper for LaTeX symbols
+    │   ├── evaluator.js   six-stage decision journey UI (port of evaluator.tsx)
     │   └── home.js        landing background chart (port of HomeChart.tsx)
     └── assets/            STAT UP logos (light + dark)
 ```
+
+## The evaluator journey
+
+The Scenario Evaluator is a six-stage guided journey, identical to the React app:
+
+1. **Problem** — the strategic question and the four decision axes.
+2. **Causal pathway** — live structural diagram + trajectory charts; move a lever
+   or pick a scenario preset and watch the pathway and risks reshape.
+3. **Risk profile** — five-axis radar per strategy against the status-quo baseline.
+4. **Tipping points** — each risk against its critical threshold.
+5. **Mitigation** — model-proposed strategy vectors with before/after comparison
+   and a mocked AI advisory.
+6. **Recommendation** — plain-language read, plus an optional Anthropic-powered
+   advisory. The API key is used only in the browser, sent directly to Anthropic,
+   and never stored, logged, or sent to the backend.
+
+A floating **How it works** button opens the full model documentation (equations,
+parameters, and the risk-factor → variable mapping) rendered with KaTeX.
 
 ## Run
 
