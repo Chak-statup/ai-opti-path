@@ -370,7 +370,7 @@ export const PRESETS: ScenarioPreset[] = [
     ctx: { tokenPriceFactor: 3, regPressure: 30 },
     dm: 6,
     qstar: 0.5,
-    vec: { innovation: 50, resilience: 50 },
+    vec: { innovation: 50, resilience: 50, platformReach: 70 },
   },
   {
     id: "regulatory-stress",
