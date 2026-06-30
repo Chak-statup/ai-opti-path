@@ -148,6 +148,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [qstar, setQstar] = useState(PRESETS[0].qstar);
   const [innov, setInnov] = useState(DEFAULT_VECTOR.innovation);
   const [resil, setResil] = useState(DEFAULT_VECTOR.resilience);
+  const [reach, setReach] = useState(DEFAULT_VECTOR.platformReach ?? 50);
   const [tpf, setTpf] = useState(DEFAULT_CONTEXT.tokenPriceFactor);
   const [reg, setReg] = useState(DEFAULT_CONTEXT.regPressure);
   const [activePreset, setActivePreset] = useState<string | null>("status-quo");
@@ -161,9 +162,18 @@ function ExplorerView({ data }: { data: RunsData }) {
     [tpf, reg],
   );
   const vec: StrategyVector = useMemo(
-    () => ({ innovation: innov, resilience: resil }),
-    [innov, resil],
+    () => ({ innovation: innov, resilience: resil, platformReach: reach }),
+    [innov, resil, reach],
   );
+
+  // Scaling Strategy axis: one dial that drives both Δm and Q* together.
+  const scaling = knobsToScaling(dm, data);
+  function setScaling(v: number) {
+    const k = scalingToKnobs(v, data);
+    setDm(k.dm);
+    setQstar(k.qstar);
+    setActivePreset(null);
+  }
 
   const qi = qstarIndex(qstar, data.qstar_grid);
   const snappedQ = data.qstar_grid[qi];
