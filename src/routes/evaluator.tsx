@@ -688,6 +688,10 @@ function ExplorerView({ data }: { data: RunsData }) {
           </div>
         </div>
       )}
+
+      <footer className="exp-footer">
+        <p>© STAT-UP · for demo purpose only</p>
+      </footer>
     </div>
   );
 }
