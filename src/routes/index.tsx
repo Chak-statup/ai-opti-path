@@ -61,14 +61,20 @@ function LandingPage() {
         <section className="lp-about">
           <h2 className="lp-section-title">What the evaluator shows</h2>
           <p className="lp-about-body">
-            This is an illustration, not a forecast. It extends a simple word of mouth growth
+            This is an illustration, not a forecast. It extends a simple word-of-mouth growth
             model into a guided decision journey. You set a strategy vector you control (quality,
-            margin per customer, innovation and resilience) and an environment you do not (vendor
-            token price and regulatory pressure). The evaluator then traces the causal pathway,
+            margin per customer, in-house build and vendor independence) and an environment you do not
+            (token price and regulatory pressure). The evaluator then traces the causal pathway,
             profiles each strategy&rsquo;s risks, flags the tipping points, and when a shock hits it
-            proposes mitigations you can compare side by side. The point: margin per user is an
-            output of cost and user dynamics, not a lever, so the real question is which strategy
-            holds up as the world changes.
+            proposes mitigations you can compare side by side.
+          </p>
+          <p className="lp-about-body">
+            Every risk factor in the four decision axes is wired to a model variable. Platform
+            reach scales the user base; vendor independence hedges token price spikes and
+            lock-in; in-house build lifts margin and retention; scaling aggressiveness couples
+            quality and margin slope. Regulatory pressure and token price factor are external
+            shocks. The point: margin per user is an output of cost and user dynamics, not a lever,
+            so the real question is which strategy holds up as the world changes.
           </p>
         </section>
       </main>
