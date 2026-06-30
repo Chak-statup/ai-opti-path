@@ -95,10 +95,13 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
           one another. None can be tuned in isolation, and each carries its own systemic risks.
         </p>
         <div className="exp-axis-grid">
-          {AXES.map((a) => (
+          {AXES.map((a) => {
+            const Icon = AXIS_ICONS[a.n as keyof typeof AXIS_ICONS];
+            return (
             <div key={a.n} className="exp-axis-card">
               <div className="exp-axis-head">
                 <span className="exp-axis-num">{a.n}</span>
+                <span className="exp-axis-icon">{Icon ? <Icon /> : null}</span>
                 <span className="exp-axis-title">{a.title}</span>
               </div>
               <p className="exp-axis-q">{a.question}</p>
