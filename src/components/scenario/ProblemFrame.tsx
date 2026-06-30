@@ -72,11 +72,11 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
       <section className="exp-section">
         <h2 className="exp-section-title">THE CORE INSIGHT</h2>
         <p className="exp-prose">
-          Margin per user is not a thing you can manage. It is an output of two inputs: margin and
-          the number of users. Margin itself is an output of revenue and cost, and cost depends on
-          the vendor&rsquo;s pricing policy. So the real question is not what our margin per user is,
-          but what happens to cost, users and dependency as the world changes, and which strategy
-          survives it.
+          To convert qualitative reasoning to quantitative models we define some metrics that
+          correlate with the business model. For ex: Margin per user is an estimated output of two
+          inputs: margin and the number of users. Margin itself is an output of revenue and cost, and
+          cost depends on the vendor&rsquo;s pricing policy. Constructing estimated causal
+          dependencies for such cases is important and this is what we do.&nbsp;
         </p>
       </section>
 
