@@ -1324,6 +1324,65 @@
 }
 .exp-axis-risks { margin: 0; padding-left: 1.05rem; display: flex; flex-direction: column; gap: 0.3rem; }
 .exp-axis-risks li { font-size: 0.82rem; line-height: 1.4; color: var(--exp-muted); }
+.exp-axis-lever {
+  border-top: 1px solid var(--exp-border);
+  padding-top: 0.7rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.exp-axis-lever-name {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--exp-frontier);
+}
+/* axis chip used in the control rail + pathway legend */
+.exp-axis-chip {
+  display: inline-block;
+  min-width: 1.4em;
+  text-align: center;
+  font-size: 0.66rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--exp-surface);
+  background: var(--exp-frontier);
+  border-radius: 5px;
+  padding: 0.12em 0.4em;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+.exp-axis-map {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+  align-items: center;
+  border: 1px solid var(--exp-border);
+  border-radius: 8px;
+  background: var(--exp-surface);
+  padding: 0.75rem 0.95rem;
+  margin: 0.85rem 0 0.25rem;
+}
+.exp-axis-map-title {
+  flex-basis: 100%;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  font-weight: 600;
+}
+.exp-axis-map-item {
+  font-size: 0.78rem;
+  color: var(--exp-ink);
+  display: inline-flex;
+  align-items: center;
+}
+.exp-axis-map-item em { font-style: italic; color: var(--exp-muted); }
 .exp-axis-note {
   border: 1px solid var(--exp-border);
   border-left: 3px solid var(--exp-accent-2);
