@@ -83,8 +83,8 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
       <section className="exp-section">
         <h2 className="exp-section-title">WHAT MAKES THIS HARD</h2>
         <p className="exp-prose">
-          Four decisions are taken at the same time and reinforce one another. None can be tuned in
-          isolation, and each carries its own systemic risks.
+          Considering our use case: Four decisions are to be taken at the same time and reinforce
+          one another. None can be tuned in isolation, and each carries its own systemic risks.
         </p>
         <div className="exp-axis-grid">
           {AXES.map((a) => (
