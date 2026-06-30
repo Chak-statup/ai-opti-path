@@ -256,9 +256,11 @@ export function sweepCumProfit(
 ): number[][] {
   const p = data.meta.params;
   const t = data.t;
+  const reach = reachMul(vec);
   return data.meta.strategies.map((strat, s) =>
     data.qstar_grid.map((qstar, qi) => {
-      const raw = deriveRaw(data.N[s][qi], strat.Q, qstar, dm, p, t, ctx, vec);
+      const N = data.N[s][qi].map((v) => v * reach);
+      const raw = deriveRaw(N, strat.Q, qstar, dm, p, t, ctx, vec);
       return trapezoid(raw.profit, t) / M;
     }),
   );
