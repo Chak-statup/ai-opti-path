@@ -93,7 +93,7 @@ export const Route = createFileRoute("/evaluator")({
 });
 
 const STRAT_COLORS = ["var(--exp-open)", "var(--exp-hybrid)", "var(--exp-frontier)"];
-const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "Innovation", "Resilience"];
+const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "In-house build", "Vendor indep."];
 
 type MetricKey = "users" | "margin" | "cost" | "profit";
 type Tab = "strategy" | MetricKey;
