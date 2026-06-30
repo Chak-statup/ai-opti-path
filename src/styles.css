@@ -1346,7 +1346,7 @@
 .exp-axis-card:hover .exp-axis-icon {
   background: color-mix(in srgb, var(--exp-frontier) 14%, transparent);
 }
-.exp-axis-title { font-weight: 600; font-size: 1rem; color: var(--exp-ink); margin-left: auto; }
+.exp-axis-title { font-weight: 600; font-size: 1rem; color: var(--exp-ink); }
 .exp-axis-q { margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--exp-ink); }
 .exp-axis-risks-label {
   font-size: 0.66rem;
