@@ -1,5 +1,7 @@
 // Hand-rolled SVG radar / spider chart. Matches the consulting chart style:
 // thin axes, subtle rings, muted fills. Values are 0..100 per axis.
+// Axis labels wrap onto multiple lines so long labels never clip, and the
+// chart reserves a generous label margin so it scales cleanly at any size.
 
 export interface RadarSeries {
   label: string;
@@ -9,10 +11,18 @@ export interface RadarSeries {
   fill?: boolean;
 }
 
+// Break a label into <=2 short lines for tidy multi-word axis captions.
+function wrapLabel(label: string): string[] {
+  const words = label.split(" ");
+  if (words.length < 2) return [label];
+  const mid = Math.ceil(words.length / 2);
+  return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+}
+
 export function RadarChart({
   axes,
   series,
-  size = 380,
+  size = 460,
 }: {
   axes: string[];
   series: RadarSeries[];
@@ -20,7 +30,8 @@ export function RadarChart({
 }) {
   const cx = size / 2;
   const cy = size / 2;
-  const radius = size / 2 - 56;
+  // Reserve a wide margin for the wrapped axis labels around the rim.
+  const radius = size / 2 - 92;
   const n = axes.length;
 
   const angle = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -65,12 +76,29 @@ export function RadarChart({
       ))}
       {/* axis labels */}
       {axes.map((label, i) => {
-        const p = point(i, 118);
         const a = angle(i);
-        const anchor = Math.abs(Math.cos(a)) < 0.3 ? "middle" : Math.cos(a) > 0 ? "start" : "end";
+        // Place labels just outside the outermost ring.
+        const r = radius + 22;
+        const lx = cx + Math.cos(a) * r;
+        const ly = cy + Math.sin(a) * r;
+        const anchor = Math.abs(Math.cos(a)) < 0.25 ? "middle" : Math.cos(a) > 0 ? "start" : "end";
+        const lines = wrapLabel(label);
+        const dyStart = -((lines.length - 1) * 7);
         return (
-          <text key={label} x={p.x} y={p.y} textAnchor={anchor} dominantBaseline="central" className="radar-axis-label" fill="var(--exp-muted)">
-            {label}
+          <text
+            key={label}
+            x={lx}
+            y={ly}
+            textAnchor={anchor}
+            dominantBaseline="central"
+            className="radar-axis-label"
+            fill="var(--exp-muted)"
+          >
+            {lines.map((ln, li) => (
+              <tspan key={li} x={lx} dy={li === 0 ? dyStart : 14}>
+                {ln}
+              </tspan>
+            ))}
           </text>
         );
       })}

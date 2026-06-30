@@ -10,6 +10,7 @@ import { Mitigation } from "@/components/scenario/Mitigation";
 import { AiInsight } from "@/components/scenario/AiInsight";
 import { ProblemFrame } from "@/components/scenario/ProblemFrame";
 import { HowItWorks } from "@/components/scenario/HowItWorks";
+import { Tex } from "@/components/scenario/Tex";
 import { StatupLogo } from "@/components/StatupLogo";
 import {
   computeCausalState,
@@ -546,18 +547,23 @@ function ExplorerView({ data }: { data: RunsData }) {
                     <div className="exp-axis-map">
                       <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
                       <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">01</span> Platform reach &rarr; user base <em>N(t)</em>
+                        <span className="exp-axis-chip">01</span>
+                        <span>Platform reach &rarr; user base <Tex>{"N(t)"}</Tex></span>
                       </span>
                       <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">02</span> Vendor independence &rarr; token-price shock
+                        <span className="exp-axis-chip">02</span>
+                        <span>Vendor independence &rarr; token-price shock</span>
                       </span>
                       <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">03</span> In-house build &rarr; churn <em>&chi;</em> &amp; margin <em>m</em>
+                        <span className="exp-axis-chip">03</span>
+                        <span>In-house build &rarr; churn <Tex>{"\\chi"}</Tex> &amp; margin <Tex>{"m"}</Tex></span>
                       </span>
                       <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">04</span> Scaling &rarr; quality bar <em>Q*</em> &amp; margin <em>m</em>
+                        <span className="exp-axis-chip">04</span>
+                        <span>Scaling &rarr; quality bar <Tex>{"Q^{*}"}</Tex> &amp; margin <Tex>{"m"}</Tex></span>
                       </span>
                     </div>
+
                     <div className="exp-causal-key">
                       <span className="exp-causal-key-item">
                         <span className="exp-edge-sample good" /> reinforcing link
