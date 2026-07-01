@@ -46,9 +46,8 @@ function LandingPage() {
               Scenario Evaluator
             </h1>
             <p className="lp-hero-lead">
-              AI Product economics. Scaling AI is a system of coupled decisions, not a single
-              yes or no. Set your strategy, stress it against the things you cannot control, and
-              see which path survives.
+              Scaling AI is a system of coupled decisions, not a single yes or no. Set your
+              strategy, stress it against what you cannot control, and see which path survives.
             </p>
             <div className="lp-cta-row">
               <Link to="/evaluator" className="lp-cta-primary">
@@ -59,33 +58,29 @@ function LandingPage() {
         </section>
 
         <section className="lp-about">
-          <h2 className="lp-section-title">What the evaluator shows</h2>
-          <p className="lp-about-body">
-            This is an illustration, not a forecast. It runs a live simulation of user growth
-            (logistic growth with churn and competition) and nets a transparent euro P&amp;L on top.
-            You set a strategy vector you control &mdash; quality, scaling aggressiveness, in-house
-            build, vendor independence and platform reach &mdash; and an environment you do not
-            (the vendor&rsquo;s serving price and regulatory pressure). The evaluator then traces the
-            causal pathway, profiles each strategy&rsquo;s risks, flags the tipping points, and when
-            a shock hits it proposes mitigations you can compare side by side.
-          </p>
-          <p className="lp-about-body">
-            Each decision axis is wired to a model variable. Platform reach scales the addressable
-            market and the user base; in-house build raises the quality users experience (cutting
-            churn in the trajectory) and lifts ARPU; vendor independence shields serving-price spikes
-            and lock-in; scaling aggressiveness couples the per-user ARPU premium with the quality
-            bar &mdash; and burns more tokens per user. The quality tier itself is a trade-off: a
-            premium product serves on pricier frontier models. Token price is the per-user serving
-            cost; regulation is a distinct load that raises fixed compliance cost and slows
-            innovation. Per-user margin (ARPU) is a genuine lever &mdash; the <em>output</em> is
-            profit, and it turns on retention as much as on price, so the real question is which
-            strategy holds up as the world changes.
-          </p>
+          <details className="lp-about-details">
+            <summary className="lp-section-title lp-about-summary">What the evaluator shows</summary>
+            <p className="lp-about-body">
+              An illustration, not a forecast: a live simulation of user growth (logistic growth
+              with churn and competition) with a transparent euro P&amp;L on top. You set the
+              strategy you control &mdash; quality tier, scaling, in-house build, vendor
+              independence, platform reach &mdash; and the environment you don&rsquo;t (serving
+              price, regulation). The evaluator traces the causal pathway, profiles the risks,
+              flags tipping points, and proposes mitigations when a shock hits.
+            </p>
+            <p className="lp-about-body">
+              Every axis is wired to a model variable: reach scales the market; in-house build
+              raises delivered quality and ARPU; independence shields price spikes; scaling couples
+              the ARPU premium with the quality bar &mdash; and burns more tokens; a premium tier
+              serves on pricier frontier models. Margin is a lever; profit is the output, and it
+              turns on retention as much as on price.
+            </p>
+          </details>
         </section>
       </main>
 
       <footer className="lp-footer">
-        <p>© STAT-UP · for demo purpose only</p>
+        <p>© STAT-UP · for demo purposes only</p>
       </footer>
     </div>
   );

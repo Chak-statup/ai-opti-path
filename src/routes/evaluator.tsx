@@ -237,9 +237,14 @@ function ExplorerView({ data }: { data: RunsData }) {
   const baseGuides: VGuide[] = [
     { x: params.tau, label: "τ revenue", color: "var(--exp-axis)" },
     ...(shockMonth !== undefined
-      ? [{ x: shockMonth, label: "price shock", color: "var(--exp-marker)" } as VGuide]
+      ? [{ x: shockMonth, label: `price ×${tpf.toFixed(1)}`, color: "var(--exp-marker)" } as VGuide]
       : []),
   ];
+
+  // Compact live summary of the environment the charts are computed under.
+  const envSummary = `serving ×${tpf.toFixed(1)}${
+    shockMonth !== undefined ? ` @ m${shockMonth}` : ""
+  } · reg ${Math.round(reg)}${qualityShift ? ` · quality −${qualityShift.toFixed(1)}` : ""}`;
 
   function panelSeries(key: MetricKey): Series[] {
     const faint: Series[] = [];
@@ -366,6 +371,11 @@ function ExplorerView({ data }: { data: RunsData }) {
                 ))}
               </div>
 
+              {/* Native midpoint tick: 50 = today's posture on every strategy slider. */}
+              <datalist id="exp-mid50">
+                <option value="50" label="today" />
+              </datalist>
+
               <div className="exp-control">
                 <div className="exp-control-head">
                   <span className="exp-control-label">
@@ -379,6 +389,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   max={100}
                   step={1}
                   value={reach}
+                  list="exp-mid50"
                   onChange={(e) => onKnob(setReach)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
@@ -401,6 +412,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   max={100}
                   step={1}
                   value={resil}
+                  list="exp-mid50"
                   onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
@@ -423,6 +435,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   max={100}
                   step={1}
                   value={innov}
+                  list="exp-mid50"
                   onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
@@ -445,6 +458,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   max={100}
                   step={1}
                   value={scaling}
+                  list="exp-mid50"
                   onChange={(e) => setScaling(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
@@ -561,7 +575,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">03</span>
-                        <span>In-house build &rarr; churn <Tex>{"\\chi"}</Tex> &amp; ARPU <Tex>{"m"}</Tex></span>
+                        <span>In-house build &rarr; delivered quality <Tex>{"Q_{\\mathrm{eff}}"}</Tex> &amp; ARPU <Tex>{"m"}</Tex></span>
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">04</span>
@@ -597,6 +611,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                           {x.label}
                         </button>
                       ))}
+                      <span className="exp-scenario-chip" title="Environment these charts are computed under">
+                        {envSummary}
+                      </span>
                     </div>
                     {tab === "strategy" ? (
                       <>
@@ -769,7 +786,7 @@ function ExplorerView({ data }: { data: RunsData }) {
       )}
 
       <footer className="exp-footer">
-        <p>© STAT-UP · for demo purpose only</p>
+        <p>© STAT-UP · for demo purposes only</p>
       </footer>
     </div>
   );

@@ -82,7 +82,12 @@ export function HowItWorks() {
         <div className="exp-howto-eq">
           <Tex block>
             {
-              "\\chi=\\chi_{\\min}+\\frac{\\chi_{\\max}-\\chi_{\\min}}{1+e^{\\,\\kappa(Q_{\\mathrm{eff}}-Q^{\\ast})}}\\qquad Q_{\\mathrm{eff}}=Q-\\Delta q_{\\mathrm{scen}}+0.15\\,\\iota\\qquad m=(a_0+\\Delta m\\,Q_{\\mathrm{scen}})\\big(1+0.20\\,\\iota\\big)"
+              "\\chi=\\chi_{\\min}+\\frac{\\chi_{\\max}-\\chi_{\\min}}{1+e^{\\,\\kappa(Q_{\\mathrm{eff}}-Q^{\\ast})}}"
+            }
+          </Tex>
+          <Tex block>
+            {
+              "Q_{\\mathrm{eff}}=Q-\\Delta q_{\\mathrm{scen}}+0.15\\,\\iota\\qquad m=(a_0+\\Delta m\\,Q_{\\mathrm{scen}})\\big(1+0.20\\,\\iota\\big)"
             }
           </Tex>
           <p className="exp-howto-cap">
@@ -114,14 +119,14 @@ export function HowItWorks() {
 
         <p className="exp-prose exp-howto-note">
           Where price acts: the per-user serving cost is{" "}
-          <Tex>{"s=s_0\\,\\big(1+2.0\\,(Q-0.6)\\big)\\big(1+0.4\\,\\tfrac{\\Delta m}{12}\\big)\\,\\rho"}</Tex>{" "}
-          — the token cost of goods. The tier factor prices which models you run (Lean ×0.4, Balanced
-          ×1.0, Premium ×1.6 — a premium product serves on pricier frontier models), aggressive
-          scaling burns more tokens per user (up to +40%), and <Tex>{"\\rho"}</Tex> is the vendor's
-          price factor after your hedge. A <em>pricing shock</em> is a temporal event:{" "}
-          <Tex>{"\\rho"}</Tex> stays at today's ×1 until the shock month, then steps up to the new
-          level and stays there. Regulation does not touch <Tex>{"s"}</Tex>; it is a distinct
-          fixed-cost load (below).
+          <Tex>{"s=s_0\\,f(Q)\\,\\big(1+0.4\\,\\tfrac{\\Delta m}{12}\\big)\\,\\rho"}</Tex> — the
+          token cost of goods. The tier factor <Tex>{"f(Q)=1+2.0\\,(Q-0.6)"}</Tex> prices which
+          models you run (Lean ×0.4, Balanced ×1.0, Premium ×1.6 — a premium product serves on
+          pricier frontier models), aggressive scaling burns more tokens per user (up to +40%), and{" "}
+          <Tex>{"\\rho"}</Tex> is the vendor's price factor after your hedge. A <em>pricing shock</em>{" "}
+          is a temporal event: <Tex>{"\\rho"}</Tex> stays at today's ×1 until the shock month, then
+          steps up to the new level and stays there. Regulation does not touch <Tex>{"s"}</Tex>; it
+          is a distinct fixed-cost load (below).
         </p>
       </section>
 

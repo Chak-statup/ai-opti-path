@@ -152,7 +152,7 @@ export function CausalDiagram({
   };
 
   const nodeSub: Record<string, string> = {
-    Q: `quality ${cs.Q.toFixed(2)}`,
+    Q: `delivered quality ${cs.Q.toFixed(2)}`,
     Qstar: "market bar",
     dm: "ARPU premium",
     phi: "competition",

@@ -12,7 +12,7 @@ const RISK_LABEL: Record<string, string> = {
 
 function fmt(v: number): string {
   const sign = v < 0 ? "−" : "";
-  return `${sign}€${Math.abs(v).toFixed(0)}M`;
+  return `${sign}€${Math.abs(v).toFixed(1)}M`;
 }
 
 export function Recommendation({

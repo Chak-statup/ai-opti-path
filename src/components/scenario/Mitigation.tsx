@@ -23,12 +23,12 @@ const CAND_COLORS = ["#2980B9", "#16A085", "#F39C12", "#4B2C50", "#C0392B"];
 
 function fmt(v: number): string {
   const sign = v < 0 ? "−" : "";
-  return `${sign}€${Math.abs(v).toFixed(0)}M`;
+  return `${sign}€${Math.abs(v).toFixed(1)}M`;
 }
 
 function fmtDelta(v: number): string {
   const sign = v >= 0 ? "+" : "−";
-  return `${sign}€${Math.abs(v).toFixed(0)}M`;
+  return `${sign}€${Math.abs(v).toFixed(1)}M`;
 }
 
 // Mocked AI briefing, composed locally from the chosen candidate's numbers.

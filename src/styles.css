@@ -472,6 +472,16 @@
   color: var(--exp-bg);
   border-color: var(--exp-ink);
 }
+.exp-scenario-chip {
+  align-self: center;
+  border: 1px dashed var(--exp-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.7rem;
+  color: var(--exp-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .exp-home-link {
   font-size: 0.82rem;
   color: var(--exp-muted);
@@ -674,11 +684,22 @@
   margin-top: 3.5rem;
   max-width: 720px;
 }
+.lp-about-summary {
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 0;
+}
+.lp-about-details[open] .lp-about-summary {
+  margin-bottom: 1.1rem;
+}
 .lp-about-body {
   font-size: 0.85rem;
   line-height: 1.65;
   color: var(--exp-muted);
   margin: 0;
+}
+.lp-about-body + .lp-about-body {
+  margin-top: 0.8rem;
 }
 
 .lp-footer {
