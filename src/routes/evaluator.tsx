@@ -164,7 +164,6 @@ function ExplorerView({ data }: { data: RunsData }) {
     setDm(k.dm);
     setQstar(k.qstar);
     setActivePreset(null);
-    setShockMonth(undefined);
   }
 
   const qi = qstarIndex(qstar, data.qstar_grid);
@@ -207,7 +206,10 @@ function ExplorerView({ data }: { data: RunsData }) {
     return (v: T) => {
       setter(v);
       setActivePreset(null);
-      setShockMonth(undefined); // a hand-set price is a flat level, not a timed shock
+      // NOTE: do not clear shockMonth here. The scenario's timed shock is part of
+      // the environment; adjusting a lever is your RESPONSE to it, not a dismissal.
+      // (Dragging the token price down to ×1 flattens the step on its own, since
+      // the pre- and post-shock levels then coincide.)
     };
   }
   function applyPreset(p: ScenarioPreset) {
