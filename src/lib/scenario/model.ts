@@ -9,10 +9,12 @@
 //   • Strategy vector (INTERNAL — the company controls these), each a 0..100
 //     slider with a documented, comparable effect (see CALIB):
 //       – Platform reach       → scales the addressable market K (dynamics)
-//       – In-house build       → lowers churn χ + lifts ARPU (dynamics + €)
+//       – In-house build       → raises delivered quality (→ lower churn) + lifts ARPU
 //       – Vendor independence  → shields token-price spikes + lowers lock-in (€)
 //       – Scaling aggressiveness → couples the ARPU premium Δm and quality bar Q*
-//     plus the discrete strategy choice Q (product quality tier).
+//     plus the discrete strategy choice Q (product quality tier). A higher tier
+//     runs richer (frontier) models, so it costs MORE per user to serve — the
+//     tier choice is a genuine trade-off, not a free lunch.
 //   • Environment (EXTERNAL — not controlled):
 //       – Token price factor   → per-user serving cost (COGS); a "pricing shock"
 //                                is simply a high level of this.
@@ -41,7 +43,7 @@ export const CALIB = {
   sigma: 0.16, // [src] demand volatility CV (frePPLe SBC; <0.70 = smooth)
 
   // In-house build (innovation) — DYNAMICAL + economic
-  innovChurnCut: 0.3, // [assume] full build cuts churn 30% (needs A/B cohort data)
+  innovQualityLift: 0.15, // [assume] full build raises DELIVERED quality +0.15 (~half a tier); churn responds through the same logistic cliff (needs A/B cohort data)
   innovArpuLift: 0.2, // [assume] ... and lifts ARPU 20% (needs monetization experiment)
 
   // Vendor independence (resilience) — economic (shock buffer)
@@ -49,9 +51,10 @@ export const CALIB = {
 
   // Economics (euros / active user / month unless noted)
   arpu0: 9, // [src] base ARPU €/user/mo (Slack Pro €6.75–8.25/seat)
-  serve0: 2.5, // [src+assume] API price grounded × assumed ~0.5–1M tokens/user/mo
+  serve0: 2.5, // [src+assume] API price grounded × assumed ~0.5–1M tokens/user/mo — at the BALANCED tier
+  qualityServeSlope: 2.0, // [src-anchored] serving factor 1+slope·(Q−0.6): Lean ×0.4, Balanced ×1.0, Premium ×1.6 — a higher tier runs pricier frontier models (cross-tier API spreads are 3–5×)
   scalingServeBump: 0.4, // [assume] full aggressive scaling raises serving cost 40% (more tokens/user)
-  cac: 20, // [src] €/user (First Page Sage; per-seat — benchmarks per-account ~35× higher)
+  cac: 20, // [src] blended €/user charged on every GROSS ADD the growth equation generates (First Page Sage; per-seat — benchmarks per-account ~35× higher)
 
   // Fixed cost (euros / month)
   F0: 400_000, // [src] baseline org/infra (~15–25 EU ML FTE + infra; ×10 = €4M/mo)
@@ -228,10 +231,10 @@ export function reachToK(vec: StrategyVector): number {
   return CALIB.K_min + (CALIB.K_max - CALIB.K_min) * reachN;
 }
 
-// Churn rate χ: logistic cliff around Q*, then reduced by in-house build.
-export function chi(Q: number, qstar: number, innovEff = 0): number {
-  const base = CALIB.chiMin + (CALIB.chiMax - CALIB.chiMin) / (1 + Math.exp(CALIB.kappa * (Q - qstar)));
-  return base * (1 - CALIB.innovChurnCut * innovEff);
+// Churn rate χ: a pure logistic cliff around Q*. Everything that changes churn
+// does so through ONE channel — the quality users actually experience.
+export function chi(Q: number, qstar: number): number {
+  return CALIB.chiMin + (CALIB.chiMax - CALIB.chiMin) / (1 + Math.exp(CALIB.kappa * (Q - qstar)));
 }
 
 // Quality that actually reaches users under a scenario. Some scenarios trade
@@ -239,6 +242,21 @@ export function chi(Q: number, qstar: number, innovEff = 0): number {
 // quality — which shifts effective quality down, lifting churn and cutting users.
 export function scenarioQuality(Q: number, ctx: ScenarioContext): number {
   return clamp01(Q - (ctx.qualityShift ?? 0));
+}
+
+// The quality users EXPERIENCE: the tier, shifted down by scenario trades
+// (open-source adoption) and lifted by in-house build (regulation-dragged).
+// This is the single quality that drives churn — so in-house build genuinely
+// mitigates a scenario quality drop by climbing back over the bar Q*.
+export function effectiveQuality(Q: number, ctx: ScenarioContext, vec: StrategyVector): number {
+  return clamp01(scenarioQuality(Q, ctx) + CALIB.innovQualityLift * innovEffective(vec, ctx));
+}
+
+// Serving-cost factor of the quality tier: a premium product runs richer
+// (frontier) models and burns more tokens, a lean one runs cheaper models.
+// Anchored ×1 at the Balanced tier (Q = 0.6).
+export function qualityServeFactor(Q: number): number {
+  return Math.max(0.2, 1 + CALIB.qualityServeSlope * (Q - 0.6));
 }
 
 // Vendor independence as a portfolio: hedgeShare(R) = maxHedge · R/100 is the
@@ -283,12 +301,13 @@ function arpuPerUser(Q: number, dm: number, innovEff: number): number {
 
 // ---- The simulation -----------------------------------------------------
 // Euler–Maruyama on dN = [p(K−N) + rN(1−N/K) − χN − φ(t/T)N] dt + σN √dt dW.
-function simulate(Q: number, qstar: number, K: number, innovEff: number, noise?: number[]): number[] {
+// Q here is the EFFECTIVE quality (tier + scenario shift + in-house build).
+function simulate(Qeff: number, qstar: number, K: number, noise?: number[]): number[] {
   const n = CALIB.steps;
   const T = CALIB.T;
   const dt = T / (n - 1);
   const sdt = Math.sqrt(dt);
-  const ch = chi(Q, qstar, innovEff);
+  const ch = chi(Qeff, qstar);
   const N = new Array<number>(n);
   N[0] = CALIB.N0;
   for (let i = 1; i < n; i++) {
@@ -343,12 +362,12 @@ export function deriveStrategy(
   const t = data.t;
   const strat = data.meta.strategies[s];
   const Q = strat.Q;
-  const Qs = scenarioQuality(Q, ctx); // quality users actually get under the scenario
+  const Qs = scenarioQuality(Q, ctx); // quality users get before the build lift (prices the ARPU)
+  const Qeff = effectiveQuality(Q, ctx, vec); // quality users experience (drives churn)
   const K = reachToK(vec);
-  const innovEff = innovEffective(vec, ctx);
 
-  const N = simulate(Qs, qstar, K, innovEff);
-  const rawDet = deriveRawExact(N, Qs, qstar, dm, t, ctx, vec);
+  const N = simulate(Qeff, qstar, K);
+  const rawDet = deriveRawExact(N, Q, Qs, dm, t, ctx, vec, K);
   const det = toUnits(rawDet, N);
   const cumProfit = trapezoid(rawDet.profit, t) / M;
   const cumRevenue = trapezoid(rawDet.revenue, t) / M;
@@ -356,45 +375,51 @@ export function deriveStrategy(
   const rng = mulberry32(1000 + s * 97 + Math.round(qstar * 100));
   const samples: MetricSeries[] = Array.from({ length: 8 }, () => {
     const noise = Array.from({ length: CALIB.steps }, () => gauss(rng));
-    const Ns = simulate(Qs, qstar, K, innovEff, noise);
-    return toUnits(deriveRawExact(Ns, Qs, qstar, dm, t, ctx, vec), Ns);
+    const Ns = simulate(Qeff, qstar, K, noise);
+    return toUnits(deriveRawExact(Ns, Q, Qs, dm, t, ctx, vec, K), Ns);
   });
 
   return { label: strat.label, Q, cumProfit, cumRevenue, samples, ...det };
 }
 
-// Exact P&L given an explicit Q* (churn matches the simulated trajectory).
+// Exact P&L on a simulated trajectory. tierQ prices the serving cost (which
+// models the tier runs); Qs prices the ARPU (what the delivered product can
+// charge). Acquisition is charged on the GROSS ADDS the growth equation
+// actually generates — p(K−N) paid + rN(1−N/K) word-of-mouth — at the blended
+// CAC, so growing the base costs money and churned users are only "replaced"
+// insofar as the dynamics actually replace them.
 function deriveRawExact(
   N: number[],
-  Q: number,
-  qstar: number,
+  tierQ: number,
+  Qs: number,
   dm: number,
   t: number[],
   ctx: ScenarioContext,
   vec: StrategyVector,
+  K: number,
 ) {
   const n = N.length;
   const revenue = new Array<number>(n);
   const cost = new Array<number>(n);
   const profit = new Array<number>(n);
   const innovEff = innovEffective(vec, ctx);
-  const arpu = arpuPerUser(Q, dm, innovEff);
-  // Serving cost is the token COGS per user. Aggressive scaling (a richer, more
-  // premium product) burns more tokens per user, so it raises the per-user cost.
-  const serveScale = 1 + CALIB.scalingServeBump * clamp01(dm / 12);
+  const arpu = arpuPerUser(Qs, dm, innovEff);
+  // Serving cost is the token COGS per user: the tier sets which models you
+  // run (qualityServeFactor); aggressive scaling (a richer product) burns more
+  // tokens per user on top.
+  const serveScale = qualityServeFactor(tierQ) * (1 + CALIB.scalingServeBump * clamp01(dm / 12));
   // If the scenario carries a shock, price is today's ×1 until shockMonth, then
   // steps to the prevailing level.
   const servePost = CALIB.serve0 * serveScale * shieldedTpf(ctx.tokenPriceFactor, vec);
   const servePre = CALIB.serve0 * serveScale * shieldedTpf(1, vec);
-  const churn = chi(Q, qstar, innovEff);
   const F = fixedCost(vec, ctx);
   for (let i = 0; i < n; i++) {
     const ti = t[i];
     const gate = ti >= CALIB.tau ? 1 : 0;
-    const comp = (CALIB.phi * ti) / CALIB.T;
     const serve = ctx.shockMonth !== undefined && ti < ctx.shockMonth ? servePre : servePost;
+    const adds = Math.max(0, CALIB.p * (K - N[i]) + CALIB.r * N[i] * (1 - N[i] / K));
     const rev = gate * arpu * N[i];
-    const c = serve * N[i] + CALIB.cac * (churn + comp) * N[i] + F;
+    const c = serve * N[i] + CALIB.cac * adds + F;
     revenue[i] = rev;
     cost[i] = c;
     profit[i] = rev - c;
@@ -411,12 +436,12 @@ export function sweepCumProfit(
 ): number[][] {
   const t = data.t;
   const K = reachToK(vec);
-  const innovEff = innovEffective(vec, ctx);
   return data.meta.strategies.map((strat) => {
     const Qs = scenarioQuality(strat.Q, ctx);
+    const Qeff = effectiveQuality(strat.Q, ctx, vec);
     return data.qstar_grid.map((qstar) => {
-      const N = simulate(Qs, qstar, K, innovEff);
-      const raw = deriveRawExact(N, Qs, qstar, dm, t, ctx, vec);
+      const N = simulate(Qeff, qstar, K);
+      const raw = deriveRawExact(N, strat.Q, Qs, dm, t, ctx, vec, K);
       return trapezoid(raw.profit, t) / M;
     });
   });
@@ -472,10 +497,11 @@ export function computeCausalState(
   vec: StrategyVector = DEFAULT_VECTOR,
 ): CausalState {
   const Q = data.meta.strategies[s].Q;
-  const Qs = scenarioQuality(Q, ctx); // effective quality under the scenario
+  const Qs = scenarioQuality(Q, ctx); // scenario quality (prices the ARPU)
+  const Qeff = effectiveQuality(Q, ctx, vec); // quality users experience (drives churn)
   const innovEff = innovEffective(vec, ctx);
 
-  const churn = chi(Qs, qstar, innovEff);
+  const churn = chi(Qeff, qstar);
   const churnNorm = clamp01((churn - CALIB.chiMin) / (CALIB.chiMax - CALIB.chiMin));
 
   const margin = arpuPerUser(Qs, dm, innovEff);
@@ -483,7 +509,9 @@ export function computeCausalState(
   const marginCeil = (CALIB.arpu0 + (data.meta.params.dmMax ?? 12) * Q) * (1 + CALIB.innovArpuLift);
   const marginNorm = clamp01((margin - marginFloor) / Math.max(marginCeil - marginFloor, 1e-6));
 
-  const comp = clamp01(CALIB.phi / 0.5); // standing competition drag (grows over time)
+  // Competition is exogenous (a linear 0→φ ramp over the horizon, moved by no
+  // lever): show its horizon-average rate φ/2 against the churn scale.
+  const comp = clamp01(CALIB.phi / 2 / CALIB.chiMax);
 
   const d = deriveStrategy(data, s, dm, qstar, ctx, vec);
   const usersEnd = d.users[d.users.length - 1];
@@ -500,7 +528,7 @@ export function computeCausalState(
   const shockNorm = clamp01((tpfEff - 1) / 2);
 
   return {
-    Q: Qs,
+    Q: Qeff,
     churn,
     churnNorm,
     margin,
@@ -583,8 +611,9 @@ export function deriveRiskScores(
   // Shielded price stress: 0 at today's price, 1 at a heavy spike after resilience.
   const stress = clamp01((effectiveTpf(ctx, vec) - 1) / 2);
   // Cliff: how far the committed quality bar Q* sits above the quality users
-  // actually get (scenario-shifted, e.g. lower under open-source adoption).
-  const cliff = clamp01((qstar - scenarioQuality(Q, ctx)) / 0.4);
+  // actually experience (scenario-shifted down, lifted by in-house build — so
+  // building genuinely reduces the cliff a quality-losing scenario opens).
+  const cliff = clamp01((qstar - effectiveQuality(Q, ctx, vec)) / 0.4);
 
   // Cost exposure: ~0 at today's price; climbs with the (shielded) serving price
   // and with how many users you serve — so a pricing shock at scale drives it to
@@ -608,7 +637,7 @@ export const RISK_AXES: { key: keyof RiskScores; label: string; driver: string; 
   { key: "cost", label: "Cost exposure", driver: "Token price ↑ · Platform reach ↑ · Vendor independence ↓", rises: "the serving price climbs while you serve many users" },
   { key: "lockin", label: "Vendor lock-in", driver: "Vendor independence ↓ · Quality ↑", rises: "you sit deep on one vendor with no cheap way to switch" },
   { key: "capability", label: "Capability gap", driver: "In-house build ↓ · Regulation ↑", rises: "you build little in-house and lean on the vendor's roadmap" },
-  { key: "scaling", label: "Scaling risk", driver: "Scaling aggressiveness ↑ (a bar above your quality)", rises: "you push margin and a quality bar the product can't yet meet" },
+  { key: "scaling", label: "Scaling risk", driver: "Scaling aggressiveness ↑ · delivered quality ↓ (in-house build restores it)", rises: "you push margin and a quality bar above what users actually experience" },
   { key: "regulatory", label: "Regulatory load", driver: "Regulation ↑ · Vendor independence & build ↓", rises: "compliance duty outpaces what your capability absorbs" },
 ];
 
@@ -770,7 +799,7 @@ export function proposeMitigations(
   } else if (dominant === "capability") {
     targeted.push({
       id: "build", label: "Build in-house", targetRisk: RISK_NAME.capability,
-      rationale: "Raise in-house build to close the capability gap: it lowers churn in the trajectory and lifts ARPU, at a higher fixed cost.",
+      rationale: "Raise in-house build to close the capability gap: it raises the quality users experience (churn falls through the same cliff) and lifts ARPU, at a higher fixed cost.",
       strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ innovation: 88 }),
     });
     targeted.push({
@@ -786,9 +815,16 @@ export function proposeMitigations(
     });
     targeted.push({
       id: "ease-and-retain", label: "Ease off + retain", targetRisk: RISK_NAME.scaling,
-      rationale: "Ease scaling and lift in-house build so lower churn shrinks the re-acquisition bill that the cost structure is straining under.",
+      rationale: "Ease scaling and lift in-house build: the quality bar retreats while delivered quality rises, so churn falls on both counts.",
       strat: base.strat, dm: clampDm(base.dm - 2.5), qstar: clampQ(base.qstar - 0.08), vec: V({ innovation: 80 }),
     });
+    if ((ctx.qualityShift ?? 0) > 0) {
+      targeted.push({
+        id: "rebuild-quality", label: "Rebuild quality in-house", targetRisk: RISK_NAME.scaling,
+        rationale: "The scenario cut the quality users experience below the bar you committed to. A hard in-house build push raises delivered quality back over the bar — retention recovers at the cost of higher fixed spend.",
+        strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ innovation: 90 }),
+      });
+    }
   } else {
     targeted.push({
       id: "absorb", label: "Absorb the compliance load", targetRisk: RISK_NAME.regulatory,
