@@ -113,7 +113,7 @@ export interface RunsData {
 export interface MetricSeries {
   users: number[]; // millions of active users
   revenue: number[]; // €M / month (ARPU × users, after the deployment lag)
-  cost: number[]; // €M / month (serving + re-acquisition + fixed)
+  cost: number[]; // €M / month (serving + acquisition of gross adds + fixed)
   profit: number[]; // €M / month (revenue − cost)
 }
 

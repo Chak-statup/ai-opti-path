@@ -405,8 +405,8 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
                 <p className="exp-control-note">
                   <strong>Vendor choice.</strong> The share of serving you can run on cheaper
-                  alternatives. At 70% independence only ~30% of your traffic feels a vendor price
-                  hike (so ×3 becomes ×1.6) — at a higher fixed cost.
+                  alternatives. At full independence (100) only ~30% of your traffic feels a vendor
+                  price hike (so ×3 becomes ×1.6; at 70 it becomes ×2.0) — at a higher fixed cost.
                 </p>
               </div>
 
@@ -426,8 +426,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  <strong>Build vs buy.</strong> API-first to in-house. More in-house build lowers
-                  churn and lifts per-user margin, but raises fixed cost.
+                  <strong>Build vs buy.</strong> API-first to in-house. More in-house build raises
+                  the quality users experience (cutting churn) and lifts per-user margin, but raises
+                  fixed cost.
                 </p>
               </div>
 
@@ -474,8 +475,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setTpf)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today; a
-                  pricing shock is simply a high value here. Vendor independence shields the excess.
+                  Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today;
+                  set high, it is the prevailing price — the Pricing-shock preset steps up to it at a
+                  set month. Vendor independence shields the excess.
                 </p>
               </div>
 
@@ -603,7 +605,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                           xs={data.qstar_grid}
                           series={sweepSeries}
                           xLabel="Quality threshold"
-                          yLabel="$M over horizon"
+                          yLabel="€M over horizon"
                           vGuides={sweepGuides}
                           zeroLine
                           xFormat={(v) => v.toFixed(1)}

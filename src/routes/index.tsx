@@ -71,10 +71,12 @@ function LandingPage() {
           </p>
           <p className="lp-about-body">
             Each decision axis is wired to a model variable. Platform reach scales the addressable
-            market and the user base; in-house build lowers churn in the trajectory and lifts ARPU;
-            vendor independence shields serving-price spikes and lock-in; scaling aggressiveness
-            couples the per-user ARPU premium with the quality bar. Token price is the per-user
-            serving cost; regulation is a distinct load that raises fixed compliance cost and slows
+            market and the user base; in-house build raises the quality users experience (cutting
+            churn in the trajectory) and lifts ARPU; vendor independence shields serving-price spikes
+            and lock-in; scaling aggressiveness couples the per-user ARPU premium with the quality
+            bar &mdash; and burns more tokens per user. The quality tier itself is a trade-off: a
+            premium product serves on pricier frontier models. Token price is the per-user serving
+            cost; regulation is a distinct load that raises fixed compliance cost and slows
             innovation. Per-user margin (ARPU) is a genuine lever &mdash; the <em>output</em> is
             profit, and it turns on retention as much as on price, so the real question is which
             strategy holds up as the world changes.

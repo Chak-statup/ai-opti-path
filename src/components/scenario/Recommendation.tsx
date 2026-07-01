@@ -38,10 +38,10 @@ export function Recommendation({
 
   const flip =
     ctx.tokenPriceFactor >= 2.5
-      ? "If serving prices return to today's level, the higher-quality strategy regains the lead — most of the gap here is the vendor's pricing, not the product."
+      ? "A sustained price at this level punishes the premium tier hardest — it serves users on the priciest frontier models. If prices return toward today's ×1, the premium tier regains the lead; raising vendor independence recovers part of it either way."
       : ctx.regPressure >= 70
-        ? "If regulatory load eases, the build-heavy strategy pays off faster — compliance is currently the binding constraint."
-        : "If the vendor doubles serving prices, the ranking shifts toward the lower-exposure, more vendor-independent strategy.";
+        ? "Heavy regulation compresses every tier without reordering them. What it does change is the in-house-build lever: compliance eats up to 40% of delivered innovation at full load, so build pays back faster once the load eases."
+        : "The lead rests on today's serving prices: if the vendor's price roughly doubles and persists, the premium tier's frontier serving cost erodes its lead, and past ~×2.5 the ranking flips to the leaner tier.";
 
   return (
     <div className="exp-rec">

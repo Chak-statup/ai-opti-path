@@ -17,7 +17,8 @@ Every parameter and formula in `src/lib/scenario/model.ts` (`CALIB` block) with 
 | `serve0` | 2.5 (range 0.9–6.5) | Anthropic / OpenAI / Google API pricing — https://platform.claude.com/docs/en/about-claude/pricing , https://developers.openai.com/api/docs/pricing , https://ai.google.dev/gemini-api/docs/pricing | Frontier blend ~$3/$15 (Sonnet), $2.50/$15 (GPT-5.4), $1.25/$10 (Gemini Pro) × **assumed** ~0.5–1M tokens/user/mo. **Price grounded; token volume is an assumption.** |
 | `arpu0` | 9 | Slack Pro — https://slack.com/pricing/pro | Per-seat €6.75–8.25 brackets €9; AI seats run higher, so €9 is conservative. |
 | `dm` (0–12, default 6) | up to 12 | Microsoft 365 Copilot — https://www.microsoft.com/en-us/microsoft-365-copilot/pricing/enterprise | Verified AI premium $30/user/mo → €12 is low-to-mid of the $5–30 uplift band. |
-| `cac` | 20 (per-seat) | First Page Sage B2B CAC — https://firstpagesage.com/reports/average-customer-acquisition-cost-cac-by-industry-b2b-edition-fc/ | Benchmarks are per-**account** (FS ~€726; Insurance-SaaS ~$1,280). €20/seat implies a self-serve motion, **not** enterprise field sales (~35× higher per account). |
+| `cac` | 20 (per-seat) | First Page Sage B2B CAC — https://firstpagesage.com/reports/average-customer-acquisition-cost-cac-by-industry-b2b-edition-fc/ | Benchmarks are per-**account** (FS ~€726; Insurance-SaaS ~$1,280). €20/seat implies a self-serve motion, **not** enterprise field sales (~35× higher per account). Charged on **gross adds** `p(K−N)+rN(1−N/K)` — the blended-CAC definition (total acquisition spend / all new users), consistent with the benchmark's own construction. |
+| `qualityServeSlope` | 2.0 | Anthropic / OpenAI / Google API pricing (cross-tier spreads, URLs above) | Serving factor `1+2.0·(Q−0.6)`: Lean ×0.4 / Balanced ×1.0 / Premium ×1.6 (4× Lean→Premium spread). Real cross-tier spreads are 3–5× (Opus $15/$75 vs Sonnet $3/$15 = 5×; Gemini Pro→Flash 4×), so the in-model spread is **conservative**. The tier→model-mix mapping itself is an assumption. |
 
 ### Growth & diffusion (Bass coefficients, /month)
 | Symbol | Value | Source | Note |
@@ -66,7 +67,7 @@ State plainly as modelling choices.
 | Symbol (value) | What it is | Data needed to fit it |
 |---|---|---|
 | `kappa` = 12 | Steepness of the logistic churn cliff around Q* | Cohort churn across a quality/satisfaction (NPS, task-success) gradient — fit the logistic slope. |
-| `innovChurnCut` = 0.30 | In-house build cuts churn 30% | Before/after or A/B cohort retention, in-house vs vendor-only. |
+| `innovQualityLift` = 0.15 | Full in-house build raises DELIVERED quality +0.15 (~half a tier); churn responds through the same logistic cliff. (Replaced the earlier multiplicative `innovChurnCut` = 0.30 — decided 2026-07-01: one quality channel drives churn, so build genuinely mitigates a scenario quality drop.) | Before/after or A/B cohort retention mapped onto the quality index, in-house vs vendor-only. |
 | `innovArpuLift` = 0.20 | In-house build lifts ARPU 20% | Monetization experiments isolating uplift from proprietary features. |
 | `regComplianceBuffer` = 0.30 | Resilience+build buy down 30% of compliance | Case studies on portability + in-house compliance reducing audit/QMS cost. |
 | `Q` tiers 0.3/0.6/0.9, `qstar` 0.5 | Dimensionless quality index & churn threshold | Map an observable quality metric to churn; locate the threshold empirically. |

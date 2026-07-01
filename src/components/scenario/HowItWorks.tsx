@@ -13,8 +13,9 @@ const PARAMS: ParamRow[] = [
   { sym: "\\kappa", meaning: "Churn-cliff steepness", value: "12" },
   { sym: "Q^{\\ast}", meaning: "Churn threshold, cliff location (set by scaling)", value: "0.1 – 1.0" },
   { sym: "a_0,\\,\\Delta m", meaning: "Base ARPU, scaling premium slope", value: "€9, up to €12 /user/mo" },
-  { sym: "s_0", meaning: "Serving (token) cost / user at price ×1", value: "€2.5 /user/mo" },
-  { sym: "c_{\\mathrm{ac}}", meaning: "Cost per (re)acquired user", value: "€20" },
+  { sym: "s_0", meaning: "Serving (token) cost / user at price ×1, Balanced tier", value: "€2.5 /user/mo" },
+  { sym: "1+2.0(Q-0.6)", meaning: "Tier serving factor (which models you run)", value: "×0.4 / ×1.0 / ×1.6" },
+  { sym: "c_{\\mathrm{ac}}", meaning: "Blended cost per gross acquired user", value: "€20" },
   { sym: "\\varphi", meaning: "Peak competitive-loss rate", value: "0.35 / mo" },
   { sym: "\\sigma", meaning: "Demand volatility", value: "0.16" },
   { sym: "F_0", meaning: "Base fixed cost per month (+ investments)", value: "€0.4M / mo" },
@@ -29,7 +30,7 @@ const FINDINGS = [
   },
   {
     h: "Strategies can lose money",
-    b: "A low-quality strategy bleeds re-acquisition cost refilling a high-churn base, so it can destroy value even while it still has users.",
+    b: "A low-quality strategy pays the blended acquisition cost for every user the growth engine adds while churn drains them straight back out — a paid leaky bucket that destroys value even while the user count looks alive.",
   },
   {
     h: "There is a critical threshold",
@@ -37,7 +38,7 @@ const FINDINGS = [
   },
   {
     h: "Retention beats margin",
-    b: "The per-user ARPU lift from quality is the minor channel. Keeping users — low churn, hence low re-acquisition cost — is the dominant one, which is why in-house build pays.",
+    b: "The per-user ARPU lift from quality is the minor channel. Keeping users — low churn compounds the paying base every month — is the dominant one, which is why in-house build pays.",
   },
 ];
 
@@ -81,35 +82,46 @@ export function HowItWorks() {
         <div className="exp-howto-eq">
           <Tex block>
             {
-              "\\chi=\\Big[\\chi_{\\min}+\\frac{\\chi_{\\max}-\\chi_{\\min}}{1+e^{\\,\\kappa(Q-Q^{\\ast})}}\\Big]\\big(1-0.30\\,\\iota\\big)\\qquad m=(a_0+\\Delta m\\,Q)\\big(1+0.20\\,\\iota\\big)"
+              "\\chi=\\chi_{\\min}+\\frac{\\chi_{\\max}-\\chi_{\\min}}{1+e^{\\,\\kappa(Q_{\\mathrm{eff}}-Q^{\\ast})}}\\qquad Q_{\\mathrm{eff}}=Q-\\Delta q_{\\mathrm{scen}}+0.15\\,\\iota\\qquad m=(a_0+\\Delta m\\,Q_{\\mathrm{scen}})\\big(1+0.20\\,\\iota\\big)"
             }
           </Tex>
           <p className="exp-howto-cap">
-            Quality lowers churn through a threshold cliff at <Tex>{"Q^{\\ast}"}</Tex>; in-house build{" "}
-            <Tex>{"\\iota"}</Tex> lowers it <em>further in the trajectory</em> (retention) and lifts
-            per-user ARPU <Tex>{"m"}</Tex>. ARPU is a <strong>lever</strong>, not an output.
+            Churn responds to <strong>one</strong> quality — the quality users actually experience{" "}
+            <Tex>{"Q_{\\mathrm{eff}}"}</Tex>: the chosen tier <Tex>{"Q"}</Tex>, shifted <em>down</em> by
+            scenarios that trade quality for cost (<Tex>{"\\Delta q_{\\mathrm{scen}}"}</Tex>, e.g.
+            adopting open-source models) and lifted by in-house build <Tex>{"\\iota"}</Tex> (up to
+            +0.15, about half a tier) — through a threshold cliff at <Tex>{"Q^{\\ast}"}</Tex>. That is
+            why building in-house can genuinely climb back over the bar after a quality-losing
+            scenario. ARPU <Tex>{"m"}</Tex> is priced on the scenario quality and lifted separately by
+            build; it is a <strong>lever</strong>, not an output.
           </p>
         </div>
 
         <div className="exp-howto-eq">
           <Tex block>
             {
-              "\\Pi(t)=\\underbrace{\\Theta(t-\\tau)\\,m\\,N}_{\\text{revenue}}-\\underbrace{s\\,N}_{\\text{serving}}-\\underbrace{c_{\\mathrm{ac}}\\big[\\chi+\\varphi\\tfrac{t}{T}\\big]N}_{\\text{re-acquisition}}-\\underbrace{F}_{\\text{fixed}}"
+              "\\Pi(t)=\\underbrace{\\Theta(t-\\tau)\\,m\\,N}_{\\text{revenue}}-\\underbrace{s\\,N}_{\\text{serving}}-\\underbrace{c_{\\mathrm{ac}}\\big[p(K-N)+rN(1-\\tfrac{N}{K})\\big]}_{\\text{acquisition}}-\\underbrace{F}_{\\text{fixed}}"
             }
           </Tex>
           <p className="exp-howto-cap">
             Profit flow, in euros: revenue (ARPU × users, earned only after the deployment lag{" "}
-            <Tex>{"\\tau"}</Tex>) minus the serving cost of every active user, minus the cost of
-            replacing churned and competed-away users, minus fixed cost. Cumulative profit is the
-            time-integral of <Tex>{"\\Pi(t)"}</Tex> over the horizon.
+            <Tex>{"\\tau"}</Tex>) minus the serving cost of every active user, minus the blended
+            acquisition cost <Tex>{"c_{\\mathrm{ac}}"}</Tex> of every gross user the growth equation
+            actually adds — growing the base costs real money — minus fixed cost. Cumulative profit
+            is the time-integral of <Tex>{"\\Pi(t)"}</Tex> over the horizon.
           </p>
         </div>
 
         <p className="exp-prose exp-howto-note">
-          Where price acts: the serving cost <Tex>{"s=s_0\\,\\rho"}</Tex> is the per-user token cost of
-          goods. A <em>pricing shock</em> is simply a high token-price factor <Tex>{"\\rho"}</Tex> —
-          there is no separate one-off event baked into the curve. Regulation does not touch{" "}
-          <Tex>{"s"}</Tex>; it is a distinct fixed-cost load (below).
+          Where price acts: the per-user serving cost is{" "}
+          <Tex>{"s=s_0\\,\\big(1+2.0\\,(Q-0.6)\\big)\\big(1+0.4\\,\\tfrac{\\Delta m}{12}\\big)\\,\\rho"}</Tex>{" "}
+          — the token cost of goods. The tier factor prices which models you run (Lean ×0.4, Balanced
+          ×1.0, Premium ×1.6 — a premium product serves on pricier frontier models), aggressive
+          scaling burns more tokens per user (up to +40%), and <Tex>{"\\rho"}</Tex> is the vendor's
+          price factor after your hedge. A <em>pricing shock</em> is a temporal event:{" "}
+          <Tex>{"\\rho"}</Tex> stays at today's ×1 until the shock month, then steps up to the new
+          level and stays there. Regulation does not touch <Tex>{"s"}</Tex>; it is a distinct
+          fixed-cost load (below).
         </p>
       </section>
 
@@ -118,7 +130,9 @@ export function HowItWorks() {
         <p className="exp-prose">
           Beyond the quality tier, three company-level levers act on the same trajectory, each with a
           documented, comparable effect and a real trade-off. Two external variables act on the
-          economics.
+          economics — and a scenario can additionally trade quality for cost: adopting open-source
+          models halves the serving price but shifts the delivered quality{" "}
+          <Tex>{"Q_{\\mathrm{eff}}"}</Tex> down, so retention pays for the cheaper serving.
         </p>
 
         <div className="exp-howto-eq">
@@ -128,9 +142,10 @@ export function HowItWorks() {
             }
           </Tex>
           <p className="exp-howto-cap">
-            <strong>In-house build</strong> <Tex>{"\\iota"}</Tex> buys product capability — it lowers
-            churn (up to 30% at full) and lifts ARPU (up to 20%) — but regulation drags its delivered
-            effect down (compliance eats cycles). <strong>Vendor independence</strong> is the share{" "}
+            <strong>In-house build</strong> <Tex>{"\\iota"}</Tex> buys product capability — it raises
+            the quality users experience (up to +0.15, cutting churn through the cliff) and lifts ARPU
+            (up to 20%) — but regulation drags its delivered effect down (compliance eats cycles).{" "}
+            <strong>Vendor independence</strong> is the share{" "}
             <Tex>{"h"}</Tex> of serving you can run on cheaper alternatives (up to 70% at full). Your
             blended serving price <Tex>{"\\rho"}</Tex> pays that share at today&rsquo;s ×1 and the rest
             at the vendor&rsquo;s price — so a vendor tripling its price only lifts your cost to{" "}
@@ -182,9 +197,11 @@ export function HowItWorks() {
         <div className="exp-howto-eq">
           <p className="exp-howto-cap">
             <strong>Build versus buy.</strong> In-house capability costs talent and time, but it
-            raises retention and margin. <strong>In-house build</strong> <Tex>{"\\iota"}</Tex> lowers
-            churn <Tex>{"\\chi"}</Tex> by up to 30% <em>in the simulated trajectory</em> and lifts ARPU{" "}
-            <Tex>{"m"}</Tex> by up to 20%, at a higher fixed cost.
+            raises retention and margin. <strong>In-house build</strong> <Tex>{"\\iota"}</Tex> raises
+            the delivered quality <Tex>{"Q_{\\mathrm{eff}}"}</Tex> by up to 0.15{" "}
+            <em>in the simulated trajectory</em> — churn falls through the same cliff — and lifts ARPU{" "}
+            <Tex>{"m"}</Tex> by up to 20%, at a higher fixed cost. It is also the honest response when
+            a scenario (open-source adoption) cuts delivered quality below the committed bar.
           </p>
         </div>
         <div className="exp-howto-eq">
@@ -193,7 +210,8 @@ export function HowItWorks() {
             a higher committed bar, but a steeper cliff if the market bar moves past your quality. One
             dial couples the <strong>ARPU premium</strong> <Tex>{"\\Delta m"}</Tex> and the{" "}
             <strong>quality bar</strong> <Tex>{"Q^{\\ast}"}</Tex>: turning it up raises short-run
-            revenue but raises the tipping-point risk.
+            revenue but also burns more tokens per user (serving cost up to +40%) and raises the
+            tipping-point risk.
           </p>
         </div>
       </section>
