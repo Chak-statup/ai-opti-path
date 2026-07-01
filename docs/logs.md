@@ -42,9 +42,10 @@ Persistent notes for the AI-strategy evaluator redesign. Read this at the start 
 ## The app (what it is)
 - TanStack Start + React (Lovable-connected; commits sync to Lovable — keep branch working, no history rewrite per `AGENTS.md`).
 - An "AI strategy evaluator": a company sets a strategy vector + external environment; the app shows a causal pathway, a risk radar, tipping points, scenarios, and mitigations for scaling an AI product.
-- Live model: `src/lib/scenario/model.ts`. Main page: `src/routes/evaluator.tsx`. Data: `public/runs.json`.
+- Live model: `src/lib/scenario/model.ts`. Main page: `src/routes/evaluator.tsx`. ~~Data: `public/runs.json`~~ (SUPERSEDED — no runs.json since the rewrite; the model simulates live in the browser).
 
-## Verified technical facts (audit 2026-07-01) `[fact]`
+## Verified technical facts (audit 2026-07-01) `[fact]` — ⚠ SUPERSEDED by the rewrite
+> These findings describe the PRE-REWRITE app and were all FIXED in the 2026-07-01 implementation rounds below. Kept for historical context only; the RESUME POINT above is current.
 - `public/runs.json` is a real seeded Euler integration of a logistic user-growth + churn + competition ODE (`public/generate_data.py` / `standalone/backend/generate_data.py`, byte-identical output). Numbers are computed, not hardcoded.
 - BUT only `Q` (strategy) and `Q*` (qstar) drive the simulated trajectory. innovation, resilience, platform reach, token price, regulation are post-hoc arithmetic on a frozen curve — they do not re-simulate growth.
 - innovation's churn reduction is applied only to the cost line (`model.ts:189`), not to the user trajectory → raising "In-house build" does not move the Users curve.

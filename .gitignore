@@ -30,3 +30,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# session scratch
+_shots/
+_shot.mjs
