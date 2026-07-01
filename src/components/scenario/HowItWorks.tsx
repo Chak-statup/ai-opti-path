@@ -124,15 +124,17 @@ export function HowItWorks() {
         <div className="exp-howto-eq">
           <Tex block>
             {
-              "\\iota=\\tfrac{\\text{build}}{100}\\Big(1-0.40\\,\\tfrac{\\text{reg}}{100}\\Big)\\qquad \\rho = 1+(\\text{tpf}-1)\\Big(1-0.70\\,\\tfrac{\\text{resil}}{100}\\Big)\\;\\text{for }\\text{tpf}>1"
+              "\\iota=\\tfrac{\\text{build}}{100}\\Big(1-0.40\\,\\tfrac{\\text{reg}}{100}\\Big)\\qquad h=0.70\\,\\tfrac{\\text{resil}}{100},\\quad \\rho=(1-h)\\,\\text{tpf}+h\\;\\;(\\text{tpf}>1)"
             }
           </Tex>
           <p className="exp-howto-cap">
             <strong>In-house build</strong> <Tex>{"\\iota"}</Tex> buys product capability — it lowers
             churn (up to 30% at full) and lifts ARPU (up to 20%) — but regulation drags its delivered
-            effect down (compliance eats cycles). <strong>Vendor independence</strong> shields the
-            serving multiplier <Tex>{"\\rho"}</Tex>: up to 70% of a price spike above today&rsquo;s
-            level is absorbed by multi-vendor / open-weight fallbacks, and lock-in falls directly.
+            effect down (compliance eats cycles). <strong>Vendor independence</strong> is the share{" "}
+            <Tex>{"h"}</Tex> of serving you can run on cheaper alternatives (up to 70% at full). Your
+            blended serving price <Tex>{"\\rho"}</Tex> pays that share at today&rsquo;s ×1 and the rest
+            at the vendor&rsquo;s price — so a vendor tripling its price only lifts your cost to{" "}
+            <Tex>{"0.3\\times3+0.7=1.6\\times"}</Tex> at full independence.
           </p>
         </div>
 
@@ -255,9 +257,12 @@ export function HowItWorks() {
       </section>
 
       <p className="exp-howto-illus">
-        Illustrative, calibrated to a plausible large-enterprise scale in euros, not to any specific
-        company. The cliff location, CAC, serving cost, competition rate and fixed cost should be fit
-        to real data before any number is taken literally.
+        Every parameter is sourced in <code>docs/references.md</code> (citation-audited). Serving cost,
+        ARPU, CAC, the Bass growth coefficients, the churn floor, fixed/compliance cost and the
+        vendor-hedge share are grounded in real data; the quality index, the in-house-build effects,
+        and the worst-case ceilings (churn 30%/mo, competition 0.35/mo, regulatory drag 40%) are
+        stated assumptions or stress bounds to be fit to your data. Euro figures are illustrative
+        large-enterprise scale, not a specific company.
       </p>
     </div>
   );

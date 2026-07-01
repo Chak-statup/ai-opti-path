@@ -22,48 +22,50 @@
 // ---- Calibration ---------------------------------------------------------
 // One place for every magnitude, so no coefficient is hidden. Absolute euros
 // unless noted. Every strategy slider is 0..100 (0 = minimal posture, 50 =
-// today's baseline, 100 = maximum investment); the "full-scale" comments below
-// state exactly what the slider does at 100.
+// today's baseline, 100 = maximum investment).
+//
+// SOURCES: every value is cited in docs/references.md (citation-audited 2026-07-01).
+// Provenance tags below: [src] grounded in a real source · [assume] internal
+// modelling assumption · [bound] deliberate worst-case ceiling, not a median.
 export const CALIB = {
   // Market & growth (DYNAMICAL — these enter the simulated user ODE)
-  K_min: 2_000_000, // addressable market at platform reach 0 (contained pilot)
-  K_max: 15_000_000, // addressable market at platform reach 100 (mass-market)
-  N0: 40_000, // active users at t = 0
-  p: 0.008, // external acquisition rate / month
-  r: 0.35, // word-of-mouth growth rate / month
-  chiMin: 0.02, // churn floor / month
-  chiMax: 0.3, // churn ceiling / month
-  kappa: 12, // churn-cliff steepness
-  phi: 0.35, // peak competitive-loss rate / month (ramps 0 → phi over horizon)
-  sigma: 0.16, // demand volatility (state-proportional, drives sample spread)
+  K_min: 200_000, // [assume] addressable market at platform reach 0 (contained pilot)
+  K_max: 1_500_000, // [assume] addressable market at platform reach 100 (mass-market)
+  N0: 4_000, // [assume] active users at t = 0 (fit to pilot telemetry)
+  p: 0.008, // [src] Bass innovation coeff (PyMC-Marketing; canonical 0.01–0.03)
+  r: 0.35, // [src] Bass imitation coeff (PyMC-Marketing; canonical 0.3–0.5)
+  chiMin: 0.02, // [src] churn floor/mo (Optifai B2B SaaS; enterprise 1–2%/mo)
+  chiMax: 0.3, // [bound] churn ceiling/mo (worst case; empirical ~0.10–0.15)
+  kappa: 12, // [assume] churn-cliff steepness (fit to a quality→churn gradient)
+  phi: 0.35, // [bound] peak competition/mo (ramps 0→phi; central ~0.07–0.12)
+  sigma: 0.16, // [src] demand volatility CV (frePPLe SBC; <0.70 = smooth)
 
   // In-house build (innovation) — DYNAMICAL + economic
-  innovChurnCut: 0.3, // full build cuts churn by 30% (the retention channel)
-  innovArpuLift: 0.2, // ... and lifts ARPU by 20%
+  innovChurnCut: 0.3, // [assume] full build cuts churn 30% (needs A/B cohort data)
+  innovArpuLift: 0.2, // [assume] ... and lifts ARPU 20% (needs monetization experiment)
 
   // Vendor independence (resilience) — economic (shock buffer)
-  resilShield: 0.7, // full resilience absorbs 70% of a serving-cost spike
-  resilLockCut: 0.6, // ... and cuts lock-in exposure by 60%
+  maxHedge: 0.7, // [src/bound] RouteLLM 70–87% routable at ~95% quality (realized ~19%)
 
   // Economics (euros / active user / month unless noted)
-  arpu0: 9, // base ARPU (revenue per active user / month) at Q = 0
-  serve0: 2.5, // serving (token) cost per active user at price ×1.0
-  cac: 20, // cost to (re)acquire one user (marketing/onboarding; NOT token-priced)
+  arpu0: 9, // [src] base ARPU €/user/mo (Slack Pro €6.75–8.25/seat)
+  serve0: 2.5, // [src+assume] API price grounded × assumed ~0.5–1M tokens/user/mo
+  cac: 20, // [src] €/user (First Page Sage; per-seat — benchmarks per-account ~35× higher)
 
   // Fixed cost (euros / month)
-  F0: 4_000_000, // baseline org / infra
-  F_innov: 5_000_000, // full in-house build adds this (talent, dev)
-  F_resil: 1_500_000, // full resilience adds this (portability engineering)
-  F_reg: 3_000_000, // full regulation adds this (compliance, audit, legal)
+  F0: 400_000, // [src] baseline org/infra (~15–25 EU ML FTE + infra; ×10 = €4M/mo)
+  F_innov: 500_000, // [src] full in-house build (~40 FTE @ €130–160k loaded)
+  F_resil: 150_000, // [src] full resilience (~11 FTE portability team)
+  F_reg: 300_000, // [src] compliance (Fourthline; ×10 = €36M/yr is the grounded figure)
 
   // Regulation (external) — distinct from token price
-  regInnovDrag: 0.4, // full regulation slows innovation delivery by 40%
-  regComplianceBuffer: 0.3, // resilience + build buy down compliance overhead
+  regInnovDrag: 0.4, // [bound] full-load innovation drag (MIT Sloan; expected ~0.25–0.33)
+  regComplianceBuffer: 0.3, // [assume] resilience+build buy down 30% of compliance
 
   // Timing
-  tau: 6, // deployment → revenue lag (months)
-  T: 54, // horizon (months)
-  steps: 361, // integration steps
+  tau: 6, // [assume] deployment → revenue lag (months; fit to sales cycle)
+  T: 54, // [design] horizon (months)
+  steps: 361, // [design] integration steps
 } as const;
 
 const M = 1e6; // euros → €M
@@ -228,12 +230,21 @@ export function chi(Q: number, qstar: number, innovEff = 0): number {
   return base * (1 - CALIB.innovChurnCut * innovEff);
 }
 
-// Serving-cost multiplier for a given raw vendor price, after resilience shields
-// the part of a spike above today's ×1.
+// Vendor independence as a portfolio: hedgeShare(R) = maxHedge · R/100 is the
+// fraction of serving you can run on cheaper / alternative models.
+export function hedgeShare(vec: StrategyVector): number {
+  return CALIB.maxHedge * clamp01(vec.resilience / 100);
+}
+
+// Serving-cost multiplier at a given raw vendor price — a BLENDED price:
+// only the un-hedged share (1 − h) pays the vendor's price; the hedged share h
+// runs on alternatives at today's ×1. (If the price falls, take the full
+// benefit — no reason to hedge a cheaper price.) So at h = 0.7 a vendor that
+// triples its price (×3) only lifts your blended cost to 0.3·3 + 0.7 = ×1.6.
 export function shieldedTpf(rawTpf: number, vec: StrategyVector): number {
-  const excess = rawTpf - 1;
-  const shield = 1 - CALIB.resilShield * clamp01(vec.resilience / 100);
-  return 1 + (excess > 0 ? excess * shield : excess);
+  if (rawTpf <= 1) return rawTpf;
+  const h = hedgeShare(vec);
+  return (1 - h) * rawTpf + h * 1;
 }
 
 // Effective serving-cost multiplier at the prevailing (post-shock) price level —

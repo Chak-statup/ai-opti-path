@@ -402,8 +402,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  <strong>Vendor choice.</strong> Single frontier vendor to open / multi-vendor.
-                  Higher independence shields token-price shocks and lowers lock-in, at a higher fixed cost.
+                  <strong>Vendor choice.</strong> The share of serving you can run on cheaper
+                  alternatives. At 70% independence only ~30% of your traffic feels a vendor price
+                  hike (so ×3 becomes ×1.6) — at a higher fixed cost.
                 </p>
               </div>
 
