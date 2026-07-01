@@ -94,3 +94,12 @@ User tested hands-on and flagged real gaps; fixed from first principles (design 
 - KEY honesty flags (carry into pitch, from references.md): serve0 volume is an assumption (price grounded); cac is per-seat vs per-account benchmarks (~35× higher); chiMax 0.30 / phi 0.35 / regInnovDrag 0.40 are worst-case bounds (expected ~0.10–0.15 / 0.07–0.12 / 0.25–0.33); maxHedge 0.70 is a technical ceiling (realized ~19%); 3× shock has no single-vendor precedent; pin FX to live ECB rate.
 - OPEN: churn form A/B (route innovation through Q_eff vs keep multiplicative) — user hasn't decided. Causal diagram redesign — proposed making the 4 sliders explicit driver-nodes; awaiting user confirm.
 - Commits now: aaf0fb2, 3eafc05, bce98b9, 079b11e (all unpushed).
+
+### 2026-07-01 (round 4 — scenario stories affect users + profit)
+- Made 3 scenario stories drive users AND profit (commit 40a6cbf):
+  1. Price hike → loss → Hedge the vendor (already worked).
+  2. Aggressive scaling: added `scalingServeBump` (serving cost per user rises with dm) on top of the churn cliff. dm6/Q*0.5 → dm11/Q*0.9 on Balanced: users 0.38→0.10M, profit €25→−€28M. Per-user cost up; total cost down as the business shrinks.
+  3. Open-source adoption: `ScenarioContext.qualityShift` (OSS = 0.2) lowers effective quality via `scenarioQuality(Q,ctx)`, threaded through simulate/deriveRawExact/computeCausalState/sweep/riskScores(cliff). OSS preset relabeled "Open-source adoption", tpf 0.5 + qualityShift 0.2. Quality-dependent: Balanced €25M→−€28M (falls below bar, users 0.38→0.15M); Premium €102M→€86M (keeps headroom). Evaluator threads qualityShift like shockMonth (set by preset, not cleared by sliders).
+- Verified: tsc 0; numeric stories confirmed.
+- STILL PENDING (deferred at ~80% token checkpoint): HowItWorks copy for the two new couplings (OSS quality trade, scaling serving cost); the causal-diagram redesign (4 sliders as explicit driver-nodes — proposed, awaiting user confirm); churn-form A/B question (still open).
+- Commits: aaf0fb2, 3eafc05, bce98b9, 079b11e, 40a6cbf (all unpushed; github unreachable from sandbox → user runs `git push origin main`).
