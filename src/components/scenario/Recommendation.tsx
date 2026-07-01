@@ -3,7 +3,7 @@
 import type { RiskScores, ScenarioContext, StrategyDerived } from "@/lib/scenario/model";
 
 const RISK_LABEL: Record<string, string> = {
-  platform: "platform exposure",
+  cost: "cost exposure",
   lockin: "vendor lock-in",
   capability: "capability gap",
   scaling: "scaling risk",
@@ -31,7 +31,7 @@ export function Recommendation({
     if (d.cumProfit > derived[best].cumProfit) best = i;
   });
   const bestRisks = riskAll[best];
-  const ranked = (["platform", "lockin", "capability", "scaling", "regulatory"] as const)
+  const ranked = (["cost", "lockin", "capability", "scaling", "regulatory"] as const)
     .map((k) => ({ k, v: bestRisks[k] }))
     .sort((a, b) => b.v - a.v);
   const topRisks = ranked.slice(0, 2);

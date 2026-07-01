@@ -16,8 +16,8 @@ function buildPrompt(
   });
   const lines = derived.map((d, i) => {
     const r = riskAll[i];
-    return `- ${d.label}: cumulative profit €${d.cumProfit.toFixed(0)}M over the horizon; risk axes (0-100, higher = worse) → platform exposure ${Math.round(
-      r.platform,
+    return `- ${d.label}: cumulative profit €${d.cumProfit.toFixed(0)}M over the horizon; risk axes (0-100, higher = worse) → cost exposure ${Math.round(
+      r.cost,
     )}, vendor lock-in ${Math.round(r.lockin)}, capability gap ${Math.round(
       r.capability,
     )}, scaling risk ${Math.round(r.scaling)}, regulatory load ${Math.round(r.regulatory)}`;

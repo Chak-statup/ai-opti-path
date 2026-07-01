@@ -140,6 +140,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [reach, setReach] = useState(DEFAULT_VECTOR.platformReach ?? 50);
   const [tpf, setTpf] = useState(DEFAULT_CONTEXT.tokenPriceFactor);
   const [reg, setReg] = useState(DEFAULT_CONTEXT.regPressure);
+  const [shockMonth, setShockMonth] = useState<number | undefined>(undefined);
   const [activePreset, setActivePreset] = useState<string | null>("status-quo");
   const [tab, setTab] = useState<Tab>("profit");
   const [causalView, setCausalView] = useState<"pathway" | "charts">("pathway");
@@ -147,8 +148,8 @@ function ExplorerView({ data }: { data: RunsData }) {
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
   const ctx: ScenarioContext = useMemo(
-    () => ({ tokenPriceFactor: tpf, regPressure: reg }),
-    [tpf, reg],
+    () => ({ tokenPriceFactor: tpf, regPressure: reg, shockMonth }),
+    [tpf, reg, shockMonth],
   );
   const vec: StrategyVector = useMemo(
     () => ({ innovation: innov, resilience: resil, platformReach: reach }),
@@ -163,6 +164,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     setDm(k.dm);
     setQstar(k.qstar);
     setActivePreset(null);
+    setShockMonth(undefined);
   }
 
   const qi = qstarIndex(qstar, data.qstar_grid);
@@ -205,6 +207,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     return (v: T) => {
       setter(v);
       setActivePreset(null);
+      setShockMonth(undefined); // a hand-set price is a flat level, not a timed shock
     };
   }
   function applyPreset(p: ScenarioPreset) {
@@ -213,6 +216,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     // The strategy response lives in the Mitigation step.
     setTpf(p.ctx.tokenPriceFactor);
     setReg(p.ctx.regPressure);
+    setShockMonth(p.ctx.shockMonth);
     setActivePreset(p.id);
   }
   function applyVector(c: MitigationBaseline) {
@@ -228,6 +232,9 @@ function ExplorerView({ data }: { data: RunsData }) {
 
   const baseGuides: VGuide[] = [
     { x: params.tau, label: "τ revenue", color: "var(--exp-axis)" },
+    ...(shockMonth !== undefined
+      ? [{ x: shockMonth, label: "price shock", color: "var(--exp-marker)" } as VGuide]
+      : []),
   ];
 
   function panelSeries(key: MetricKey): Series[] {
@@ -253,14 +260,14 @@ function ExplorerView({ data }: { data: RunsData }) {
     ...riskAll.map((r, s) => ({
       label: derived[s].label,
       color: STRAT_COLORS[s],
-      values: [r.platform, r.lockin, r.capability, r.scaling, r.regulatory],
+      values: [r.cost, r.lockin, r.capability, r.scaling, r.regulatory],
       fill: s === traceStrat,
     })),
     {
       label: "Status quo",
       color: "var(--exp-axis)",
       values: [
-        baselineRisk.platform,
+        baselineRisk.cost,
         baselineRisk.lockin,
         baselineRisk.capability,
         baselineRisk.scaling,
@@ -632,11 +639,11 @@ function ExplorerView({ data }: { data: RunsData }) {
                   <div className="exp-radar-side">
                     <p className="exp-prose">
                       All five axes are <strong>risks &mdash; smaller is better</strong>, so a tighter shape is a
-                      safer strategy. Each spoke is driven by one decision: <strong>platform exposure</strong> by
-                      platform reach and price, <strong>vendor lock-in</strong> by vendor independence,{" "}
-                      <strong>capability gap</strong> by in-house build, <strong>scaling risk</strong> by scaling
-                      aggressiveness, and <strong>regulatory load</strong> by the compliance environment
-                      (buffered by resilience and in-house build). The dashed grey outline is{" "}
+                      safer strategy. Each spoke is driven by one decision (see the breakdown below):{" "}
+                      <strong>cost exposure</strong> by the serving price and platform reach,{" "}
+                      <strong>vendor lock-in</strong> by vendor independence, <strong>capability gap</strong> by
+                      in-house build, <strong>scaling risk</strong> by scaling aggressiveness, and{" "}
+                      <strong>regulatory load</strong> by the compliance environment. The dashed grey outline is{" "}
                       {derived[traceStrat].label} under today&rsquo;s status quo; the gap to the coloured shape is
                       what the current strategy and scenario change.
                     </p>
@@ -651,6 +658,26 @@ function ExplorerView({ data }: { data: RunsData }) {
                         <span className="exp-swatch dashed" />
                         Status quo (traced)
                       </span>
+                    </div>
+
+                    <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--exp-muted)" }}>
+                        How each axis moves ({derived[traceStrat].label})
+                      </div>
+                      {RISK_AXES.map((a) => (
+                        <div key={a.key} style={{ borderTop: "1px solid var(--exp-grid)", paddingTop: 8 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                            <span style={{ fontWeight: 600, fontSize: 13, color: "var(--exp-ink)" }}>{a.label}</span>
+                            <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--exp-muted)", fontSize: 12 }}>
+                              {Math.round(riskAll[traceStrat][a.key])}/100
+                            </span>
+                          </div>
+                          <div style={{ color: "var(--exp-muted)", fontSize: 12, marginTop: 3 }}>{a.driver}</div>
+                          <div style={{ color: "var(--exp-muted)", fontSize: 12, fontStyle: "italic", marginTop: 2 }}>
+                            Rises when {a.rises}.
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>

@@ -134,15 +134,15 @@ export function Mitigation({
     [data, base, ctx],
   );
   const RISK_LABELS: Record<string, string> = {
-    platform: "platform exposure",
+    cost: "cost exposure",
     lockin: "vendor lock-in",
     capability: "capability gap",
-    scaling: "scaling / cost-structure risk",
+    scaling: "scaling risk",
     regulatory: "regulatory load",
   };
-  const dominantKey = (["platform", "lockin", "capability", "scaling", "regulatory"] as const).reduce(
+  const dominantKey = (["cost", "lockin", "capability", "scaling", "regulatory"] as const).reduce(
     (a, b) => (baseRisk[b] > baseRisk[a] ? b : a),
-    "platform" as "platform" | "lockin" | "capability" | "scaling" | "regulatory",
+    "cost" as "cost" | "lockin" | "capability" | "scaling" | "regulatory",
   );
   const primaryRisk = useMemo(
     () => deriveRiskScores(data, primary.strat, primary.dm, primary.qstar, ctx, primary.vec),
@@ -153,14 +153,14 @@ export function Mitigation({
     {
       label: "Before",
       color: "var(--exp-axis)",
-      values: [baseRisk.platform, baseRisk.lockin, baseRisk.capability, baseRisk.scaling, baseRisk.regulatory],
+      values: [baseRisk.cost, baseRisk.lockin, baseRisk.capability, baseRisk.scaling, baseRisk.regulatory],
       dashed: true,
       fill: false,
     },
     {
       label: "After",
       color: colorOf[primary.id],
-      values: [primaryRisk.platform, primaryRisk.lockin, primaryRisk.capability, primaryRisk.scaling, primaryRisk.regulatory],
+      values: [primaryRisk.cost, primaryRisk.lockin, primaryRisk.capability, primaryRisk.scaling, primaryRisk.regulatory],
       fill: true,
     },
   ];
@@ -272,6 +272,9 @@ export function Mitigation({
             yLabel="€M / month"
             vGuides={[
               { x: data.meta.params.tau, label: "τ revenue", color: "var(--exp-axis)" },
+              ...(ctx.shockMonth !== undefined
+                ? [{ x: ctx.shockMonth, label: "price shock", color: "var(--exp-marker)" }]
+                : []),
             ]}
             zeroLine
             xFormat={(v) => `${Math.round(v)}`}

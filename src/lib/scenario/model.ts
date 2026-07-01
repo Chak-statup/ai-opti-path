@@ -132,8 +132,11 @@ export const DEFAULT_VECTOR: StrategyVector = {
 };
 
 export interface ScenarioContext {
-  tokenPriceFactor: number; // 1 = today's serving price; a shock is a high value
+  tokenPriceFactor: number; // the prevailing serving-price level (1 = today)
   regPressure: number; // 0..100 regulatory / compliance load (distinct channel)
+  // If set, the serving price is ×1 (today) before this month and steps up to
+  // tokenPriceFactor after it — a real, visible pricing shock at a point in time.
+  shockMonth?: number;
 }
 
 export const DEFAULT_CONTEXT: ScenarioContext = {
@@ -225,13 +228,18 @@ export function chi(Q: number, qstar: number, innovEff = 0): number {
   return base * (1 - CALIB.innovChurnCut * innovEff);
 }
 
-// Effective serving-cost multiplier the company faces. Token price is the level
-// the vendor charges; resilience shields the part of a spike above today's ×1.
-export function effectiveTpf(ctx: ScenarioContext, vec: StrategyVector): number {
-  const raw = ctx.tokenPriceFactor;
-  const excess = raw - 1;
+// Serving-cost multiplier for a given raw vendor price, after resilience shields
+// the part of a spike above today's ×1.
+export function shieldedTpf(rawTpf: number, vec: StrategyVector): number {
+  const excess = rawTpf - 1;
   const shield = 1 - CALIB.resilShield * clamp01(vec.resilience / 100);
   return 1 + (excess > 0 ? excess * shield : excess);
+}
+
+// Effective serving-cost multiplier at the prevailing (post-shock) price level —
+// the exposure the company is carrying. Used by the risk radar and causal state.
+export function effectiveTpf(ctx: ScenarioContext, vec: StrategyVector): number {
+  return shieldedTpf(ctx.tokenPriceFactor, vec);
 }
 
 // Fixed cost: baseline + the two investments + regulation's compliance load
@@ -348,13 +356,17 @@ function deriveRawExact(
   const profit = new Array<number>(n);
   const innovEff = innovEffective(vec, ctx);
   const arpu = arpuPerUser(Q, dm, innovEff);
-  const serve = CALIB.serve0 * effectiveTpf(ctx, vec);
+  // Serving cost is the token COGS per user. If the scenario carries a shock,
+  // it is today's price (×1) until shockMonth, then steps to the prevailing level.
+  const servePost = CALIB.serve0 * shieldedTpf(ctx.tokenPriceFactor, vec);
+  const servePre = CALIB.serve0 * shieldedTpf(1, vec);
   const churn = chi(Q, qstar, innovEff);
   const F = fixedCost(vec, ctx);
   for (let i = 0; i < n; i++) {
     const ti = t[i];
     const gate = ti >= CALIB.tau ? 1 : 0;
     const comp = (CALIB.phi * ti) / CALIB.T;
+    const serve = ctx.shockMonth !== undefined && ti < ctx.shockMonth ? servePre : servePost;
     const rev = gate * arpu * N[i];
     const c = serve * N[i] + CALIB.cac * (churn + comp) * N[i] + F;
     revenue[i] = rev;
@@ -496,8 +508,8 @@ export const PRESETS: ScenarioPreset[] = [
   {
     id: "pricing-shock",
     label: "Pricing shock",
-    blurb: "The vendor triples serving prices after market consolidation.",
-    ctx: { tokenPriceFactor: 3.0, regPressure: 30 },
+    blurb: "At month 16 the vendor triples serving prices after market consolidation.",
+    ctx: { tokenPriceFactor: 3.0, regPressure: 30, shockMonth: 16 },
   },
   {
     id: "regulatory-stress",
@@ -517,24 +529,11 @@ export const PRESETS: ScenarioPreset[] = [
 // One spoke per Problem-page decision axis + one for the environment, each
 // owned by identifiable sliders and monotonic in them.
 export interface RiskScores {
-  platform: number; // Platform-ecosystem risk (reach × token exposure)
-  lockin: number; // Vendor lock-in risk (low resilience × quality/scale × price)
-  capability: number; // Build-vs-buy capability gap (low in-house build + reg drag)
-  scaling: number; // Scaling / cost-structure risk (aggressiveness × cost pressure)
-  regulatory: number; // Regulatory / compliance risk (reg, buffered by resil + build)
-}
-
-function totals(
-  data: RunsData,
-  s: number,
-  dm: number,
-  qstar: number,
-  ctx: ScenarioContext,
-  vec: StrategyVector,
-) {
-  const d = deriveStrategy(data, s, dm, qstar, ctx, vec);
-  const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
-  return { cumRevenue: sum(d.revenue), cumCost: sum(d.cost), cumProfit: d.cumProfit };
+  cost: number; // Cost exposure — (shielded) token price × how many users you serve
+  lockin: number; // Vendor lock-in — low independence × product depth
+  capability: number; // Capability gap — low in-house build, amplified by regulation
+  scaling: number; // Scaling risk — aggressiveness + committing above your quality
+  regulatory: number; // Regulatory load — regulation, buffered by resilience + build
 }
 
 export function deriveRiskScores(
@@ -551,29 +550,35 @@ export function deriveRiskScores(
   const innN = clamp01(vec.innovation / 100);
   const regN = clamp01(ctx.regPressure / 100);
   const aggN = clamp01(knobsToScaling(dm, data, qstar) / 100);
-  const tpfEff = effectiveTpf(ctx, vec);
-  const tpN = clamp01((tpfEff - 1) / 3); // effective token-price exposure
+  // Shielded price stress: 0 at today's price, 1 at a heavy spike after resilience.
+  const stress = clamp01((effectiveTpf(ctx, vec) - 1) / 2);
+  // Cliff: how far the committed quality bar Q* sits above your actual quality Q.
+  const cliff = clamp01((qstar - Q) / 0.4);
 
-  const tt = totals(data, s, dm, qstar, ctx, vec);
-  const costR = clamp01(tt.cumCost / Math.max(tt.cumRevenue, 1e-9) / 1.2);
+  // Cost exposure: ~0 at today's price; climbs with the (shielded) serving price
+  // and with how many users you serve — so a pricing shock at scale drives it to
+  // the rim. Resilience (via stress) and in-house build pull it back.
+  const cost = clamp01(0.15 * reachN + 0.5 * stress + 0.9 * stress * reachN + 0.15 * stress * (1 - innN)) * 100;
+  // Vendor lock-in: deep dependence on one vendor, bought down by independence.
+  const lockin = clamp01((1 - resN) * (0.6 + 0.4 * Q) + 0.15 * stress) * 100;
+  // Capability gap: how little you build in-house, amplified by regulation.
+  const capability = clamp01((1 - innN) * (0.8 + 0.4 * regN)) * 100;
+  // Scaling risk: aggressiveness plus committing to a bar above your quality.
+  const scaling = clamp01(0.55 * aggN + 0.85 * cliff + 0.2 * aggN * stress) * 100;
+  // Regulatory load: compliance burden net of what resilience/build can absorb.
+  const regulatory = clamp01(regN * (1.1 - 0.35 * resN - 0.15 * innN)) * 100;
 
-  const platform = clamp01(0.6 * reachN + 0.4 * tpN) * 100;
-  const lockin = clamp01(0.5 * (1 - resN) + 0.3 * Q + 0.2 * tpN) * 100;
-  const capability = clamp01(0.7 * (1 - innN) + 0.3 * regN) * 100;
-  const scaling = clamp01(0.55 * aggN + 0.45 * costR) * 100;
-  const regulatory = clamp01(regN * (1 - 0.35 * resN - 0.15 * innN)) * 100;
-
-  return { platform, lockin, capability, scaling, regulatory };
+  return { cost, lockin, capability, scaling, regulatory };
 }
 
 // Axis metadata (labels + which sliders move each spoke) — used by the UI so
 // the radar can explain itself.
-export const RISK_AXES: { key: keyof RiskScores; label: string; driver: string }[] = [
-  { key: "platform", label: "Platform exposure", driver: "Platform reach & token price" },
-  { key: "lockin", label: "Vendor lock-in", driver: "Vendor independence (−)" },
-  { key: "capability", label: "Capability gap", driver: "In-house build (−)" },
-  { key: "scaling", label: "Scaling risk", driver: "Scaling aggressiveness & cost" },
-  { key: "regulatory", label: "Regulatory load", driver: "Regulation, buffered by resilience/build" },
+export const RISK_AXES: { key: keyof RiskScores; label: string; driver: string; rises: string }[] = [
+  { key: "cost", label: "Cost exposure", driver: "Token price ↑ · Platform reach ↑ · Vendor independence ↓", rises: "the serving price climbs while you serve many users" },
+  { key: "lockin", label: "Vendor lock-in", driver: "Vendor independence ↓ · Quality ↑", rises: "you sit deep on one vendor with no cheap way to switch" },
+  { key: "capability", label: "Capability gap", driver: "In-house build ↓ · Regulation ↑", rises: "you build little in-house and lean on the vendor's roadmap" },
+  { key: "scaling", label: "Scaling risk", driver: "Scaling aggressiveness ↑ (a bar above your quality)", rises: "you push margin and a quality bar the product can't yet meet" },
+  { key: "regulatory", label: "Regulatory load", driver: "Regulation ↑ · Vendor independence & build ↓", rises: "compliance duty outpaces what your capability absorbs" },
 ];
 
 // ---- Tipping points -----------------------------------------------------
@@ -612,10 +617,10 @@ export function deriveTippingPoints(
   });
   return [
     mk(
-      "platform",
-      "Platform exposure",
+      "cost",
+      "Cost exposure",
       70,
-      "Past this line the user base is large and priced on a single vendor: a serving-price spike now hits enough users to swamp the margin, and a forced shutdown carries real reputational cost.",
+      "Past this line the serving price is eating margin across a large user base: every user is expensive to serve and a forced shutdown carries real cost. Vendor independence is the lever that pulls it back.",
     ),
     mk(
       "lockin",
@@ -631,9 +636,9 @@ export function deriveTippingPoints(
     ),
     mk(
       "scaling",
-      "Scaling / cost structure",
+      "Scaling risk",
       70,
-      "Past this line aggressiveness has pushed cost close to revenue: each new user at full scale adds little or negative contribution and the cost structure tips.",
+      "Past this line you have committed to a quality bar above what the product delivers: churn accelerates off the cliff and the aggressive margin push turns loss-making.",
     ),
     mk(
       "regulatory",
@@ -689,13 +694,13 @@ export function proposeMitigations(
   const baseRisk = deriveRiskScores(data, base.strat, base.dm, base.qstar, ctx, base.vec);
 
   // Dominant risk axis.
-  const order: (keyof RiskScores)[] = ["platform", "lockin", "capability", "scaling", "regulatory"];
+  const order: (keyof RiskScores)[] = ["cost", "lockin", "capability", "scaling", "regulatory"];
   const dominant = order.reduce((a, b) => (baseRisk[b] > baseRisk[a] ? b : a), order[0]);
   const RISK_NAME: Record<keyof RiskScores, string> = {
-    platform: "platform exposure",
+    cost: "cost exposure",
     lockin: "vendor lock-in",
     capability: "capability gap",
-    scaling: "scaling / cost-structure risk",
+    scaling: "scaling risk",
     regulatory: "regulatory load",
   };
 
@@ -709,16 +714,16 @@ export function proposeMitigations(
 
   // Targeted responses per dominant risk (each grounded in the model).
   const targeted: Raw[] = [];
-  if (dominant === "platform") {
+  if (dominant === "cost") {
     targeted.push({
-      id: "hedge", label: "Hedge the platform", targetRisk: RISK_NAME.platform,
-      rationale: "Raise vendor independence hard so the large user base is shielded from a serving-price spike, cutting the exposure that scale created.",
-      strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ resilience: 90 }),
+      id: "hedge", label: "Hedge the vendor", targetRisk: RISK_NAME.cost,
+      rationale: "Raise vendor independence hard so multi-vendor and open-weight fallbacks absorb the serving-price spike, cutting the cost at its source across the whole user base.",
+      strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ resilience: 92 }),
     });
     targeted.push({
-      id: "contain", label: "Contain the footprint", targetRisk: RISK_NAME.platform,
-      rationale: "Pull platform reach back toward a contained deployment so fewer users are exposed to the vendor's pricing at once.",
-      strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ platformReach: Math.max(20, reach - 30), resilience: Math.max(65, base.vec.resilience) }),
+      id: "contain", label: "Contain the footprint", targetRisk: RISK_NAME.cost,
+      rationale: "Pull platform reach back so fewer users are exposed to the vendor's pricing at once — a smaller, cheaper base to serve while the price is high.",
+      strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ platformReach: Math.max(20, reach - 30), resilience: Math.max(70, base.vec.resilience) }),
     });
   } else if (dominant === "lockin") {
     targeted.push({
@@ -786,26 +791,48 @@ export function proposeMitigations(
 
   const raw = [...targeted, ...hedge, guardrail];
 
-  return raw
-    .map((c) => {
-      const d = deriveStrategy(data, c.strat, c.dm, c.qstar, ctx, c.vec);
-      const r = deriveRiskScores(data, c.strat, c.dm, c.qstar, ctx, c.vec);
-      return {
-        ...c,
-        cumProfit: d.cumProfit,
-        deltaVsBaseline: d.cumProfit - baseProfit,
-        riskReduction: baseRisk[dominant] - r[dominant],
-      };
+  const scored = raw.map((c) => {
+    const d = deriveStrategy(data, c.strat, c.dm, c.qstar, ctx, c.vec);
+    const r = deriveRiskScores(data, c.strat, c.dm, c.qstar, ctx, c.vec);
+    return {
+      ...c,
+      cumProfit: d.cumProfit,
+      deltaVsBaseline: d.cumProfit - baseProfit,
+      riskReduction: baseRisk[dominant] - r[dominant],
+    };
+  });
+
+  // Credible options only: each must materially cut the dominant risk AND not
+  // make profit meaningfully worse than the baseline — so we never headline a
+  // money-losing "mitigation". If none qualify, fall back to the single
+  // best-profit risk-reducer so there is always something honest to show.
+  const floor = -Math.max(3, 0.02 * Math.abs(baseProfit));
+  let pool = scored.filter((c) => c.riskReduction > 1 && c.deltaVsBaseline >= floor);
+  if (pool.length === 0) {
+    pool = scored
+      .filter((c) => c.riskReduction > 1)
+      .sort((a, b) => b.cumProfit - a.cumProfit)
+      .slice(0, 1);
+  }
+
+  // De-duplicate identical strategy vectors, then rank by how much each cuts the
+  // dominant risk (all shown options are already profit-credible).
+  const seen = new Set<string>();
+  return pool
+    .filter((c) => {
+      const k = `${c.strat}|${c.dm.toFixed(1)}|${c.qstar.toFixed(2)}|${c.vec.innovation}|${c.vec.resilience}|${c.vec.platformReach ?? 50}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
     })
-    // Drop candidates that wreck profit outright.
-    .filter((c) => c.deltaVsBaseline > -Math.max(200, Math.abs(baseProfit)))
-    // Rank profit-guarded: options that don't make profit worse than the
-    // baseline come first (never headline a money-loser), then by how much
-    // each cuts the dominant risk, then by absolute profit.
+    // Rank by dominant-risk reduction, but when two options cut the risk by a
+    // comparable amount (same ~20-point band) prefer the more profitable one —
+    // so the headline is both a real risk fix and the best business outcome.
     .sort((a, b) => {
-      const aw = a.deltaVsBaseline >= 0 ? 1 : 0;
-      const bw = b.deltaVsBaseline >= 0 ? 1 : 0;
-      if (aw !== bw) return bw - aw;
-      return b.riskReduction - a.riskReduction || b.cumProfit - a.cumProfit;
-    });
+      const ba = Math.round(a.riskReduction / 20);
+      const bb = Math.round(b.riskReduction / 20);
+      if (ba !== bb) return bb - ba;
+      return b.cumProfit - a.cumProfit;
+    })
+    .slice(0, 4);
 }
