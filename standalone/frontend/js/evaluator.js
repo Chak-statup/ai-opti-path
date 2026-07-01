@@ -17,9 +17,9 @@ const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "In-house build", "Vendor i
 
 const METRIC_PANELS = {
   users: { title: "Active users", yLabel: "users (000s)", zero: false },
-  margin: { title: "Operating margin", yLabel: "$M / step", zero: false },
-  cost: { title: "Cost (CAC + fixed)", yLabel: "$M / step", zero: false },
-  profit: { title: "Revenue", yLabel: "$M / step", zero: true },
+  margin: { title: "Operating margin", yLabel: "$M / month", zero: false },
+  cost: { title: "Cost (CAC + fixed)", yLabel: "$M / month", zero: false },
+  profit: { title: "Revenue", yLabel: "$M / month", zero: true },
 };
 const TABS = [
   { key: "profit", label: "Revenue" },
@@ -168,7 +168,7 @@ function railHtml(derived, causalState, params) {
     <div class="exp-readout">
       <div class="exp-readout-title">Cumulative profit</div>
       ${derived.map((d, s) => `<div class="exp-readout-row"><span class="exp-readout-name">${d.label}</span><span class="exp-readout-val" style="color:${STRAT_COLORS[s]}">${fmtMoney(d.cumProfit)}</span></div>`).join("")}
-      <p class="exp-readout-note">over ${params.T} time steps</p>
+      <p class="exp-readout-note">over ${params.T} months</p>
     </div>
   </aside>`;
 }
@@ -649,7 +649,7 @@ function drawTrajectory(derived, snappedQ) {
     { x: data.meta.params.tau, label: "\u03c4 revenue", color: "var(--exp-axis)" },
     { x: data.meta.params.t_shock, label: "price shock", color: "var(--exp-axis)" },
   ];
-  renderChart(chartEl, { xs: data.t, series: [...faint, ...bold], title: METRIC_PANELS[key].title, xLabel: "time steps", yLabel: METRIC_PANELS[key].yLabel, vGuides: guides, zeroLine: METRIC_PANELS[key].zero, xFormat: (v) => `${Math.round(v)}`, yFormat: (v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1)), height: 360 });
+  renderChart(chartEl, { xs: data.t, series: [...faint, ...bold], title: METRIC_PANELS[key].title, xLabel: "months", yLabel: METRIC_PANELS[key].yLabel, vGuides: guides, zeroLine: METRIC_PANELS[key].zero, xFormat: (v) => `${Math.round(v)}`, yFormat: (v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1)), height: 360 });
 }
 
 function drawMitigation() {
@@ -670,7 +670,7 @@ function drawMitigation() {
       const d = deriveStrategy(data, c.strat, c.dm, c.qstar, ctx(), c.vec);
       series.push({ ys: d.profit, color: colorOf[c.id], width: c.id === state.mitPrimary ? 2.8 : 2 });
     });
-    renderChart(chartEl, { xs: data.t, series, xLabel: "time steps", yLabel: "$M / step", vGuides: [{ x: data.meta.params.t_shock, label: "price shock", color: "var(--exp-axis)" }], zeroLine: true, xFormat: (v) => `${Math.round(v)}`, yFormat: (v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1)), height: 300 });
+    renderChart(chartEl, { xs: data.t, series, xLabel: "months", yLabel: "$M / month", vGuides: [{ x: data.meta.params.t_shock, label: "price shock", color: "var(--exp-axis)" }], zeroLine: true, xFormat: (v) => `${Math.round(v)}`, yFormat: (v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1)), height: 300 });
   }
   const radarEl = document.getElementById("mit-radar");
   if (radarEl) {

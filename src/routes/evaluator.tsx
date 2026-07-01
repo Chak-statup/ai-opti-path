@@ -101,9 +101,9 @@ type Tab = "strategy" | MetricKey;
 
 const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
   users: { title: "Active users", yLabel: "users (000s)", zero: false },
-  margin: { title: "Operating margin", yLabel: "$M / step", zero: false },
-  cost: { title: "Cost (CAC + fixed)", yLabel: "$M / step", zero: false },
-  profit: { title: "Revenue", yLabel: "$M / step", zero: true },
+  margin: { title: "Operating margin", yLabel: "$M / month", zero: false },
+  cost: { title: "Cost (CAC + fixed)", yLabel: "$M / month", zero: false },
+  profit: { title: "Revenue", yLabel: "$M / month", zero: true },
 };
 
 const TABS: { key: Tab; label: string }[] = [
@@ -509,7 +509,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   </span>
                 </div>
               ))}
-              <p className="exp-readout-note">over {params.T} time steps</p>
+              <p className="exp-readout-note">over {params.T} months</p>
             </div>
           </aside>
 
@@ -615,7 +615,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                           xs={t}
                           series={panelSeries(tab)}
                           title={METRIC_PANELS[tab].title}
-                          xLabel="time steps"
+                          xLabel="months"
                           yLabel={METRIC_PANELS[tab].yLabel}
                           vGuides={baseGuides}
                           zeroLine={METRIC_PANELS[tab].zero}

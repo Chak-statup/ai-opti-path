@@ -252,8 +252,8 @@ export function Mitigation({
           <LineChart
             xs={t}
             series={profitSeries}
-            xLabel="time steps"
-            yLabel="$M / step"
+            xLabel="months"
+            yLabel="$M / month"
             vGuides={[
               { x: data.meta.params.t_shock, label: "price shock", color: "var(--exp-axis)" },
             ]}
