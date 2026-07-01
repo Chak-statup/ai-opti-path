@@ -50,6 +50,7 @@ export const CALIB = {
   // Economics (euros / active user / month unless noted)
   arpu0: 9, // [src] base ARPU €/user/mo (Slack Pro €6.75–8.25/seat)
   serve0: 2.5, // [src+assume] API price grounded × assumed ~0.5–1M tokens/user/mo
+  scalingServeBump: 0.4, // [assume] full aggressive scaling raises serving cost 40% (more tokens/user)
   cac: 20, // [src] €/user (First Page Sage; per-seat — benchmarks per-account ~35× higher)
 
   // Fixed cost (euros / month)
@@ -139,6 +140,9 @@ export interface ScenarioContext {
   // If set, the serving price is ×1 (today) before this month and steps up to
   // tokenPriceFactor after it — a real, visible pricing shock at a point in time.
   shockMonth?: number;
+  // Quality the users actually get, shifted DOWN by scenarios that trade quality
+  // for cost (e.g. adopting open-source models). 0 = no shift; 0.2 = a real hit.
+  qualityShift?: number;
 }
 
 export const DEFAULT_CONTEXT: ScenarioContext = {
@@ -228,6 +232,13 @@ export function reachToK(vec: StrategyVector): number {
 export function chi(Q: number, qstar: number, innovEff = 0): number {
   const base = CALIB.chiMin + (CALIB.chiMax - CALIB.chiMin) / (1 + Math.exp(CALIB.kappa * (Q - qstar)));
   return base * (1 - CALIB.innovChurnCut * innovEff);
+}
+
+// Quality that actually reaches users under a scenario. Some scenarios trade
+// quality for cost — adopting open-source models is cheaper to serve but lower
+// quality — which shifts effective quality down, lifting churn and cutting users.
+export function scenarioQuality(Q: number, ctx: ScenarioContext): number {
+  return clamp01(Q - (ctx.qualityShift ?? 0));
 }
 
 // Vendor independence as a portfolio: hedgeShare(R) = maxHedge · R/100 is the
@@ -332,11 +343,12 @@ export function deriveStrategy(
   const t = data.t;
   const strat = data.meta.strategies[s];
   const Q = strat.Q;
+  const Qs = scenarioQuality(Q, ctx); // quality users actually get under the scenario
   const K = reachToK(vec);
   const innovEff = innovEffective(vec, ctx);
 
-  const N = simulate(Q, qstar, K, innovEff);
-  const rawDet = deriveRawExact(N, Q, qstar, dm, t, ctx, vec);
+  const N = simulate(Qs, qstar, K, innovEff);
+  const rawDet = deriveRawExact(N, Qs, qstar, dm, t, ctx, vec);
   const det = toUnits(rawDet, N);
   const cumProfit = trapezoid(rawDet.profit, t) / M;
   const cumRevenue = trapezoid(rawDet.revenue, t) / M;
@@ -344,8 +356,8 @@ export function deriveStrategy(
   const rng = mulberry32(1000 + s * 97 + Math.round(qstar * 100));
   const samples: MetricSeries[] = Array.from({ length: 8 }, () => {
     const noise = Array.from({ length: CALIB.steps }, () => gauss(rng));
-    const Ns = simulate(Q, qstar, K, innovEff, noise);
-    return toUnits(deriveRawExact(Ns, Q, qstar, dm, t, ctx, vec), Ns);
+    const Ns = simulate(Qs, qstar, K, innovEff, noise);
+    return toUnits(deriveRawExact(Ns, Qs, qstar, dm, t, ctx, vec), Ns);
   });
 
   return { label: strat.label, Q, cumProfit, cumRevenue, samples, ...det };
@@ -367,10 +379,13 @@ function deriveRawExact(
   const profit = new Array<number>(n);
   const innovEff = innovEffective(vec, ctx);
   const arpu = arpuPerUser(Q, dm, innovEff);
-  // Serving cost is the token COGS per user. If the scenario carries a shock,
-  // it is today's price (×1) until shockMonth, then steps to the prevailing level.
-  const servePost = CALIB.serve0 * shieldedTpf(ctx.tokenPriceFactor, vec);
-  const servePre = CALIB.serve0 * shieldedTpf(1, vec);
+  // Serving cost is the token COGS per user. Aggressive scaling (a richer, more
+  // premium product) burns more tokens per user, so it raises the per-user cost.
+  const serveScale = 1 + CALIB.scalingServeBump * clamp01(dm / 12);
+  // If the scenario carries a shock, price is today's ×1 until shockMonth, then
+  // steps to the prevailing level.
+  const servePost = CALIB.serve0 * serveScale * shieldedTpf(ctx.tokenPriceFactor, vec);
+  const servePre = CALIB.serve0 * serveScale * shieldedTpf(1, vec);
   const churn = chi(Q, qstar, innovEff);
   const F = fixedCost(vec, ctx);
   for (let i = 0; i < n; i++) {
@@ -397,13 +412,14 @@ export function sweepCumProfit(
   const t = data.t;
   const K = reachToK(vec);
   const innovEff = innovEffective(vec, ctx);
-  return data.meta.strategies.map((strat) =>
-    data.qstar_grid.map((qstar) => {
-      const N = simulate(strat.Q, qstar, K, innovEff);
-      const raw = deriveRawExact(N, strat.Q, qstar, dm, t, ctx, vec);
+  return data.meta.strategies.map((strat) => {
+    const Qs = scenarioQuality(strat.Q, ctx);
+    return data.qstar_grid.map((qstar) => {
+      const N = simulate(Qs, qstar, K, innovEff);
+      const raw = deriveRawExact(N, Qs, qstar, dm, t, ctx, vec);
       return trapezoid(raw.profit, t) / M;
-    }),
-  );
+    });
+  });
 }
 
 // ---- Scaling dial: one aggressiveness value drives Δm and Q* together -----
@@ -456,12 +472,13 @@ export function computeCausalState(
   vec: StrategyVector = DEFAULT_VECTOR,
 ): CausalState {
   const Q = data.meta.strategies[s].Q;
+  const Qs = scenarioQuality(Q, ctx); // effective quality under the scenario
   const innovEff = innovEffective(vec, ctx);
 
-  const churn = chi(Q, qstar, innovEff);
+  const churn = chi(Qs, qstar, innovEff);
   const churnNorm = clamp01((churn - CALIB.chiMin) / (CALIB.chiMax - CALIB.chiMin));
 
-  const margin = arpuPerUser(Q, dm, innovEff);
+  const margin = arpuPerUser(Qs, dm, innovEff);
   const marginFloor = CALIB.arpu0; // dm = 0
   const marginCeil = (CALIB.arpu0 + (data.meta.params.dmMax ?? 12) * Q) * (1 + CALIB.innovArpuLift);
   const marginNorm = clamp01((margin - marginFloor) / Math.max(marginCeil - marginFloor, 1e-6));
@@ -481,7 +498,7 @@ export function computeCausalState(
   const shockNorm = clamp01((tpfEff - 1) / 2);
 
   return {
-    Q,
+    Q: Qs,
     churn,
     churnNorm,
     margin,
@@ -530,9 +547,9 @@ export const PRESETS: ScenarioPreset[] = [
   },
   {
     id: "oss-breakthrough",
-    label: "Open-source breakthrough",
-    blurb: "An open model matches the frontier; serving cost collapses to ×0.5.",
-    ctx: { tokenPriceFactor: 0.5, regPressure: 30 },
+    label: "Open-source adoption",
+    blurb: "You move to open-source models: serving cost collapses to ×0.5, but quality drops and retention takes a hit.",
+    ctx: { tokenPriceFactor: 0.5, regPressure: 30, qualityShift: 0.2 },
   },
 ];
 
@@ -563,8 +580,9 @@ export function deriveRiskScores(
   const aggN = clamp01(knobsToScaling(dm, data, qstar) / 100);
   // Shielded price stress: 0 at today's price, 1 at a heavy spike after resilience.
   const stress = clamp01((effectiveTpf(ctx, vec) - 1) / 2);
-  // Cliff: how far the committed quality bar Q* sits above your actual quality Q.
-  const cliff = clamp01((qstar - Q) / 0.4);
+  // Cliff: how far the committed quality bar Q* sits above the quality users
+  // actually get (scenario-shifted, e.g. lower under open-source adoption).
+  const cliff = clamp01((qstar - scenarioQuality(Q, ctx)) / 0.4);
 
   // Cost exposure: ~0 at today's price; climbs with the (shielded) serving price
   // and with how many users you serve — so a pricing shock at scale drives it to

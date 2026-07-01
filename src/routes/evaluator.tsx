@@ -141,6 +141,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [tpf, setTpf] = useState(DEFAULT_CONTEXT.tokenPriceFactor);
   const [reg, setReg] = useState(DEFAULT_CONTEXT.regPressure);
   const [shockMonth, setShockMonth] = useState<number | undefined>(undefined);
+  const [qualityShift, setQualityShift] = useState<number | undefined>(undefined);
   const [activePreset, setActivePreset] = useState<string | null>("status-quo");
   const [tab, setTab] = useState<Tab>("profit");
   const [causalView, setCausalView] = useState<"pathway" | "charts">("pathway");
@@ -148,8 +149,8 @@ function ExplorerView({ data }: { data: RunsData }) {
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
   const ctx: ScenarioContext = useMemo(
-    () => ({ tokenPriceFactor: tpf, regPressure: reg, shockMonth }),
-    [tpf, reg, shockMonth],
+    () => ({ tokenPriceFactor: tpf, regPressure: reg, shockMonth, qualityShift }),
+    [tpf, reg, shockMonth, qualityShift],
   );
   const vec: StrategyVector = useMemo(
     () => ({ innovation: innov, resilience: resil, platformReach: reach }),
@@ -219,6 +220,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     setTpf(p.ctx.tokenPriceFactor);
     setReg(p.ctx.regPressure);
     setShockMonth(p.ctx.shockMonth);
+    setQualityShift(p.ctx.qualityShift);
     setActivePreset(p.id);
   }
   function applyVector(c: MitigationBaseline) {
