@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LineChart, type Series, type VGuide } from "@/components/scenario/LineChart";
 import { CausalDiagram } from "@/components/scenario/CausalDiagram";
 import { RadarChart, type RadarSeries } from "@/components/scenario/RadarChart";
@@ -13,6 +13,7 @@ import { HowItWorks } from "@/components/scenario/HowItWorks";
 import { Tex } from "@/components/scenario/Tex";
 import { StatupLogo } from "@/components/StatupLogo";
 import {
+  buildModelData,
   computeCausalState,
   deriveRiskScores,
   deriveStrategy,
@@ -22,6 +23,7 @@ import {
   scalingToKnobs,
   sweepCumProfit,
   PRESETS,
+  RISK_AXES,
   DEFAULT_CONTEXT,
   DEFAULT_VECTOR,
   type MitigationBaseline,
@@ -94,48 +96,34 @@ export const Route = createFileRoute("/evaluator")({
 });
 
 const STRAT_COLORS = ["var(--exp-open)", "var(--exp-hybrid)", "var(--exp-frontier)"];
-const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "In-house build", "Vendor indep."];
+const RADAR_AXES = RISK_AXES.map((a) => a.label);
 
-type MetricKey = "users" | "margin" | "cost" | "profit";
+type MetricKey = "users" | "revenue" | "cost" | "profit";
 type Tab = "strategy" | MetricKey;
 
 const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
-  users: { title: "Active users", yLabel: "users (000s)", zero: false },
-  margin: { title: "Operating margin", yLabel: "$M / month", zero: false },
-  cost: { title: "Cost (CAC + fixed)", yLabel: "$M / month", zero: false },
-  profit: { title: "Revenue", yLabel: "$M / month", zero: true },
+  users: { title: "Active users", yLabel: "million users", zero: false },
+  revenue: { title: "Revenue (ARPU × users)", yLabel: "€M / month", zero: false },
+  cost: { title: "Cost (serving + acquisition + fixed)", yLabel: "€M / month", zero: false },
+  profit: { title: "Net profit", yLabel: "€M / month", zero: true },
 };
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "profit", label: "Revenue" },
+  { key: "profit", label: "Profit" },
   { key: "users", label: "Users" },
-  { key: "margin", label: "Margin" },
+  { key: "revenue", label: "Revenue" },
   { key: "cost", label: "Cost" },
   { key: "strategy", label: "Strategy" },
 ];
 
 function fmtMoney(v: number): string {
   const sign = v < 0 ? "−" : "";
-  return `${sign}$${Math.abs(v).toFixed(1)}M`;
+  return `${sign}€${Math.abs(v).toFixed(1)}M`;
 }
 
 function Explorer() {
-  const [data, setData] = useState<RunsData | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/runs.json")
-      .then((r) => {
-        if (!r.ok) throw new Error(`runs.json ${r.status}`);
-        return r.json();
-      })
-      .then((d: RunsData) => setData(d))
-      .catch((e) => setErr(String(e)));
-  }, []);
-
-  if (err) return <div className="exp exp-loading">Could not load data: {err}</div>;
-  if (!data) return <div className="exp exp-loading">Loading exhibit</div>;
-
+  // The model is simulated live in the browser — no data fetch, no runs.json.
+  const data = useMemo<RunsData>(() => buildModelData(), []);
   return <ExplorerView data={data} />;
 }
 
@@ -145,8 +133,8 @@ function ExplorerView({ data }: { data: RunsData }) {
 
   const [stage, setStage] = useState<Stage>("problem");
   const [traceStrat, setTraceStrat] = useState(1);
-  const [dm, setDm] = useState(PRESETS[0].dm);
-  const [qstar, setQstar] = useState(PRESETS[0].qstar);
+  const [dm, setDm] = useState(data.meta.controls.dm.default);
+  const [qstar, setQstar] = useState(data.meta.controls.qstar.default);
   const [innov, setInnov] = useState(DEFAULT_VECTOR.innovation);
   const [resil, setResil] = useState(DEFAULT_VECTOR.resilience);
   const [reach, setReach] = useState(DEFAULT_VECTOR.platformReach ?? 50);
@@ -168,7 +156,8 @@ function ExplorerView({ data }: { data: RunsData }) {
   );
 
   // Scaling Strategy axis: one dial that drives both Δm and Q* together.
-  const scaling = knobsToScaling(dm, data);
+  // Derived from BOTH dm and Q* so the dial can't disagree with the bar in effect.
+  const scaling = knobsToScaling(dm, data, qstar);
   function setScaling(v: number) {
     const k = scalingToKnobs(v, data);
     setDm(k.dm);
@@ -196,15 +185,17 @@ function ExplorerView({ data }: { data: RunsData }) {
     () => deriveTippingPoints(data, traceStrat, dm, snappedQ, ctx, vec),
     [data, traceStrat, dm, snappedQ, ctx, vec],
   );
+  // Dashed reference on the radar: the traced strategy under today's status quo
+  // (balanced strategy vector, default scaling, status-quo environment).
   const baselineRisk = useMemo(
     () =>
       deriveRiskScores(
         data,
         traceStrat,
-        PRESETS[0].dm,
-        PRESETS[0].qstar,
+        data.meta.controls.dm.default,
+        data.meta.controls.qstar.default,
         PRESETS[0].ctx,
-        PRESETS[0].vec,
+        DEFAULT_VECTOR,
       ),
     [data, traceStrat],
   );
@@ -217,11 +208,9 @@ function ExplorerView({ data }: { data: RunsData }) {
     };
   }
   function applyPreset(p: ScenarioPreset) {
-    setDm(p.dm);
-    setQstar(p.qstar);
-    setInnov(p.vec.innovation);
-    setResil(p.vec.resilience);
-    setReach(p.vec.platformReach ?? 50);
+    // A scenario changes ONLY the external environment. Your strategy sliders
+    // stay where you set them, so you see the same strategy face a new world.
+    // The strategy response lives in the Mitigation step.
     setTpf(p.ctx.tokenPriceFactor);
     setReg(p.ctx.regPressure);
     setActivePreset(p.id);
@@ -239,7 +228,6 @@ function ExplorerView({ data }: { data: RunsData }) {
 
   const baseGuides: VGuide[] = [
     { x: params.tau, label: "τ revenue", color: "var(--exp-axis)" },
-    { x: params.t_shock, label: "price shock", color: "var(--exp-axis)" },
   ];
 
   function panelSeries(key: MetricKey): Series[] {
@@ -265,34 +253,34 @@ function ExplorerView({ data }: { data: RunsData }) {
     ...riskAll.map((r, s) => ({
       label: derived[s].label,
       color: STRAT_COLORS[s],
-      values: [r.cost, r.lockin, r.regulatory, r.innovation, r.resilience],
+      values: [r.platform, r.lockin, r.capability, r.scaling, r.regulatory],
       fill: s === traceStrat,
     })),
     {
       label: "Status quo",
       color: "var(--exp-axis)",
       values: [
-        baselineRisk.cost,
+        baselineRisk.platform,
         baselineRisk.lockin,
+        baselineRisk.capability,
+        baselineRisk.scaling,
         baselineRisk.regulatory,
-        baselineRisk.innovation,
-        baselineRisk.resilience,
       ],
       dashed: true,
       fill: false,
     },
   ];
 
-  const reading = `With the effective token price at ${causalState.tpfEff.toFixed(
+  const reading = `With serving cost at ×${causalState.tpfEff.toFixed(
     1,
-  )}× (vendor ${tpf.toFixed(1)}× plus regulatory pass-through) and the quality threshold at ${snappedQ.toFixed(
+  )} (vendor ×${tpf.toFixed(1)}, resilience-shielded) and the quality bar at ${snappedQ.toFixed(
     2,
   )}, ${derived[traceStrat].label} holds churn at ${causalState.churn.toFixed(
     2,
-  )} and margin at $${causalState.margin.toFixed(1)}/user. That leaves about ${Math.round(
-    causalState.usersEnd,
-  )}k active users and ${fmtMoney(causalState.cumProfit)} cumulative, so ${
-    causalState.profitPos ? "the model stays profitable" : "the model slips into a loss"
+  )}/mo and ARPU at €${causalState.margin.toFixed(1)}/user. After the deployment lag and the standing competition drag that leaves about ${causalState.usersEnd.toFixed(
+    2,
+  )}M active users and ${fmtMoney(causalState.cumProfit)} cumulative profit, so ${
+    causalState.profitPos ? "the line stays profitable" : "the line runs at a loss"
   }.`;
 
   const showRail = stage === "causal" || stage === "risk" || stage === "tipping";
@@ -384,7 +372,8 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
                 <p className="exp-control-note">
                   <strong>Platform ecosystem.</strong> Contained pilots to mass-market apps. More
-                  reach grows the user base, lifting revenue but also token-cost exposure when prices spike.
+                  reach widens the addressable market <Tex>{"K"}</Tex>, growing the user base and revenue &mdash;
+                  but also serving-cost exposure when prices spike.
                 </p>
               </div>
 
@@ -473,7 +462,8 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setTpf)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  Multiplier on vendor token costs. 1× is today; higher values mimic a price shock or market consolidation.
+                  Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today; a
+                  pricing shock is simply a high value here. Vendor independence shields the excess.
                 </p>
               </div>
 
@@ -491,11 +481,12 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setReg)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  External compliance burden the vendor passes through. Adds to the effective token price and raises total cost.
+                  External compliance load. Raises the fixed compliance cost and slows your in-house
+                  innovation; resilience and in-house build partly buffer it. It does not change the token price.
                 </p>
               </div>
               <p className="exp-rail-note">
-                Effective token price is now ×{causalState.tpfEff.toFixed(1)}.
+                Effective serving price is now ×{causalState.tpfEff.toFixed(1)} after resilience shielding.
               </p>
             </div>
 
@@ -548,19 +539,19 @@ function ExplorerView({ data }: { data: RunsData }) {
                       <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">01</span>
-                        <span>Platform reach &rarr; user base <Tex>{"N(t)"}</Tex></span>
+                        <span>Platform reach &rarr; market size <Tex>{"K"}</Tex> &amp; users <Tex>{"N(t)"}</Tex></span>
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">02</span>
-                        <span>Vendor independence &rarr; token-price shock</span>
+                        <span>Vendor independence &rarr; serving-cost shield</span>
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">03</span>
-                        <span>In-house build &rarr; churn <Tex>{"\\chi"}</Tex> &amp; margin <Tex>{"m"}</Tex></span>
+                        <span>In-house build &rarr; churn <Tex>{"\\chi"}</Tex> &amp; ARPU <Tex>{"m"}</Tex></span>
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">04</span>
-                        <span>Scaling &rarr; quality bar <Tex>{"Q^{*}"}</Tex> &amp; margin <Tex>{"m"}</Tex></span>
+                        <span>Scaling &rarr; quality bar <Tex>{"Q^{*}"}</Tex> &amp; ARPU premium <Tex>{"\\Delta m"}</Tex></span>
                       </span>
                     </div>
 
@@ -640,11 +631,14 @@ function ExplorerView({ data }: { data: RunsData }) {
                   </div>
                   <div className="exp-radar-side">
                     <p className="exp-prose">
-                      Cost, lock-in and regulatory load are <strong>risks</strong> (smaller is
-                      better); innovation and resilience are <strong>strengths</strong> you invest in
-                      directly (larger is better). The dashed grey outline is {derived[traceStrat].label}{" "}
-                      under today&rsquo;s status quo, the gap to the coloured shape is what the current
-                      strategy vector and scenario change.
+                      All five axes are <strong>risks &mdash; smaller is better</strong>, so a tighter shape is a
+                      safer strategy. Each spoke is driven by one decision: <strong>platform exposure</strong> by
+                      platform reach and price, <strong>vendor lock-in</strong> by vendor independence,{" "}
+                      <strong>capability gap</strong> by in-house build, <strong>scaling risk</strong> by scaling
+                      aggressiveness, and <strong>regulatory load</strong> by the compliance environment
+                      (buffered by resilience and in-house build). The dashed grey outline is{" "}
+                      {derived[traceStrat].label} under today&rsquo;s status quo; the gap to the coloured shape is
+                      what the current strategy and scenario change.
                     </p>
                     <div className="exp-radar-legend">
                       {derived.map((d, s) => (

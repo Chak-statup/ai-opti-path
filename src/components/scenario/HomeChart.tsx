@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { sweepCumProfit, type RunsData } from "@/lib/scenario/model";
+import { useMemo } from "react";
+import { buildModelData, sweepCumProfit } from "@/lib/scenario/model";
 
 const STRAT_COLORS = ["#2980B9", "#16A085", "#4B2C50"];
 
@@ -30,17 +30,10 @@ function mulberry32(seed: number) {
 }
 
 export function HomeChart() {
-  const [data, setData] = useState<RunsData | null>(null);
+  // Live-simulated decorative background — same model as the evaluator.
+  const data = useMemo(() => buildModelData(), []);
 
-  useEffect(() => {
-    fetch("/runs.json")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: RunsData | null) => setData(d))
-      .catch(() => setData(null));
-  }, []);
-
-  const sets = useMemo<PathSet[] | null>(() => {
-    if (!data) return null;
+  const sets = useMemo<PathSet[]>(() => {
     const xs = data.qstar_grid;
     const sweep = sweepCumProfit(data, data.meta.controls.dm.default);
 
@@ -70,8 +63,6 @@ export function HomeChart() {
       return { main: buildPath(ys, xs, sx, sy), noisy, color: STRAT_COLORS[s] };
     });
   }, [data]);
-
-  if (!sets) return null;
 
   return (
     <svg

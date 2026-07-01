@@ -5,12 +5,6 @@
 import { useState } from "react";
 import type { RiskScores, ScenarioContext, StrategyDerived } from "@/lib/scenario/model";
 
-const RISK_LABEL: Record<string, string> = {
-  cost: "token cost exposure",
-  lockin: "vendor lock-in",
-  regulatory: "regulatory load",
-};
-
 function buildPrompt(
   derived: StrategyDerived[],
   riskAll: RiskScores[],
@@ -22,17 +16,21 @@ function buildPrompt(
   });
   const lines = derived.map((d, i) => {
     const r = riskAll[i];
-    return `- ${d.label}: cumulative profit $${d.cumProfit.toFixed(0)}M; risks → cost ${Math.round(
-      r.cost,
-    )}/100, lock-in ${Math.round(r.lockin)}/100, regulatory ${Math.round(r.regulatory)}/100`;
+    return `- ${d.label}: cumulative profit €${d.cumProfit.toFixed(0)}M over the horizon; risk axes (0-100, higher = worse) → platform exposure ${Math.round(
+      r.platform,
+    )}, vendor lock-in ${Math.round(r.lockin)}, capability gap ${Math.round(
+      r.capability,
+    )}, scaling risk ${Math.round(r.scaling)}, regulatory load ${Math.round(r.regulatory)}`;
   });
   return [
-    "You are a sober strategy advisor briefing a corporate executive on how aggressively to scale an AI product over the next 12-18 months.",
-    "The candidate strategies differ in product quality (a single quality knob). Internal levers the company controls are the strategy vector: quality, quality threshold, margin per customer, innovation orientation and resilience orientation. External factors it does not control are vendor token price and regulatory pressure. Regulatory pressure feeds through into the effective token price (compliance overhead the vendor passes on).",
+    "You are a sober strategy advisor briefing a large European insurer's executive on how aggressively to scale an AI product over a ~54-month (roughly 4.5-year) horizon. All figures are in euros.",
+    "The user base is simulated (logistic growth with churn and competition). The company's decisions (the strategy vector): the product quality tier Q; scaling aggressiveness, a single dial that couples the per-user ARPU premium (Δm) with the quality bar Q* it commits to; in-house build, which lowers churn in the simulated trajectory and lifts ARPU but raises fixed cost; and vendor independence, which shields serving-cost spikes and lowers lock-in.",
+    "External factors it does NOT control: the vendor's token/serving price factor (the per-active-user cost of goods; a pricing shock is simply a high value), and regulatory pressure — a DISTINCT force that raises fixed compliance cost and slows in-house innovation (it does not change the token price).",
+    "Note: per-user ARPU (margin) is a genuine lever set by the scaling and in-house-build decisions. The OUTPUT is profit, which depends on that ARPU, the simulated user base, serving/acquisition cost and fixed cost — and retention (churn) is the dominant channel.",
     "",
     "Current scenario assumptions (external):",
-    `- Token price factor (vs. today): ${ctx.tokenPriceFactor}x`,
-    `- Regulatory pressure: ${ctx.regPressure}/100 (raises the effective token price)`,
+    `- Token / serving price factor (vs. today): ${ctx.tokenPriceFactor}x`,
+    `- Regulatory pressure: ${ctx.regPressure}/100 (raises fixed compliance cost and slows innovation)`,
     "",
     "Model output for each strategy:",
     ...lines,
@@ -40,8 +38,7 @@ function buildPrompt(
     `The model currently favours "${derived[best].label}" on cumulative profit.`,
     "",
     "Write a crisp executive briefing (max ~180 words). Be direct, no marketing language, no headings.",
-    "Cover: (1) which path you recommend and why, (2) the single biggest risk and what would flip the decision, (3) a concrete adjustment to the strategy vector (innovation / resilience) to mitigate the dominant external risk.",
-    "Emphasise that 'margin per user' is an output of cost and user dynamics, not a real lever.",
+    "Cover: (1) which path you recommend and why, (2) the single biggest risk (name the dominant risk axis) and what would flip the decision, (3) a concrete adjustment to the strategy vector (in-house build / vendor independence / platform reach / scaling) that reduces that dominant risk, with the mechanism.",
   ].join("\n");
 }
 
@@ -79,7 +76,7 @@ export function AiInsight({
           "anthropic-dangerous-direct-browser-access": "true",
         },
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-latest",
+          model: "claude-sonnet-5",
           max_tokens: 600,
           messages: [{ role: "user", content: buildPrompt(derived, riskAll, ctx) }],
         }),

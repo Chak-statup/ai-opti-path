@@ -80,11 +80,13 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
       <section className="exp-section">
         <h2 className="exp-section-title">THE CORE INSIGHT</h2>
         <p className="exp-prose">
-          To convert qualitative reasoning to quantitative models we define some metrics that
-          correlate with the business model. For ex: Margin per user is an estimated output of two
-          inputs: margin and the number of users. Margin itself is an output of revenue and cost, and
-          cost depends on the vendor&rsquo;s pricing policy. Constructing estimated causal
-          dependencies for such cases is important and this is what we do.&nbsp;
+          To turn qualitative reasoning into a quantitative model we simulate the user base over time
+          and net a transparent P&amp;L on top. <strong>Profit is the output.</strong> It depends on
+          per-user margin (ARPU &mdash; a lever you set), the size and retention of the user base, the
+          vendor&rsquo;s serving price, and fixed cost. The point is that no single number decides it:
+          retention (churn) matters as much as price, and cost and dependency evolve as you scale.
+          Making those causal dependencies explicit &mdash; and letting you stress them &mdash; is
+          what this tool does.&nbsp;
         </p>
       </section>
 

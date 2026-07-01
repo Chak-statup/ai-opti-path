@@ -3,14 +3,16 @@
 import type { RiskScores, ScenarioContext, StrategyDerived } from "@/lib/scenario/model";
 
 const RISK_LABEL: Record<string, string> = {
-  cost: "token cost exposure",
+  platform: "platform exposure",
   lockin: "vendor lock-in",
+  capability: "capability gap",
+  scaling: "scaling risk",
   regulatory: "regulatory load",
 };
 
 function fmt(v: number): string {
   const sign = v < 0 ? "−" : "";
-  return `${sign}$${Math.abs(v).toFixed(0)}M`;
+  return `${sign}€${Math.abs(v).toFixed(0)}M`;
 }
 
 export function Recommendation({
@@ -29,17 +31,17 @@ export function Recommendation({
     if (d.cumProfit > derived[best].cumProfit) best = i;
   });
   const bestRisks = riskAll[best];
-  const ranked = (["cost", "lockin", "regulatory"] as const)
+  const ranked = (["platform", "lockin", "capability", "scaling", "regulatory"] as const)
     .map((k) => ({ k, v: bestRisks[k] }))
     .sort((a, b) => b.v - a.v);
   const topRisks = ranked.slice(0, 2);
 
   const flip =
     ctx.tokenPriceFactor >= 2.5
-      ? "If token prices return to today's level, the higher-quality strategy regains the lead, most of the gap here is the vendor's pricing, not the product."
+      ? "If serving prices return to today's level, the higher-quality strategy regains the lead — most of the gap here is the vendor's pricing, not the product."
       : ctx.regPressure >= 70
-        ? "If regulatory load eases, the build-heavy strategy pays off faster, compliance is currently the binding constraint."
-        : "If the vendor doubles token prices, the ranking flips toward the open, lower-exposure strategy.";
+        ? "If regulatory load eases, the build-heavy strategy pays off faster — compliance is currently the binding constraint."
+        : "If the vendor doubles serving prices, the ranking shifts toward the lower-exposure, more vendor-independent strategy.";
 
   return (
     <div className="exp-rec">

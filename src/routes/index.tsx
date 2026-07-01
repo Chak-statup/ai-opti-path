@@ -61,21 +61,23 @@ function LandingPage() {
         <section className="lp-about">
           <h2 className="lp-section-title">What the evaluator shows</h2>
           <p className="lp-about-body">
-            This is an illustration, not a forecast. It extends a simple word-of-mouth growth
-            model into a guided decision journey. You set a strategy vector you have some control
-            over for example: quality, margin per customer, in-house build and vendor
-            independence, and an environment you do not (token price and regulatory pressure).
-            The evaluator then traces the causal pathway, profiles each strategy&rsquo;s risks,
-            flags the tipping points, and when a shock hits it proposes mitigations you can
-            compare side by side.
+            This is an illustration, not a forecast. It runs a live simulation of user growth
+            (logistic growth with churn and competition) and nets a transparent euro P&amp;L on top.
+            You set a strategy vector you control &mdash; quality, scaling aggressiveness, in-house
+            build, vendor independence and platform reach &mdash; and an environment you do not
+            (the vendor&rsquo;s serving price and regulatory pressure). The evaluator then traces the
+            causal pathway, profiles each strategy&rsquo;s risks, flags the tipping points, and when
+            a shock hits it proposes mitigations you can compare side by side.
           </p>
           <p className="lp-about-body">
-            Every risk factor in the four decision axes is wired to a model variable. Platform
-            reach scales the user base; vendor independence hedges token price spikes and
-            lock-in; in-house build lifts margin and retention; scaling aggressiveness couples
-            quality and margin slope. Regulatory pressure and token price factor are external
-            shocks. The point: margin per user is an output of cost and user dynamics, not a lever,
-            so the real question is which strategy holds up as the world changes.
+            Each decision axis is wired to a model variable. Platform reach scales the addressable
+            market and the user base; in-house build lowers churn in the trajectory and lifts ARPU;
+            vendor independence shields serving-price spikes and lock-in; scaling aggressiveness
+            couples the per-user ARPU premium with the quality bar. Token price is the per-user
+            serving cost; regulation is a distinct load that raises fixed compliance cost and slows
+            innovation. Per-user margin (ARPU) is a genuine lever &mdash; the <em>output</em> is
+            profit, and it turns on retention as much as on price, so the real question is which
+            strategy holds up as the world changes.
           </p>
         </section>
       </main>

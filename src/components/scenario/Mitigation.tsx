@@ -10,24 +10,25 @@ import {
   deriveRiskScores,
   deriveStrategy,
   proposeMitigations,
+  RISK_AXES,
   type MitigationBaseline,
   type RunsData,
   type ScenarioContext,
 } from "@/lib/scenario/model";
 
-const RADAR_AXES = ["Cost", "Lock-in", "Regulatory", "In-house build", "Vendor indep."];
+const RADAR_AXES = RISK_AXES.map((a) => a.label);
 
 // Distinct trend colors for overlaying several candidates at once.
 const CAND_COLORS = ["#2980B9", "#16A085", "#F39C12", "#4B2C50", "#C0392B"];
 
 function fmt(v: number): string {
   const sign = v < 0 ? "−" : "";
-  return `${sign}$${Math.abs(v).toFixed(0)}M`;
+  return `${sign}€${Math.abs(v).toFixed(0)}M`;
 }
 
 function fmtDelta(v: number): string {
   const sign = v >= 0 ? "+" : "−";
-  return `${sign}$${Math.abs(v).toFixed(0)}M`;
+  return `${sign}€${Math.abs(v).toFixed(0)}M`;
 }
 
 // Mocked AI briefing, composed locally from the chosen candidate's numbers.
@@ -132,6 +133,17 @@ export function Mitigation({
     () => deriveRiskScores(data, base.strat, base.dm, base.qstar, ctx, base.vec),
     [data, base, ctx],
   );
+  const RISK_LABELS: Record<string, string> = {
+    platform: "platform exposure",
+    lockin: "vendor lock-in",
+    capability: "capability gap",
+    scaling: "scaling / cost-structure risk",
+    regulatory: "regulatory load",
+  };
+  const dominantKey = (["platform", "lockin", "capability", "scaling", "regulatory"] as const).reduce(
+    (a, b) => (baseRisk[b] > baseRisk[a] ? b : a),
+    "platform" as "platform" | "lockin" | "capability" | "scaling" | "regulatory",
+  );
   const primaryRisk = useMemo(
     () => deriveRiskScores(data, primary.strat, primary.dm, primary.qstar, ctx, primary.vec),
     [data, primary, ctx],
@@ -141,14 +153,14 @@ export function Mitigation({
     {
       label: "Before",
       color: "var(--exp-axis)",
-      values: [baseRisk.cost, baseRisk.lockin, baseRisk.regulatory, baseRisk.innovation, baseRisk.resilience],
+      values: [baseRisk.platform, baseRisk.lockin, baseRisk.capability, baseRisk.scaling, baseRisk.regulatory],
       dashed: true,
       fill: false,
     },
     {
       label: "After",
       color: colorOf[primary.id],
-      values: [primaryRisk.cost, primaryRisk.lockin, primaryRisk.regulatory, primaryRisk.innovation, primaryRisk.resilience],
+      values: [primaryRisk.platform, primaryRisk.lockin, primaryRisk.capability, primaryRisk.scaling, primaryRisk.regulatory],
       fill: true,
     },
   ];
@@ -156,8 +168,10 @@ export function Mitigation({
   return (
     <div className="exp-mit">
       <div className="exp-mit-tag">
-        Model-proposed mitigations, generated from the live scenario and ranked by cumulative profit.
-        Toggle several to compare them, the highlighted one drives the radar and the apply button.
+        The dominant risk in this scenario is <strong>{RISK_LABELS[dominantKey]}</strong> (
+        {Math.round(baseRisk[dominantKey])}/100). Below are the strategy changes that reduce it, each
+        re-simulated against the same environment and ranked by how much it cuts that risk
+        (profit-guarded). Toggle several to compare; the highlighted one drives the radar and Apply.
       </div>
 
       <div className="exp-mit-ai">
@@ -232,6 +246,8 @@ export function Mitigation({
                 <span>Δm {c.dm.toFixed(1)}</span>
                 <span>Innov {Math.round(c.vec.innovation)}</span>
                 <span>Resil {Math.round(c.vec.resilience)}</span>
+                <span>Reach {Math.round(c.vec.platformReach ?? 50)}</span>
+                <span>−{Math.max(0, c.riskReduction).toFixed(0)} risk pts</span>
               </div>
             </button>
           );
@@ -241,7 +257,7 @@ export function Mitigation({
       <div className="exp-mit-compare">
         <div className="exp-mit-chart">
           <div className="exp-mit-chart-head">
-            <span className="exp-section-title">BEFORE VS AFTER, REVENUE</span>
+            <span className="exp-section-title">BEFORE VS AFTER, PROFIT</span>
             <div className="exp-mit-numbers">
               <span className="exp-mit-num">
                 <span className="exp-swatch" style={{ background: "var(--exp-axis)" }} />
@@ -253,9 +269,9 @@ export function Mitigation({
             xs={t}
             series={profitSeries}
             xLabel="months"
-            yLabel="$M / month"
+            yLabel="€M / month"
             vGuides={[
-              { x: data.meta.params.t_shock, label: "price shock", color: "var(--exp-axis)" },
+              { x: data.meta.params.tau, label: "τ revenue", color: "var(--exp-axis)" },
             ]}
             zeroLine
             xFormat={(v) => `${Math.round(v)}`}

@@ -32,7 +32,7 @@ const NODES: NodeDef[] = [
   { id: "chi", x: 470, y: 270, w: 188, h: 74, glyph: "\u03C7", italic: true, shape: "rect", role: "map" },
   { id: "m", x: 470, y: 440, w: 188, h: 74, glyph: "m", italic: true, shape: "rect", role: "map" },
   { id: "N", x: 790, y: 320, w: 196, h: 82, glyph: "N(t)", italic: true, shape: "ellipse", role: "flow" },
-  { id: "shock", x: 790, y: 500, w: 188, h: 62, glyph: "shock", italic: false, shape: "rect", role: "prior" },
+  { id: "shock", x: 790, y: 500, w: 188, h: 62, glyph: "price", italic: false, shape: "rect", role: "prior" },
   { id: "Pi", x: 1030, y: 320, w: 168, h: 112, glyph: "\u03A0", italic: true, shape: "diamond", role: "outcome" },
 ];
 
@@ -154,13 +154,13 @@ export function CausalDiagram({
   const nodeSub: Record<string, string> = {
     Q: `quality ${cs.Q.toFixed(2)}`,
     Qstar: "market bar",
-    dm: "margin lever",
+    dm: "ARPU premium",
     phi: "competition",
-    chi: `churn ${cs.churn.toFixed(2)}`,
-    m: `$${cs.margin.toFixed(1)}/user`,
-    N: `${Math.round(cs.usersEnd)}k users`,
-    Pi: `${cs.cumProfit < 0 ? "\u2212" : ""}$${Math.abs(cs.cumProfit).toFixed(0)}M`,
-    shock: `token \u00d7${cs.tpfEff.toFixed(1)}`,
+    chi: `churn ${cs.churn.toFixed(2)}/mo`,
+    m: `\u20ac${cs.margin.toFixed(1)}/user`,
+    N: `${cs.usersEnd.toFixed(2)}M users`,
+    Pi: `${cs.cumProfit < 0 ? "\u2212" : ""}\u20ac${Math.abs(cs.cumProfit).toFixed(0)}M`,
+    shock: `serving \u00d7${cs.tpfEff.toFixed(1)}`,
   };
 
   return (
