@@ -5,8 +5,8 @@ type ParamRow = { sym: string; meaning: string; value: string };
 const PARAMS: ParamRow[] = [
   { sym: "N(t)", meaning: "Active users — the single simulated state", value: "—" },
   { sym: "Q", meaning: "Quality = strategy (the decision)", value: "0.3 / 0.6 / 0.9" },
-  { sym: "K", meaning: "Addressable market (set by platform reach)", value: "2M – 15M" },
-  { sym: "N_0", meaning: "Initial active users", value: "40,000" },
+  { sym: "K", meaning: "Addressable market (set by platform reach)", value: "0.2M – 1.5M" },
+  { sym: "N_0", meaning: "Initial active users", value: "4,000" },
   { sym: "p", meaning: "External acquisition rate", value: "0.008 / mo" },
   { sym: "r", meaning: "Word-of-mouth growth rate", value: "0.35 / mo" },
   { sym: "\\chi_{\\min},\\,\\chi_{\\max}", meaning: "Churn floor / ceiling", value: "0.02 / 0.30 / mo" },
@@ -17,7 +17,7 @@ const PARAMS: ParamRow[] = [
   { sym: "c_{\\mathrm{ac}}", meaning: "Cost per (re)acquired user", value: "€20" },
   { sym: "\\varphi", meaning: "Peak competitive-loss rate", value: "0.35 / mo" },
   { sym: "\\sigma", meaning: "Demand volatility", value: "0.16" },
-  { sym: "F_0", meaning: "Base fixed cost per month (+ investments)", value: "€4M / mo" },
+  { sym: "F_0", meaning: "Base fixed cost per month (+ investments)", value: "€0.4M / mo" },
   { sym: "\\tau", meaning: "Deployment to revenue lag", value: "6 mo" },
   { sym: "T", meaning: "Horizon", value: "54 mo" },
 ];
@@ -146,9 +146,9 @@ export function HowItWorks() {
           </Tex>
           <p className="exp-howto-cap">
             The cost of the bets: every investment raises fixed cost — in-house build{" "}
-            <Tex>{"F_{\\iota}=\\text{€5M/mo}"}</Tex>, vendor independence{" "}
-            <Tex>{"F_{\\rho}=\\text{€1.5M/mo}"}</Tex> at full — and <strong>regulation</strong> adds a
-            compliance overhead <Tex>{"F_{\\text{reg}}=\\text{€3M/mo}"}</Tex> that resilience and
+            <Tex>{"F_{\\iota}=\\text{€0.5M/mo}"}</Tex>, vendor independence{" "}
+            <Tex>{"F_{\\rho}=\\text{€0.15M/mo}"}</Tex> at full — and <strong>regulation</strong> adds a
+            compliance overhead <Tex>{"F_{\\text{reg}}=\\text{€0.3M/mo}"}</Tex> that resilience and
             in-house build partly buy down. Platform reach separately sets the market{" "}
             <Tex>{"K"}</Tex>.
           </p>

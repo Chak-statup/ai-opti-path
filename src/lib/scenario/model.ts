@@ -493,7 +493,9 @@ export function computeCausalState(
   const usersNorm = clamp01(usersEnd / (0.25 * K));
 
   const cumProfit = d.cumProfit;
-  const profitNorm = clamp01(Math.abs(cumProfit) / 1500);
+  // Magnitude norm at the current ÷10 monetary scale: cumulative profit spans
+  // roughly −€60M .. +€120M across realistic configurations, so €150M ≈ 1.
+  const profitNorm = clamp01(Math.abs(cumProfit) / 150);
   const tpfEff = effectiveTpf(ctx, vec);
   const shockNorm = clamp01((tpfEff - 1) / 2);
 
