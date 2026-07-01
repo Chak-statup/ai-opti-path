@@ -4,6 +4,30 @@ Persistent notes for the AI-strategy evaluator redesign. Read this at the start 
 
 ---
 
+## ▶ RESUME POINT — last updated 2026-07-01 (read this first)
+
+**Status:** The scientific rewrite of the AI-strategy evaluator is DONE, verified (`tsc` clean, numeric slider-drive checks, live browser screenshots), and committed across ~7 commits — but **NOT pushed** (GitHub is unreachable from the agent sandbox; the **user** runs `git push origin main`, which syncs Lovable). App builds and runs; nothing is broken.
+
+**How to resume:**
+- Model = single source of truth: `src/lib/scenario/model.ts` (live in-browser ODE simulation; there is no runs.json). Every parameter is sourced in `docs/references.md`.
+- Run the app: `npm run dev` → http://localhost:8080/evaluator. If `node_modules` is missing, `npm install --no-package-lock` first (bun.lock exists but bun isn't installed in the sandbox — use npm; **revert any playwright added to package.json**).
+- Verify logic headless: write a `.ts` scratch importing `./src/lib/scenario/model.ts`, run `node file.ts` (Node 23 native TS strip), delete after. Typecheck: `node_modules/.bin/tsc --noEmit -p tsconfig.json`. Screenshots: Playwright is in node_modules (browser download skipped) → `chromium.launch({channel:'chrome'})`. Clean up `_shots/ _shot.mjs _dev.log` and don't commit them.
+
+**DONE (in unpushed commits):** live ODE sim; innovation→churn, reach→market K; token price = serving COGS; regulation = distinct fixed-cost+innovation channel; clean P&L; euro scale ÷10 (Lean −€41M / Balanced €31M / Premium €111M; peak monthly rev €1.3–8M). Radar = 5 all-risk axes each reaching ~100 at its extreme, with a live per-axis "How each axis moves" panel. Diagnostic, credible (non-loss) mitigation; reach bug fixed. Real temporal price shock at month 16 that persists through slider changes. Vendor independence = blended price `(1−h)·tpf+h`, h=0.7·resil/100 (explainable "×3→×1.6"). Parameters grounded + citation-audited (`docs/references.md`; CALIB tagged `[src]/[assume]/[bound]`). Three scenario stories drive users+profit (pricing shock→hedge; aggressive scaling→churn cliff+serving cost; open-source adoption→quality drop→fewer users, quality-dependent). Deleted the parallel `/simulator` engine + `runs.json`.
+
+**PENDING / OPEN — pick up here:**
+1. **Push** the commits (user's action).
+2. **Causal-diagram redesign** — proposed: the 4 sliders as explicit driver-nodes wired to the variables they change (reach→K/N, independence→ρ price, in-house build→χ&m, scaling→Q*&Δm), each with live value + ↑/↓ vs baseline. **AWAITING USER CONFIRM on direction before building** (it's a layout change; don't guess).
+3. **HowItWorks copy** for the two newest couplings (open-source quality trade; scaling→serving cost) — behaviour is live/verified, only the written explanation is missing.
+4. **Churn-form A/B (OPEN decision):** route innovation through effective quality `Q_eff` (restores the pure-logistic χ; recommended) vs keep the multiplicative `χ·(1−0.30ι)`. User hasn't chosen.
+5. **Task #7:** realign `standalone/` port to the new model (deferred until the React app is signed off).
+
+**Commits (unpushed, newest code-first):** 40a6cbf · 079b11e · bce98b9 · 3eafc05 · aaf0fb2 (plus interleaved `docs:` log commits).
+
+**Workflow outputs (may not persist across sessions; distilled into repo docs):** subsystem audit → `docs/logs.md` "2026-07-01 (audit)"; reference research → `docs/references.md`.
+
+---
+
 ## How to work with this user (feedback, 2026-07-01)
 - No sycophancy. Do not validate for its own sake. Agree only when it is load-bearing, and say *why* it is correct, not just *that* it is.
 - Be critical and precise. Push back directly when the user is wrong or imprecise; do not absorb an error and silently reframe.
