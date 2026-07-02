@@ -101,12 +101,11 @@ export const Route = createFileRoute("/evaluator")({
 const STRAT_COLORS = ["var(--exp-open)", "var(--exp-hybrid)", "var(--exp-frontier)"];
 const RADAR_AXES = RISK_AXES.map((a) => a.label);
 
-type MetricKey = "users" | "revenue" | "cost" | "profit";
-type Tab = "strategy" | MetricKey;
+type Tab = "users" | "revenue" | "cost" | "profit";
 
 // Display at demo scale: monthly flows in €k, users in thousands (the model's
 // internal units stay €M / millions; only the axis formatting converts).
-const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
+const METRIC_PANELS: Record<Tab, { title: string; yLabel: string; zero: boolean }> = {
   users: { title: "Active users", yLabel: "thousand users", zero: false },
   revenue: { title: "Revenue (ARPU × users)", yLabel: "€k / month", zero: false },
   cost: { title: "Cost (serving + acquisition + fixed)", yLabel: "€k / month", zero: false },
@@ -118,7 +117,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "users", label: "Users" },
   { key: "revenue", label: "Revenue" },
   { key: "cost", label: "Cost" },
-  { key: "strategy", label: "Strategy" },
 ];
 
 function fmtMoney(v: number): string {
