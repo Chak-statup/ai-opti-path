@@ -267,7 +267,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const innovEff = innovEffective(vec, ctx);
   const fixedK = (v: number) => (v / 1e3).toFixed(0);
 
-  function panelSeries(key: MetricKey): Series[] {
+  function panelSeries(key: Tab): Series[] {
     const faint: Series[] = [];
     const bold: Series[] = [];
     derived.forEach((d, s) => {
@@ -278,12 +278,6 @@ function ExplorerView({ data }: { data: RunsData }) {
     });
     return [...faint, ...bold];
   }
-
-  const sweepSeries: Series[] = sweep.map((ys, s) => ({ ys, color: STRAT_COLORS[s], width: 2 }));
-  const sweepGuides: VGuide[] = [
-    { x: snappedQ, label: `threshold ${snappedQ.toFixed(2)}`, color: "var(--exp-marker)", dash: false },
-    ...data.meta.strategies.map((st, s) => ({ x: st.Q, color: STRAT_COLORS[s], dash: true })),
-  ];
   const activeTab = TABS.find((x) => x.key === tab)!;
 
   const radarSeries: RadarSeries[] = [
