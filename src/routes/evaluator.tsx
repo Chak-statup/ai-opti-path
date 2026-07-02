@@ -486,16 +486,19 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => setScaling(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
-                  two things that cannot move apart: the price premium (<Tex>{"\\Delta m"}</Tex> ={" "}
-                  €{dm.toFixed(1)}/user per unit quality) and what users <em>expect</em> for that
-                  price (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}; expectations scale with each
-                  tier&rsquo;s positioning, so the traced tier is held to {causalState.bar.toFixed(2)}).
-                  Charging more raises the bar; delivering against it is a separate investment (tier,
-                  in-house build). Churn goes over the cliff if expectations pass your delivered
-                  quality ({causalState.Q.toFixed(2)}).
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
+                    two things that cannot move apart: the price premium (<Tex>{"\\Delta m"}</Tex> ={" "}
+                    €{dm.toFixed(1)}/user per unit quality) and what users <em>expect</em> for that
+                    price (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}; expectations scale with each
+                    tier&rsquo;s positioning, so the traced tier is held to {causalState.bar.toFixed(2)}).
+                    Charging more raises the bar; delivering against it is a separate investment (tier,
+                    in-house build). Churn goes over the cliff if expectations pass your delivered
+                    quality ({causalState.Q.toFixed(2)}).
+                  </p>
+                </details>
               </div>
             </div>
 
