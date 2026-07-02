@@ -571,7 +571,7 @@ export const PRESETS: ScenarioPreset[] = [
   },
   {
     id: "regulatory-stress",
-    label: "Regulatory stress test",
+    label: "Regulatory pressure",
     blurb: "Heavy audit and governance duty across the sector (token price unchanged).",
     ctx: { tokenPriceFactor: 1.0, regPressure: 85 },
   },
