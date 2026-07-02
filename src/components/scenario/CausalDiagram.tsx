@@ -156,6 +156,11 @@ export function CausalDiagram({
     Math.min(1, (cs.fixed.total - cs.fixed.base) / (CALIB.F_innov + CALIB.F_resil + CALIB.F_reg)),
   );
   const regDrag = Math.max(0, Math.min(1, CALIB.regInnovDrag * cs.regN));
+  // The TOTAL monthly serving bill (€/mo): per-user cost × the user base at
+  // horizon. This is what platform reach drives on the cost side; the per-user
+  // s is reach-invariant, the bill is not. €100k/mo reads fully saturated.
+  const serveBill = cs.serve * cs.usersEnd * 1e6;
+  const billNorm = Math.max(0, Math.min(1, serveBill / 100_000));
 
   const edges: { a: string; b: string; intensity: number; bad: boolean }[] = [
     { a: "Q", b: "chi", intensity: cs.churnNorm, bad: cs.churnNorm > 0.5 },
@@ -167,7 +172,8 @@ export function CausalDiagram({
     { a: "K", b: "N", intensity: cs.reachN, bad: false },
     { a: "m", b: "Pi", intensity: cs.marginNorm, bad: false },
     { a: "N", b: "Pi", intensity: cs.usersNorm, bad: false },
-    { a: "s", b: "Pi", intensity: cs.shockNorm, bad: true },
+    { a: "N", b: "s", intensity: billNorm, bad: true },
+    { a: "s", b: "Pi", intensity: Math.max(billNorm, cs.shockNorm), bad: true },
     { a: "F", b: "Pi", intensity: fixedNorm, bad: true },
     { a: "reg", b: "F", intensity: cs.regN, bad: true },
     { a: "reg", b: "Q", intensity: regDrag, bad: true },
@@ -211,7 +217,7 @@ export function CausalDiagram({
     K: `market ${(cs.KM * 1000).toFixed(0)}k people`,
     N: `${(cs.usersEnd * 1000).toFixed(1)}k users`,
     Pi: `${cs.cumProfit < 0 ? "−" : ""}€${Math.abs(cs.cumProfit).toFixed(1)}M`,
-    s: `serving €${cs.serve.toFixed(1)}/user`,
+    s: `€${cs.serve.toFixed(1)}/user · €${(serveBill / 1e3).toFixed(0)}k/mo total`,
     reg: `compliance load ${Math.round(cs.regN * 100)}`,
     F: `fixed €${fixedK(cs.fixed.total)}k/mo`,
   };
