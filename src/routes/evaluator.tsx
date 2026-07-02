@@ -790,6 +790,36 @@ function ExplorerView({ data }: { data: RunsData }) {
 
       <button
         type="button"
+        className="exp-problem-fab"
+        aria-expanded={showProblem}
+        onClick={() => setShowProblem((v) => !v)}
+      >
+        {showProblem ? "Close" : "The problem"}
+      </button>
+
+      {showProblem && (
+        <div className="exp-howto-overlay" role="dialog" aria-label="The problem">
+          <div className="exp-howto-panel">
+            <div className="exp-howto-panel-head">
+              <span>The problem</span>
+              <button
+                type="button"
+                className="exp-howto-close"
+                onClick={() => setShowProblem(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="exp-howto-panel-body">
+              <ProblemFrame onStart={() => setShowProblem(false)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
         className="exp-howto-fab"
         aria-expanded={showHow}
         onClick={() => setShowHow((v) => !v)}
