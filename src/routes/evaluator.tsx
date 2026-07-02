@@ -370,7 +370,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               </div>
 
               <div className="exp-legend">
-                <div className="exp-legend-title">Your product tier: the strategy (Q)</div>
+                <div className="exp-legend-title">YOUR PRODUCT TIER: BASED ON QUALITY (Q)</div>
                 {derived.map((d, s) => (
                   <button
                     type="button"
