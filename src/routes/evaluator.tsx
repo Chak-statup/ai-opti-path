@@ -140,8 +140,10 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [qualityShift, setQualityShift] = useState<number | undefined>(undefined);
   const [activePreset, setActivePreset] = useState<string | null>("status-quo");
   const [tab, setTab] = useState<Tab>("profit");
-  const [causalView, setCausalView] = useState<"pathway" | "charts">("pathway");
+  const [causalView, setCausalView] = useState<"pathway" | "charts">("charts");
   const [showHow, setShowHow] = useState(false);
+  const [showProblem, setShowProblem] = useState(false);
+  const [pathwayInfo, setPathwayInfo] = useState(false);
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
   const ctx: ScenarioContext = useMemo(
