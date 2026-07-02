@@ -568,19 +568,19 @@ function ExplorerView({ data }: { data: RunsData }) {
                 <div className="exp-subtabs" role="tablist" aria-label="Causal view">
                   <button
                     role="tab"
-                    aria-selected={causalView === "pathway"}
-                    className={`exp-tab ${causalView === "pathway" ? "active" : ""}`}
-                    onClick={() => setCausalView("pathway")}
-                  >
-                    Pathway
-                  </button>
-                  <button
-                    role="tab"
                     aria-selected={causalView === "charts"}
                     className={`exp-tab ${causalView === "charts" ? "active" : ""}`}
                     onClick={() => setCausalView("charts")}
                   >
                     Trajectories
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={causalView === "pathway"}
+                    className={`exp-tab ${causalView === "pathway" ? "active" : ""}`}
+                    onClick={() => setCausalView("pathway")}
+                  >
+                    Pathway
                   </button>
                 </div>
 
