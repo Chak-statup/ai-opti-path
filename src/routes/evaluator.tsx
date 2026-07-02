@@ -460,14 +460,17 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Build vs buy.</strong> API-first (0) to own models &amp; tooling (100). At{" "}
-                  {Math.round(innov)} it lifts the quality users experience by{" "}
-                  <strong>+{(CALIB.innovQualityLift * innovEff).toFixed(2)}</strong> (max +0.15 ≈ half a
-                  tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%,
-                  at €{fixedK(causalState.fixed.build)}k/mo fixed cost. Regulation currently drags
-                  its delivered effect by {Math.round(CALIB.regInnovDrag * reg)}%.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Build vs buy.</strong> API-first (0) to own models &amp; tooling (100). At{" "}
+                    {Math.round(innov)} it lifts the quality users experience by{" "}
+                    <strong>+{(CALIB.innovQualityLift * innovEff).toFixed(2)}</strong> (max +0.15 ≈ half a
+                    tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%,
+                    at €{fixedK(causalState.fixed.build)}k/mo fixed cost. Regulation currently drags
+                    its delivered effect by {Math.round(CALIB.regInnovDrag * reg)}%.
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
