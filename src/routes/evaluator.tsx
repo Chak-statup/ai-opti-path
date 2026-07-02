@@ -592,39 +592,51 @@ function ExplorerView({ data }: { data: RunsData }) {
                     <div className="exp-causal-wrap">
                       <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} />
                     </div>
-                    <div className="exp-axis-map">
-                      <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">01</span>
-                        <span>Platform reach &rarr; market size <Tex>{"K"}</Tex> &amp; users <Tex>{"N(t)"}</Tex></span>
-                      </span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">02</span>
-                        <span>Vendor independence &rarr; serving price <Tex>{"\\rho"}</Tex> (shield) &amp; fixed cost <Tex>{"F"}</Tex></span>
-                      </span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">03</span>
-                        <span>In-house build &rarr; delivered quality <Tex>{"Q_{\\mathrm{eff}}"}</Tex> &amp; ARPU <Tex>{"m"}</Tex></span>
-                      </span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">04</span>
-                        <span>Scaling &rarr; price premium <Tex>{"\\Delta m"}</Tex> &amp; users&rsquo; expectations <Tex>{"Q^{*}"}</Tex></span>
-                      </span>
-                    </div>
+                    <button
+                      type="button"
+                      className="exp-info-toggle"
+                      aria-expanded={pathwayInfo}
+                      onClick={() => setPathwayInfo((v) => !v)}
+                    >
+                      {pathwayInfo ? "Hide details −" : "More info +"}
+                    </button>
+                    {pathwayInfo && (
+                      <>
+                        <div className="exp-axis-map">
+                          <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">01</span>
+                            <span>Platform reach &rarr; market size <Tex>{"K"}</Tex> &amp; users <Tex>{"N(t)"}</Tex></span>
+                          </span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">02</span>
+                            <span>Vendor independence &rarr; serving price <Tex>{"\\rho"}</Tex> (shield) &amp; fixed cost <Tex>{"F"}</Tex></span>
+                          </span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">03</span>
+                            <span>In-house build &rarr; delivered quality <Tex>{"Q_{\\mathrm{eff}}"}</Tex> &amp; ARPU <Tex>{"m"}</Tex></span>
+                          </span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">04</span>
+                            <span>Scaling &rarr; price premium <Tex>{"\\Delta m"}</Tex> &amp; users&rsquo; expectations <Tex>{"Q^{*}"}</Tex></span>
+                          </span>
+                        </div>
 
-                    <div className="exp-causal-key">
-                      <span className="exp-causal-key-item">
-                        <span className="exp-edge-sample good" /> reinforcing link
-                      </span>
-                      <span className="exp-causal-key-item">
-                        <span className="exp-edge-sample bad" /> pressure / risk
-                      </span>
-                      <span className="exp-causal-key-item">thicker line = stronger effect</span>
-                      <span className="exp-causal-key-item">
-                        <span className="exp-edge-sample risk" /> shaded node = under pressure
-                      </span>
-                    </div>
-                    <p className="exp-prose">{reading}</p>
+                        <div className="exp-causal-key">
+                          <span className="exp-causal-key-item">
+                            <span className="exp-edge-sample good" /> reinforcing link
+                          </span>
+                          <span className="exp-causal-key-item">
+                            <span className="exp-edge-sample bad" /> pressure / risk
+                          </span>
+                          <span className="exp-causal-key-item">thicker line = stronger effect</span>
+                          <span className="exp-causal-key-item">
+                            <span className="exp-edge-sample risk" /> shaded node = under pressure
+                          </span>
+                        </div>
+                        <p className="exp-prose">{reading}</p>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
