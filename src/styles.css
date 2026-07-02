@@ -536,6 +536,10 @@
 
 .lp-main {
   flex: 1;
+  /* width: 100% is load-bearing: inside a column flex, the auto margins alone
+     would size this box to its CONTENT, so opening the <details> below used to
+     widen the column and shift the whole page. */
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
   padding: 3.5rem 1.5rem 4rem;
@@ -543,7 +547,7 @@
 
 .lp-hero {
   position: relative;
-  min-height: 360px;
+  min-height: clamp(360px, 55vh, 560px);
   padding: 2rem 0;
   display: flex;
   align-items: center;
@@ -1309,7 +1313,17 @@
 .exp-rec-flip { margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--exp-ink); }
 
 /* Problem frame */
-.exp-problem { display: flex; flex-direction: column; gap: 2rem; }
+.exp-problem {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  /* One centred reading column instead of text hugging the left half of a
+     1500px stage: symmetric margins, prose measure matched to the column. */
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.exp-problem .exp-prose { max-width: 90ch; }
 .exp-problem-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
