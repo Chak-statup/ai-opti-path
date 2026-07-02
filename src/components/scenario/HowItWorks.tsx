@@ -40,7 +40,7 @@ const FINDINGS = [
   },
   {
     h: "There is a critical threshold",
-    b: "Commit to a quality bar Q* above your actual quality Q and churn accelerates past a cliff; cumulative profit turns negative.",
+    b: "Charge for more quality than you deliver: when the expectations implied by your price (Q*) pass your actual quality, churn accelerates past a cliff and cumulative profit turns negative.",
   },
   {
     h: "Retention beats margin",
@@ -240,11 +240,13 @@ export function HowItWorks() {
         </div>
         <div className="exp-howto-eq">
           <p className="exp-howto-cap">
-            <strong>Scaling strategy.</strong> Aggressive scaling means higher margin per customer and
-            a higher committed bar, but a steeper cliff if the market bar moves past your quality. One
-            dial couples the <strong>ARPU premium</strong> <Tex>{"\\Delta m"}</Tex> and the{" "}
-            <strong>quality bar</strong> <Tex>{"Q^{\\ast}"}</Tex>: turning it up raises short-run
-            revenue but raises the promise, and with it the tipping-point risk.
+            <strong>Scaling strategy.</strong> Aggressive scaling means charging more per customer,
+            and users expect what they pay for; that is why one dial couples the{" "}
+            <strong>ARPU premium</strong> <Tex>{"\\Delta m"}</Tex> and the{" "}
+            <strong>expectation bar</strong> <Tex>{"Q^{\\ast}"}</Tex> and they cannot move apart.
+            Turning it up raises short-run revenue and the bar with it; delivered quality is a
+            separate investment (tier, in-house build), and the gap between the two is exactly the
+            tipping-point risk.
           </p>
         </div>
       </section>

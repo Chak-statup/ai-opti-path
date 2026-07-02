@@ -790,7 +790,7 @@ export const RISK_AXES: { key: keyof RiskScores; label: string; driver: string; 
   { key: "cost", label: "Cost exposure", driver: "Token price ↑ · Platform reach ↑ · Vendor independence ↓", rises: "the serving price climbs while you serve many users" },
   { key: "lockin", label: "Vendor lock-in", driver: "Vendor independence ↓ · Quality ↑", rises: "you sit deep on one vendor with no cheap way to switch" },
   { key: "capability", label: "Capability gap", driver: "In-house build ↓ · Regulation ↑", rises: "you build little in-house and lean on the vendor's roadmap" },
-  { key: "scaling", label: "Scaling risk", driver: "Scaling intensity ↑ · delivered quality ↓ (in-house build restores it)", rises: "you push margin and a quality bar above what users actually experience" },
+  { key: "scaling", label: "Scaling risk", driver: "Scaling intensity ↑ · delivered quality ↓ (in-house build restores it)", rises: "your price implies more quality than users actually experience" },
   { key: "regulatory", label: "Regulatory load", driver: "Regulation ↑ · In-house build ↓", rises: "compliance duty outpaces what your in-house capability absorbs" },
 ];
 
@@ -851,7 +851,7 @@ export function deriveTippingPoints(
       "scaling",
       "Scaling risk",
       70,
-      "Past this line you have committed to a quality bar above what the product delivers: churn accelerates off the cliff and the aggressive margin push turns loss-making.",
+      "Past this line the expectations implied by your price sit above what the product delivers: churn accelerates off the cliff and the aggressive margin push turns loss-making.",
     ),
     mk(
       "regulatory",

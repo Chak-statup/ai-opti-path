@@ -203,7 +203,7 @@ export function CausalDiagram({
   const fixedK = (v: number) => (v / 1e3).toFixed(0);
   const nodeSub: Record<string, string> = {
     Q: `delivered quality ${cs.Q.toFixed(2)}`,
-    Qstar: `your tier's bar ${cs.bar.toFixed(2)}`,
+    Qstar: `users' bar ${cs.bar.toFixed(2)}`,
     dm: "ARPU premium",
     phi: "competition",
     chi: `churn ${cs.churn.toFixed(2)}/mo`,

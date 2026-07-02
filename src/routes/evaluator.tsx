@@ -504,11 +504,13 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
                 <p className="exp-control-note">
                   <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
-                  two commitments together: the ARPU premium (<Tex>{"\\Delta m"}</Tex> ={" "}
-                  €{dm.toFixed(1)}/user per unit quality) and the quality bar you promise
-                  (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}, scaled to each tier&rsquo;s ambition:
-                  the traced tier is held to {causalState.bar.toFixed(2)}). More revenue per user; but
-                  churn goes over the cliff if the bar passes your delivered quality ({causalState.Q.toFixed(2)}).
+                  two things that cannot move apart: the price premium (<Tex>{"\\Delta m"}</Tex> ={" "}
+                  €{dm.toFixed(1)}/user per unit quality) and what users <em>expect</em> for that
+                  price (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}; expectations scale with each
+                  tier&rsquo;s positioning, so the traced tier is held to {causalState.bar.toFixed(2)}).
+                  Charging more raises the bar; delivering against it is a separate investment (tier,
+                  in-house build). Churn goes over the cliff if expectations pass your delivered
+                  quality ({causalState.Q.toFixed(2)}).
                 </p>
               </div>
             </div>
@@ -625,7 +627,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">04</span>
-                        <span>Scaling &rarr; quality bar <Tex>{"Q^{*}"}</Tex> &amp; ARPU premium <Tex>{"\\Delta m"}</Tex></span>
+                        <span>Scaling &rarr; price premium <Tex>{"\\Delta m"}</Tex> &amp; users&rsquo; expectations <Tex>{"Q^{*}"}</Tex></span>
                       </span>
                     </div>
 
