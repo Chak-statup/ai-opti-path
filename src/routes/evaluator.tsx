@@ -23,13 +23,13 @@ import {
   qstarIndex,
   scalingToKnobs,
   shieldedTpf,
-  sweepCumProfit,
   CALIB,
   PRESETS,
   RISK_AXES,
   DEFAULT_CONTEXT,
   DEFAULT_VECTOR,
   type MitigationBaseline,
+  type MetricSeries,
   type RunsData,
   type ScenarioContext,
   type ScenarioPreset,
@@ -101,12 +101,11 @@ export const Route = createFileRoute("/evaluator")({
 const STRAT_COLORS = ["var(--exp-open)", "var(--exp-hybrid)", "var(--exp-frontier)"];
 const RADAR_AXES = RISK_AXES.map((a) => a.label);
 
-type MetricKey = "users" | "revenue" | "cost" | "profit";
-type Tab = "strategy" | MetricKey;
+type Tab = "users" | "revenue" | "cost" | "profit";
 
 // Display at demo scale: monthly flows in €k, users in thousands (the model's
 // internal units stay €M / millions; only the axis formatting converts).
-const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
+const METRIC_PANELS: Record<Tab, { title: string; yLabel: string; zero: boolean }> = {
   users: { title: "Active users", yLabel: "thousand users", zero: false },
   revenue: { title: "Revenue (ARPU × users)", yLabel: "€k / month", zero: false },
   cost: { title: "Cost (serving + acquisition + fixed)", yLabel: "€k / month", zero: false },
@@ -118,7 +117,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "users", label: "Users" },
   { key: "revenue", label: "Revenue" },
   { key: "cost", label: "Cost" },
-  { key: "strategy", label: "Strategy" },
 ];
 
 function fmtMoney(v: number): string {
@@ -179,7 +177,6 @@ function ExplorerView({ data }: { data: RunsData }) {
     () => data.meta.strategies.map((_, s) => deriveStrategy(data, s, dm, snappedQ, ctx, vec)),
     [data, dm, snappedQ, ctx, vec],
   );
-  const sweep = useMemo(() => sweepCumProfit(data, dm, ctx, vec), [data, dm, ctx, vec]);
   const causalState = useMemo(
     () => computeCausalState(data, traceStrat, dm, snappedQ, ctx, vec),
     [data, traceStrat, dm, snappedQ, ctx, vec],
@@ -270,7 +267,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const innovEff = innovEffective(vec, ctx);
   const fixedK = (v: number) => (v / 1e3).toFixed(0);
 
-  function panelSeries(key: MetricKey): Series[] {
+  function panelSeries(key: Tab): Series[] {
     const faint: Series[] = [];
     const bold: Series[] = [];
     derived.forEach((d, s) => {
@@ -281,12 +278,6 @@ function ExplorerView({ data }: { data: RunsData }) {
     });
     return [...faint, ...bold];
   }
-
-  const sweepSeries: Series[] = sweep.map((ys, s) => ({ ys, color: STRAT_COLORS[s], width: 2 }));
-  const sweepGuides: VGuide[] = [
-    { x: snappedQ, label: `threshold ${snappedQ.toFixed(2)}`, color: "var(--exp-marker)", dash: false },
-    ...data.meta.strategies.map((st, s) => ({ x: st.Q, color: STRAT_COLORS[s], dash: true })),
-  ];
   const activeTab = TABS.find((x) => x.key === tab)!;
 
   const radarSeries: RadarSeries[] = [
@@ -661,38 +652,21 @@ function ExplorerView({ data }: { data: RunsData }) {
                         {envSummary}
                       </span>
                     </div>
-                    {tab === "strategy" ? (
-                      <>
-                        <h2 className="exp-section-title">CUMULATIVE PROFIT VS QUALITY THRESHOLD</h2>
-                        <LineChart
-                          xs={data.qstar_grid}
-                          series={sweepSeries}
-                          xLabel="Quality threshold"
-                          yLabel="€M over horizon"
-                          vGuides={sweepGuides}
-                          zeroLine
-                          xFormat={(v) => v.toFixed(1)}
-                          yFormat={(v) => v.toFixed(1)}
-                          height={360}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
-                        <LineChart
-                          xs={t}
-                          series={panelSeries(tab)}
-                          title={METRIC_PANELS[tab].title}
-                          xLabel="months"
-                          yLabel={METRIC_PANELS[tab].yLabel}
-                          vGuides={baseGuides}
-                          zeroLine={METRIC_PANELS[tab].zero}
-                          xFormat={(v) => `${Math.round(v)}`}
-                          yFormat={(v) => (v * 1000).toFixed(0)}
-                          height={360}
-                        />
-                      </>
-                    )}
+                    <>
+                      <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
+                      <LineChart
+                        xs={t}
+                        series={panelSeries(tab)}
+                        title={METRIC_PANELS[tab].title}
+                        xLabel="months"
+                        yLabel={METRIC_PANELS[tab].yLabel}
+                        vGuides={baseGuides}
+                        zeroLine={METRIC_PANELS[tab].zero}
+                        xFormat={(v) => `${Math.round(v)}`}
+                        yFormat={(v) => (v * 1000).toFixed(0)}
+                        height={360}
+                      />
+                    </>
                   </>
                 )}
               </section>
