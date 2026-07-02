@@ -349,11 +349,6 @@ function ExplorerView({ data }: { data: RunsData }) {
       </nav>
       <p className="exp-journey-blurb">{activeStage.blurb}</p>
 
-      {stage === "problem" && (
-        <div className="exp-stage">
-          <ProblemFrame onStart={() => setStage("causal")} />
-        </div>
-      )}
 
       {showRail && (
         <div className="exp-body">
