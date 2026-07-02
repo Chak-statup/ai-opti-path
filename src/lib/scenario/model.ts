@@ -763,10 +763,16 @@ export function deriveRiskScores(
   const aggN = clamp01(knobsToScaling(dm, data, qstar) / 100);
   // Shielded price stress: 0 at today's price, 1 at a heavy spike after resilience.
   const stress = clamp01((effectiveTpf(ctx, vec) - 1) / 2);
-  // Cliff: how far the bar THIS TIER is held to sits above the quality users
-  // actually experience (scenario-shifted down, lifted by in-house build; so
-  // building genuinely reduces the cliff a quality-losing scenario opens).
-  const cliff = clamp01((tierBar(qstar, Q) - effectiveQuality(Q, ctx, vec)) / 0.4);
+  // Cliff: where this tier actually SITS on the churn cliff; the realized churn
+  // position (0 = churn floor, 1 = worst case), not a linear quality gap. The
+  // logistic is steep (κ = 12), so even a small gap between expectations and
+  // delivered quality is already deadly; measuring the gap linearly made the
+  // radar read "calm" while churn was eating the business (the OSS case).
+  // In-house build still genuinely reduces it (raises Q_eff, churn falls).
+  const cliff = clamp01(
+    (chi(effectiveQuality(Q, ctx, vec), tierBar(qstar, Q)) - CALIB.chiMin) /
+      (CALIB.chiMax - CALIB.chiMin),
+  );
 
   // Cost exposure: ~0 at today's price; climbs with the (shielded) serving price
   // and with how many users you serve; so a pricing shock at scale drives it to
