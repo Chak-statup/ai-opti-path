@@ -518,11 +518,14 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={tpf}
                   onChange={(e) => onKnob(setTpf)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today;
-                  set high, it is the prevailing price; the Pricing-shock preset steps up to it at a
-                  set month. Vendor independence shields the excess.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today;
+                    set high, it is the prevailing price; the Pricing-shock preset steps up to it at a
+                    set month. Vendor independence shields the excess.
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
