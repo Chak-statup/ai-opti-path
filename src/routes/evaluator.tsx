@@ -587,7 +587,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 {causalView === "pathway" ? (
                   <>
                     <h2 className="exp-section-title">
-                      CAUSAL PATHWAY: {derived[traceStrat].label.toUpperCase()}
+                      OUTCOME PATHWAY: {derived[traceStrat].label.toUpperCase()}
                     </h2>
                     <div className="exp-causal-wrap">
                       <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} />
