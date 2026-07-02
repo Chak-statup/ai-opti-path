@@ -42,7 +42,7 @@ type Stage = "problem" | "causal" | "risk" | "tipping" | "mitigate" | "recommend
 const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
   {
     key: "causal",
-    label: "Causal pathway",
+    label: "Outcome pathway",
     step: "01",
     blurb:
       "How a strategy plays out, end to end. The tiers (Lean / Balanced / Premium) are decisions you make; the scenarios are futures that happen to you. Pick either and watch the pathway reshape: thicker, redder links mark where pressure builds.",
@@ -397,13 +397,16 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => onKnob(setReach)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Platform ecosystem.</strong> How widely you ship: contained pilot (0) to
-                  mass-market (100). Sets the addressable market <Tex>{"K"}</Tex>: currently{" "}
-                  <strong>{(causalState.KM * 1000).toFixed(0)}k</strong> potential users (20k&ndash;150k). A wider
-                  market grows users and revenue, and multiplies how many users you pay to serve
-                  if prices spike.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Platform ecosystem.</strong> How widely you ship: contained pilot (0) to
+                    mass-market (100). Sets the addressable market <Tex>{"K"}</Tex>: currently{" "}
+                    <strong>{(causalState.KM * 1000).toFixed(0)}k</strong> potential users (20k&ndash;150k). A wider
+                    market grows users and revenue, and multiplies how many users you pay to serve
+                    if prices spike.
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
@@ -422,23 +425,26 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Vendor choice.</strong> The share of AI traffic you can serve outside your
-                  main vendor: <strong>{Math.round(causalState.hedge * 100)}%</strong> at this setting
-                  (ceiling 70%), costing €{fixedK(causalState.fixed.indep)}k/mo fixed.{" "}
-                  {tpf <= 1 ? (
-                    <>
-                      At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving; it is{" "}
-                      <em>insurance</em>: if the vendor tripled prices, your blended cost would rise only
-                      ×{shieldedTpf(3, vec).toFixed(1)} instead of ×3.0.
-                    </>
-                  ) : (
-                    <>
-                      Right now it blends the vendor&rsquo;s ×{tpf.toFixed(1)} down to{" "}
-                      ×{causalState.tpfEff.toFixed(1)} across your traffic.
-                    </>
-                  )}
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Vendor choice.</strong> The share of AI traffic you can serve outside your
+                    main vendor: <strong>{Math.round(causalState.hedge * 100)}%</strong> at this setting
+                    (ceiling 70%), costing €{fixedK(causalState.fixed.indep)}k/mo fixed.{" "}
+                    {tpf <= 1 ? (
+                      <>
+                        At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving; it is{" "}
+                        <em>insurance</em>: if the vendor tripled prices, your blended cost would rise only
+                        ×{shieldedTpf(3, vec).toFixed(1)} instead of ×3.0.
+                      </>
+                    ) : (
+                      <>
+                        Right now it blends the vendor&rsquo;s ×{tpf.toFixed(1)} down to{" "}
+                        ×{causalState.tpfEff.toFixed(1)} across your traffic.
+                      </>
+                    )}
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
@@ -457,14 +463,17 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Build vs buy.</strong> API-first (0) to own models &amp; tooling (100). At{" "}
-                  {Math.round(innov)} it lifts the quality users experience by{" "}
-                  <strong>+{(CALIB.innovQualityLift * innovEff).toFixed(2)}</strong> (max +0.15 ≈ half a
-                  tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%,
-                  at €{fixedK(causalState.fixed.build)}k/mo fixed cost. Regulation currently drags
-                  its delivered effect by {Math.round(CALIB.regInnovDrag * reg)}%.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Build vs buy.</strong> API-first (0) to own models &amp; tooling (100). At{" "}
+                    {Math.round(innov)} it lifts the quality users experience by{" "}
+                    <strong>+{(CALIB.innovQualityLift * innovEff).toFixed(2)}</strong> (max +0.15 ≈ half a
+                    tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%,
+                    at €{fixedK(causalState.fixed.build)}k/mo fixed cost. Regulation currently drags
+                    its delivered effect by {Math.round(CALIB.regInnovDrag * reg)}%.
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
@@ -483,16 +492,19 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => setScaling(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
-                  two things that cannot move apart: the price premium (<Tex>{"\\Delta m"}</Tex> ={" "}
-                  €{dm.toFixed(1)}/user per unit quality) and what users <em>expect</em> for that
-                  price (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}; expectations scale with each
-                  tier&rsquo;s positioning, so the traced tier is held to {causalState.bar.toFixed(2)}).
-                  Charging more raises the bar; delivering against it is a separate investment (tier,
-                  in-house build). Churn goes over the cliff if expectations pass your delivered
-                  quality ({causalState.Q.toFixed(2)}).
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
+                    two things that cannot move apart: the price premium (<Tex>{"\\Delta m"}</Tex> ={" "}
+                    €{dm.toFixed(1)}/user per unit quality) and what users <em>expect</em> for that
+                    price (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}; expectations scale with each
+                    tier&rsquo;s positioning, so the traced tier is held to {causalState.bar.toFixed(2)}).
+                    Charging more raises the bar; delivering against it is a separate investment (tier,
+                    in-house build). Churn goes over the cliff if expectations pass your delivered
+                    quality ({causalState.Q.toFixed(2)}).
+                  </p>
+                </details>
               </div>
             </div>
 
@@ -515,11 +527,14 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={tpf}
                   onChange={(e) => onKnob(setTpf)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today;
-                  set high, it is the prevailing price; the Pricing-shock preset steps up to it at a
-                  set month. Vendor independence shields the excess.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today;
+                    set high, it is the prevailing price; the Pricing-shock preset steps up to it at a
+                    set month. Vendor independence shields the excess.
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
@@ -535,12 +550,15 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={reg}
                   onChange={(e) => onKnob(setReg)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  External compliance load. Raises the fixed compliance cost (now €
-                  {fixedK(causalState.fixed.compliance)}k/mo) and slows your in-house build (−
-                  {Math.round(CALIB.regInnovDrag * reg)}% of its effect); independence and build partly
-                  buffer it. It does not change the token price.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    External compliance load. Raises the fixed compliance cost (now €
+                    {fixedK(causalState.fixed.compliance)}k/mo) and slows your in-house build (−
+                    {Math.round(CALIB.regInnovDrag * reg)}% of its effect); independence and build partly
+                    buffer it. It does not change the token price.
+                  </p>
+                </details>
               </div>
               <p className="exp-rail-note">
                 Effective serving price is now ×{causalState.tpfEff.toFixed(1)} after resilience shielding.
@@ -587,7 +605,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 {causalView === "pathway" ? (
                   <>
                     <h2 className="exp-section-title">
-                      CAUSAL PATHWAY: {derived[traceStrat].label.toUpperCase()}
+                      OUTCOME PATHWAY: {derived[traceStrat].label.toUpperCase()}
                     </h2>
                     <div className="exp-causal-wrap">
                       <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} />
