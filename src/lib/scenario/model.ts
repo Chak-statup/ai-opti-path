@@ -31,11 +31,13 @@
 // modelling assumption · [bound] deliberate worst-case ceiling, not a median.
 export const CALIB = {
   // Market & growth (DYNAMICAL; these enter the simulated user ODE)
-  // Scale: insurer-flagship (design target €80–150M/mo revenue, ~€1–2B/yr;
-  // ≈1% of Allianz FY2024 business volume €179.8B; see docs/references.md).
-  K_min: 2_000_000, // [assume] addressable market at platform reach 0 (contained pilot)
-  K_max: 15_000_000, // [assume] addressable market at platform reach 100 (mass-market)
-  N0: 40_000, // [assume] active users at t = 0 (fit to pilot telemetry)
+  // Scale: DEMO scale, set by user direction 2026-07-02 (cumulative profit in
+  // single-digit €M so the exhibit does not read as an exaggerated forecast).
+  // Per-UNIT economics (ARPU, serving, CAC) are real and unscaled; only the
+  // aggregates (market size, fixed cost) are ÷100 of a flagship deployment.
+  K_min: 20_000, // [assume] addressable market at platform reach 0 (contained pilot)
+  K_max: 150_000, // [assume] addressable market at platform reach 100 (mass-market)
+  N0: 400, // [assume] active users at t = 0 (fit to pilot telemetry)
   p: 0.008, // [src] Bass innovation coeff (PyMC-Marketing; canonical 0.01–0.03)
   r: 0.35, // [src] Bass imitation coeff (PyMC-Marketing; canonical 0.3–0.5)
   chiMin: 0.02, // [src] churn floor/mo (Optifai B2B SaaS; enterprise 1–2%/mo)
@@ -55,24 +57,28 @@ export const CALIB = {
   arpu0: 9, // [src] base ARPU €/user/mo (Slack Pro €6.75–8.25/seat)
   serve0: 2.5, // [src+assume] API price grounded × assumed ~0.5–1M tokens/user/mo; at the BALANCED tier
   qualityServeSlope: 2.0, // [src-anchored] serving factor 1+slope·(Q−0.6): Lean ×0.4, Balanced ×1.0, Premium ×1.6; a higher tier runs pricier frontier models (cross-tier API spreads are 3–5×)
-  scalingServeBump: 0.4, // [assume] full aggressive scaling raises serving cost 40% (more tokens/user)
   cac: 20, // [src] blended €/user charged on every GROSS ADD the growth equation generates (First Page Sage; per-seat; benchmarks per-account ~35× higher)
 
-  // Fixed cost (euros / month); insurer-flagship scale
-  F0: 4_000_000, // [src] baseline org/infra (~150–250 ML/platform FTE + infra at group scale)
-  F_innov: 5_000_000, // [src] full in-house build (~400 FTE @ €130–160k loaded)
-  F_resil: 1_500_000, // [src] full resilience (~110 FTE portability/multi-vendor team)
-  F_reg: 3_000_000, // [src] compliance (Fourthline: €36M/yr grounded at this scale)
+  // Fixed cost (euros / month); demo scale (÷100 of a flagship deployment,
+  // same ratios; the grounded flagship magnitudes live in docs/references.md)
+  F0: 40_000, // [src-ratio] baseline org/infra
+  F_innov: 50_000, // [src-ratio] full in-house build
+  F_resil: 15_000, // [src-ratio] full resilience / portability team
+  F_reg: 30_000, // [src-ratio] compliance load at full regulation
 
   // Regulation (external); distinct from token price
   regInnovDrag: 0.4, // [bound] full-load innovation drag (MIT Sloan; expected ~0.25–0.33)
-  regComplianceBuffer: 0.3, // [assume] resilience+build buy down 30% of compliance
-  regBufferResilW: 0.6, // [assume] resilience's weight in the compliance buffer
-  regBufferInnovW: 0.4, // [assume] in-house build's weight in the compliance buffer
+  regComplianceBuffer: 0.3, // [assume] in-house build absorbs up to 30% of compliance (one coefficient, kept deliberately simple)
+
+  // Tier fairness: the quality bar a tier is held to scales with its ambition.
+  // A Lean product (Q 0.3) promises and is judged against a LOWER bar than a
+  // Premium one (Q 0.9): bar(tier) = Q* · Q / qRef. Without this, one shared
+  // bar executes the Lean tier at Premium's standard in every scenario.
+  qRef: 0.6, // [design] reference tier (Balanced) whose bar equals the dial's Q*
 
   // Display normalization (colors/intensities ONLY; never enters the dynamics)
   chiDisplay: 0.12, // [src] empirical churn ceiling (~0.10–0.15/mo); the model keeps the 0.30 worst-case bound for the cliff itself
-  profitDisplay: 1000, // [assume] |cumProfit| €M at which the profit node reads fully saturated
+  profitDisplay: 10, // [assume] |cumProfit| €M at which the profit node reads fully saturated
 
   // Timing
   tau: 6, // [assume] deployment → revenue lag (months; fit to sales cycle)
@@ -245,6 +251,13 @@ export function chi(Q: number, qstar: number): number {
   return CALIB.chiMin + (CALIB.chiMax - CALIB.chiMin) / (1 + Math.exp(CALIB.kappa * (Q - qstar)));
 }
 
+// The bar a given tier is actually held to: the scaling dial's Q*, scaled by
+// the tier's ambition (Lean promises less than Premium, and its users judge it
+// against that promise). At the reference tier (Balanced) bar === Q*.
+export function tierBar(qstar: number, Q: number): number {
+  return clamp01(qstar * (Q / CALIB.qRef));
+}
+
 // Quality that actually reaches users under a scenario. Some scenarios trade
 // quality for cost; adopting open-source models is cheaper to serve but lower
 // quality; which shifts effective quality down, lifting churn and cutting users.
@@ -293,9 +306,8 @@ export function effectiveTpf(ctx: ScenarioContext, vec: StrategyVector): number 
 // Per-user serving cost (€/user/mo) at the prevailing (post-shock) price level:
 // tier picks the models, aggressive scaling burns more tokens, the hedge blends
 // the vendor's price. This is the value the causal diagram's s node shows.
-export function servePerUser(tierQ: number, dm: number, ctx: ScenarioContext, vec: StrategyVector): number {
-  const serveScale = qualityServeFactor(tierQ) * (1 + CALIB.scalingServeBump * clamp01(dm / 12));
-  return CALIB.serve0 * serveScale * shieldedTpf(ctx.tokenPriceFactor, vec);
+export function servePerUser(tierQ: number, ctx: ScenarioContext, vec: StrategyVector): number {
+  return CALIB.serve0 * qualityServeFactor(tierQ) * shieldedTpf(ctx.tokenPriceFactor, vec);
 }
 
 // Fixed cost: baseline + the two investments + regulation's compliance load
@@ -313,9 +325,7 @@ export function fixedCostParts(vec: StrategyVector, ctx: ScenarioContext): Fixed
   const innN = clamp01(vec.innovation / 100);
   const resN = clamp01(vec.resilience / 100);
   const regN = clamp01(ctx.regPressure / 100);
-  const buffer = clamp01(
-    CALIB.regComplianceBuffer * (CALIB.regBufferResilW * resN + CALIB.regBufferInnovW * innN),
-  );
+  const buffer = clamp01(CALIB.regComplianceBuffer * innN);
   const base = CALIB.F0;
   const build = CALIB.F_innov * innN;
   const indep = CALIB.F_resil * resN;
@@ -399,8 +409,9 @@ export function deriveStrategy(
   const Qs = scenarioQuality(Q, ctx); // quality users get before the build lift (prices the ARPU)
   const Qeff = effectiveQuality(Q, ctx, vec); // quality users experience (drives churn)
   const K = reachToK(vec);
+  const bar = tierBar(qstar, Q); // the bar THIS tier is held to
 
-  const N = simulate(Qeff, qstar, K);
+  const N = simulate(Qeff, bar, K);
   const rawDet = deriveRawExact(N, Q, Qs, dm, t, ctx, vec, K);
   const det = toUnits(rawDet, N);
   const cumProfit = trapezoid(rawDet.profit, t) / M;
@@ -409,7 +420,7 @@ export function deriveStrategy(
   const rng = mulberry32(1000 + s * 97 + Math.round(qstar * 100));
   const samples: MetricSeries[] = Array.from({ length: 8 }, () => {
     const noise = Array.from({ length: CALIB.steps }, () => gauss(rng));
-    const Ns = simulate(Qeff, qstar, K, noise);
+    const Ns = simulate(Qeff, bar, K, noise);
     return toUnits(deriveRawExact(Ns, Q, Qs, dm, t, ctx, vec, K), Ns);
   });
 
@@ -441,7 +452,7 @@ function deriveRawExact(
   // Serving cost is the token COGS per user: the tier sets which models you
   // run (qualityServeFactor); aggressive scaling (a richer product) burns more
   // tokens per user on top.
-  const serveScale = qualityServeFactor(tierQ) * (1 + CALIB.scalingServeBump * clamp01(dm / 12));
+  const serveScale = qualityServeFactor(tierQ);
   // If the scenario carries a shock, price is today's ×1 until shockMonth, then
   // steps to the prevailing level.
   const servePost = CALIB.serve0 * serveScale * shieldedTpf(ctx.tokenPriceFactor, vec);
@@ -489,11 +500,10 @@ function segmentParams(data: RunsData, b: MitigationBaseline, ctx: ScenarioConte
   const Qs = scenarioQuality(Q, ctx);
   return {
     Qeff: effectiveQuality(Q, ctx, b.vec),
-    qstar: b.qstar,
+    qstar: tierBar(b.qstar, Q),
     K: reachToK(b.vec),
     arpu: arpuPerUser(Qs, b.dm, innovEffective(b.vec, ctx)),
-    serveScale:
-      CALIB.serve0 * qualityServeFactor(Q) * (1 + CALIB.scalingServeBump * clamp01(b.dm / 12)),
+    serveScale: CALIB.serve0 * qualityServeFactor(Q),
     vec: b.vec,
     F: fixedCost(b.vec, ctx),
   };
@@ -561,7 +571,7 @@ export function sweepCumProfit(
     const Qs = scenarioQuality(strat.Q, ctx);
     const Qeff = effectiveQuality(strat.Q, ctx, vec);
     return data.qstar_grid.map((qstar) => {
-      const N = simulate(Qeff, qstar, K);
+      const N = simulate(Qeff, tierBar(qstar, strat.Q), K);
       const raw = deriveRawExact(N, strat.Q, Qs, dm, t, ctx, vec, K);
       return trapezoid(raw.profit, t) / M;
     });
@@ -612,10 +622,10 @@ export interface CausalState {
   KM: number; // addressable market (millions); set by platform reach
   reachN: number; // 0 .. 1
   regN: number; // 0 .. 1 regulatory load
-  dmN: number; // 0 .. 1 scaling ARPU-premium (drives the serving token bump)
   hedge: number; // 0 .. 1 share of serving on alternatives (vendor independence)
   serve: number; // €/user/mo serving cost at the prevailing (post-shock) price
   fixed: FixedCostParts; // €/month decomposition (base | build | indep | compliance)
+  bar: number; // the quality bar THIS tier is held to (tier-scaled Q*)
 }
 
 export function computeCausalState(
@@ -630,8 +640,9 @@ export function computeCausalState(
   const Qs = scenarioQuality(Q, ctx); // scenario quality (prices the ARPU)
   const Qeff = effectiveQuality(Q, ctx, vec); // quality users experience (drives churn)
   const innovEff = innovEffective(vec, ctx);
+  const bar = tierBar(qstar, Q);
 
-  const churn = chi(Qeff, qstar);
+  const churn = chi(Qeff, bar);
   // Display norm over the REALISTIC churn band (chiMin .. chiDisplay), not the
   // worst-case model bound chiMax; so realistic slider moves actually change
   // the color, instead of living in the bottom fifth of the scale.
@@ -656,7 +667,7 @@ export function computeCausalState(
   const usersNorm = clamp01(usersEnd / (0.15 * (CALIB.K_max / MU)));
 
   const cumProfit = d.cumProfit;
-  // Magnitude norm at insurer scale: |cumProfit| ≈ €1B reads fully saturated.
+  // Magnitude norm at demo scale: |cumProfit| ≈ €10M reads fully saturated.
   const profitNorm = clamp01(Math.abs(cumProfit) / CALIB.profitDisplay);
   const tpfEff = effectiveTpf(ctx, vec);
   const shockNorm = clamp01((tpfEff - 1) / 2);
@@ -679,10 +690,10 @@ export function computeCausalState(
     KM,
     reachN: clamp01((vec.platformReach ?? 50) / 100),
     regN: clamp01(ctx.regPressure / 100),
-    dmN: clamp01(dm / (data.meta.params.dmMax ?? 12)),
     hedge: hedgeShare(vec),
-    serve: servePerUser(Q, dm, ctx, vec),
+    serve: servePerUser(Q, ctx, vec),
     fixed: fixedCostParts(vec, ctx),
+    bar,
   };
 }
 
@@ -752,10 +763,10 @@ export function deriveRiskScores(
   const aggN = clamp01(knobsToScaling(dm, data, qstar) / 100);
   // Shielded price stress: 0 at today's price, 1 at a heavy spike after resilience.
   const stress = clamp01((effectiveTpf(ctx, vec) - 1) / 2);
-  // Cliff: how far the committed quality bar Q* sits above the quality users
+  // Cliff: how far the bar THIS TIER is held to sits above the quality users
   // actually experience (scenario-shifted down, lifted by in-house build; so
   // building genuinely reduces the cliff a quality-losing scenario opens).
-  const cliff = clamp01((qstar - effectiveQuality(Q, ctx, vec)) / 0.4);
+  const cliff = clamp01((tierBar(qstar, Q) - effectiveQuality(Q, ctx, vec)) / 0.4);
 
   // Cost exposure: ~0 at today's price; climbs with the (shielded) serving price
   // and with how many users you serve; so a pricing shock at scale drives it to
@@ -767,8 +778,8 @@ export function deriveRiskScores(
   const capability = clamp01((1 - innN) * (0.8 + 0.4 * regN)) * 100;
   // Scaling risk: aggressiveness plus committing to a bar above your quality.
   const scaling = clamp01(0.55 * aggN + 0.85 * cliff + 0.2 * aggN * stress) * 100;
-  // Regulatory load: compliance burden net of what resilience/build can absorb.
-  const regulatory = clamp01(regN * (1.1 - 0.35 * resN - 0.15 * innN)) * 100;
+  // Regulatory load: compliance burden net of what in-house build absorbs.
+  const regulatory = clamp01(regN * (1.1 - 0.4 * innN)) * 100;
 
   return { cost, lockin, capability, scaling, regulatory };
 }
@@ -780,7 +791,7 @@ export const RISK_AXES: { key: keyof RiskScores; label: string; driver: string; 
   { key: "lockin", label: "Vendor lock-in", driver: "Vendor independence ↓ · Quality ↑", rises: "you sit deep on one vendor with no cheap way to switch" },
   { key: "capability", label: "Capability gap", driver: "In-house build ↓ · Regulation ↑", rises: "you build little in-house and lean on the vendor's roadmap" },
   { key: "scaling", label: "Scaling risk", driver: "Scaling intensity ↑ · delivered quality ↓ (in-house build restores it)", rises: "you push margin and a quality bar above what users actually experience" },
-  { key: "regulatory", label: "Regulatory load", driver: "Regulation ↑ · Vendor independence & build ↓", rises: "compliance duty outpaces what your capability absorbs" },
+  { key: "regulatory", label: "Regulatory load", driver: "Regulation ↑ · In-house build ↓", rises: "compliance duty outpaces what your in-house capability absorbs" },
 ];
 
 // ---- Tipping points -----------------------------------------------------
@@ -918,60 +929,62 @@ export function proposeMitigations(
   const targeted: Raw[] = [];
   if (dominant === "cost") {
     targeted.push({
-      id: "hedge", label: "Hedge the vendor", targetRisk: RISK_NAME.cost,
-      rationale: "Raise vendor independence hard so multi-vendor and open-weight fallbacks absorb the serving-price spike, cutting the cost at its source across the whole user base.",
+      id: "hedge", label: "Shift serving off-vendor now", targetRisk: RISK_NAME.cost,
+      rationale: "Push vendor independence to the ceiling: most traffic moves to alternative models at today's price, so the spike only touches the sliver that still runs on the expensive vendor.",
       strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ resilience: 92 }),
     });
     targeted.push({
-      id: "contain", label: "Contain the footprint", targetRisk: RISK_NAME.cost,
-      rationale: "Pull platform reach back so fewer users are exposed to the vendor's pricing at once: a smaller, cheaper base to serve while the price is high.",
+      id: "contain", label: "Serve fewer users while prices are high", targetRisk: RISK_NAME.cost,
+      rationale: "Pull platform reach back: a smaller base is cheaper to serve at spiked prices, and you re-expand when the price normalises.",
       strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ platformReach: Math.max(20, reach - 30), resilience: Math.max(70, base.vec.resilience) }),
     });
   } else if (dominant === "lockin") {
+    // NOTE: mitigations move the four LEVERS only; the tier is the strategy
+    // under test, and "switch strategy" is not a mitigation of it.
     targeted.push({
-      id: "independence", label: "Buy vendor independence", targetRisk: RISK_NAME.lockin,
+      id: "independence", label: "Make yourself switchable", targetRisk: RISK_NAME.lockin,
       rationale: "Invest in multi-vendor / open-weight serving so switching stays cheap and pricing power does not shift to the vendor.",
       strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ resilience: 92 }),
     });
     targeted.push({
-      id: "step-down", label: "Step down the quality tier", targetRisk: RISK_NAME.lockin,
-      rationale: "Move to a lighter strategy so less of the product is welded to one frontier vendor, with a resilience lift on top.",
-      strat: Math.max(0, base.strat - 1), dm: base.dm, qstar: clampQ(base.qstar - 0.08), vec: V({ resilience: 80 }),
+      id: "independence-lean", label: "Switchable + smaller promise", targetRisk: RISK_NAME.lockin,
+      rationale: "Raise vendor independence and ease the scaling push, so less of the product's economics is welded to one vendor's price while switching stays cheap.",
+      strat: base.strat, dm: clampDm(base.dm - 2.5), qstar: clampQ(base.qstar - 0.08), vec: V({ resilience: 85 }),
     });
   } else if (dominant === "capability") {
     targeted.push({
-      id: "build", label: "Build in-house", targetRisk: RISK_NAME.capability,
+      id: "build", label: "Invest in your own capability", targetRisk: RISK_NAME.capability,
       rationale: "Raise in-house build to close the capability gap: it raises the quality users experience (churn falls through the same cliff) and lifts ARPU, at a higher fixed cost.",
       strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ innovation: 88 }),
     });
     targeted.push({
-      id: "build-premium", label: "Build + move upmarket", targetRisk: RISK_NAME.capability,
-      rationale: "Combine an in-house build push with a higher-quality strategy so capability and product tier rise together.",
-      strat: Math.min(nStrat - 1, base.strat + 1), dm: base.dm, qstar: base.qstar, vec: V({ innovation: 85 }),
+      id: "build-monetise", label: "Build it, then charge for it", targetRisk: RISK_NAME.capability,
+      rationale: "Push in-house build and lean modestly into the ARPU premium the better product can carry; capability closes the gap, pricing captures it.",
+      strat: base.strat, dm: clampDm(base.dm + 1.5), qstar: base.qstar, vec: V({ innovation: 85 }),
     });
   } else if (dominant === "scaling") {
     targeted.push({
-      id: "ease-off", label: "Ease off scaling", targetRisk: RISK_NAME.scaling,
+      id: "ease-off", label: "Promise less, keep your users", targetRisk: RISK_NAME.scaling,
       rationale: "Reduce scaling intensity so the ARPU push and quality bar retreat from the cost-structure tipping point.",
       strat: base.strat, dm: clampDm(base.dm - 3.5), qstar: clampQ(base.qstar - 0.12), vec: V({}),
     });
     targeted.push({
-      id: "ease-and-retain", label: "Ease off + retain", targetRisk: RISK_NAME.scaling,
+      id: "ease-and-retain", label: "Promise less, deliver more", targetRisk: RISK_NAME.scaling,
       rationale: "Ease scaling and lift in-house build: the quality bar retreats while delivered quality rises, so churn falls on both counts.",
       strat: base.strat, dm: clampDm(base.dm - 2.5), qstar: clampQ(base.qstar - 0.08), vec: V({ innovation: 80 }),
     });
     if ((ctx.qualityShift ?? 0) > 0) {
       targeted.push({
-        id: "rebuild-quality", label: "Rebuild quality in-house", targetRisk: RISK_NAME.scaling,
+        id: "rebuild-quality", label: "Rebuild the lost quality yourself", targetRisk: RISK_NAME.scaling,
         rationale: "The scenario cut the quality users experience below the bar you committed to. A hard in-house build push raises delivered quality back over the bar; retention recovers at the cost of higher fixed spend.",
         strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ innovation: 90 }),
       });
     }
   } else {
     targeted.push({
-      id: "absorb", label: "Absorb the compliance load", targetRisk: RISK_NAME.regulatory,
-      rationale: "Regulation is external, but resilience (approved-model flexibility) and in-house build (compliance capability) buy down the overhead you actually carry.",
-      strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ resilience: 85, innovation: 80 }),
+      id: "absorb", label: "Build your own compliance muscle", targetRisk: RISK_NAME.regulatory,
+      rationale: "Regulation is external, but in-house capability absorbs up to 30% of the compliance overhead and recovers the innovation that regulation drags down.",
+      strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ innovation: 85 }),
     });
   }
 
@@ -983,18 +996,18 @@ export function proposeMitigations(
     serveMul > 1.3 && !targeted.some((c) => (c.vec.resilience ?? 0) >= 88)
       ? [
           {
-            id: "hedge-vendor", label: "Hedge the vendor", targetRisk: "serving-cost exposure",
+            id: "hedge-vendor", label: "Shift serving off-vendor now", targetRisk: "serving-cost exposure",
             rationale: "Serving price is elevated, so raise vendor independence hard: multi-vendor and open-weight fallbacks absorb most of the spike and cut the cost at its source.",
             strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ resilience: 92 }),
           },
         ]
       : [];
 
-  // Always include a balanced guardrail option.
+  // Always include a balanced guardrail option (same tier; levers re-centred).
   const guardrail: Raw = {
-    id: "balance", label: "Balanced reset", targetRisk: "overall",
-    rationale: "Re-centre the vector: healthy in-house build and resilience with moderate scaling; a robust default when no single risk dominates.",
-    strat: Math.min(nStrat - 1, 1), dm: clampDm(6), qstar: clampQ(0.5),
+    id: "balance", label: "Re-centre all levers", targetRisk: "overall",
+    rationale: "Return to a healthy middle: solid in-house build and vendor independence with moderate scaling; the robust default when no single risk dominates.",
+    strat: base.strat, dm: clampDm(6), qstar: clampQ(0.5),
     vec: V({ innovation: 70, resilience: 72 }),
   };
 
@@ -1020,7 +1033,7 @@ export function proposeMitigations(
   // make profit meaningfully worse than the baseline; so we never headline a
   // money-losing "mitigation". If none qualify, fall back to the single
   // best-profit risk-reducer so there is always something honest to show.
-  const floor = -Math.max(3, 0.02 * Math.abs(baseProfit));
+  const floor = -Math.max(0.05, 0.02 * Math.abs(baseProfit));
   let pool = scored.filter((c) => c.riskReduction > 1 && c.deltaVsBaseline >= floor);
   if (pool.length === 0) {
     pool = scored

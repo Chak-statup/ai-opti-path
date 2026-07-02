@@ -37,14 +37,16 @@ function fmtDelta(v: number): string {
 }
 
 // Mocked AI briefing, composed locally from the chosen candidate's numbers.
+// Figures are measured FROM the response point; history before it is fixed.
 function aiBriefing(
-  c: { label: string; rationale: string; cumProfit: number; deltaVsBaseline: number; vec: { innovation: number; resilience: number } },
-  baseProfit: number,
+  c: { label: string; rationale: string; deltaVsBaseline: number; vec: { innovation: number; resilience: number } },
+  baseFrom: number,
+  candFrom: number,
 ): string[] {
   return [
-    `I read the live scenario and stress-tested the candidate vectors against the same environment. "${c.label}" is the strongest response: it moves the cumulative result from ${fmt(baseProfit)} to ${fmt(c.cumProfit)} (${fmtDelta(c.deltaVsBaseline)}).`,
+    `I read the live scenario and stress-tested the candidate responses against the same environment. "${c.label}" is the strongest: from the response point on it earns ${fmt(candFrom)} where staying the course earns ${fmt(baseFrom)} (${fmtDelta(c.deltaVsBaseline)}).`,
     `The decisive move is to ${c.rationale.charAt(0).toLowerCase()}${c.rationale.slice(1)}`,
-    `Watch-out: this leans on innovation ${Math.round(c.vec.innovation)} and resilience ${Math.round(c.vec.resilience)}. If the external shock deepens, raise resilience first, it is the cheapest hedge against vendor pricing pass-through.`,
+    `Watch-out: this leans on in-house build ${Math.round(c.vec.innovation)} and vendor independence ${Math.round(c.vec.resilience)}. If the external shock deepens, raise independence first; it is the cheapest protection against vendor pricing pass-through.`,
   ];
 }
 
@@ -111,32 +113,47 @@ export function Mitigation({
   // The month the risk is realised and a response becomes possible: the shock
   // month for a timed shock, otherwise t = 0 (a standing scenario is already here).
   const responseMonth = ctx.shockMonth ?? 0;
+  // The chart and the table start AT the response month: what happened before
+  // the shock is history no response can change, so it is not shown.
+  const i0 = useMemo(() => Math.max(0, t.findIndex((ti) => ti >= responseMonth)), [t, responseMonth]);
+  const tView = useMemo(() => t.slice(i0), [t, i0]);
+  // Cumulative € (M) from the response month to the horizon.
+  const cumFrom = (ys: number[]): number => {
+    let s = 0;
+    for (let i = i0 + 1; i < ys.length; i++) s += ((ys[i] + ys[i - 1]) / 2) * (t[i] - t[i - 1]);
+    return s;
+  };
   const baseDerived = useMemo(
     () => deriveStrategy(data, base.strat, base.dm, base.qstar, ctx, base.vec),
     [data, base, ctx],
   );
+  const baseCumFrom = cumFrom(baseDerived.profit);
 
-  // Build overlay series: baseline first, then each selected candidate as a
-  // RESPONSE; identical to the baseline up to the response month, switched after.
+  // Build overlay series, all sliced to start at the response month: the grey
+  // line is staying the course; each candidate is the response taking over.
+  const switchedOf = useMemo(() => {
+    const map: Record<string, ReturnType<typeof deriveSwitched>> = {};
+    candidates.forEach((c) => {
+      map[c.id] = deriveSwitched(data, base, { strat: c.strat, dm: c.dm, qstar: c.qstar, vec: c.vec }, ctx);
+    });
+    return map;
+  }, [candidates, data, base, ctx]);
+
   const profitSeries: Series[] = useMemo(() => {
     const series: Series[] = [
-      { ys: baseDerived.profit, color: "var(--exp-axis)", width: 2, opacity: 0.5 },
+      { ys: baseDerived.profit.slice(i0), color: "var(--exp-axis)", width: 2, opacity: 0.5 },
     ];
     selected.forEach((c) => {
-      const d = deriveSwitched(data, base, { strat: c.strat, dm: c.dm, qstar: c.qstar, vec: c.vec }, ctx);
       series.push({
-        ys: d.profit,
+        ys: switchedOf[c.id].profit.slice(i0),
         color: colorOf[c.id],
         width: c.id === primaryId ? 2.8 : 2,
       });
     });
     return series;
-  }, [baseDerived, selected, data, base, ctx, colorOf, primaryId]);
+  }, [baseDerived, selected, switchedOf, i0, colorOf, primaryId]);
 
-  const primaryDerived = useMemo(
-    () => deriveSwitched(data, base, { strat: primary.strat, dm: primary.dm, qstar: primary.qstar, vec: primary.vec }, ctx),
-    [data, base, primary, ctx],
-  );
+  const primaryCumFrom = cumFrom(switchedOf[primary?.id]?.profit ?? baseDerived.profit);
 
   const baseRisk = useMemo(
     () => deriveRiskScores(data, base.strat, base.dm, base.qstar, ctx, base.vec),
@@ -215,7 +232,7 @@ export function Mitigation({
                 {fmtDelta(primary.deltaVsBaseline)}
               </span>
             </div>
-            {aiBriefing(primary, baseDerived.cumProfit).map((p, i) => (
+            {aiBriefing(primary, baseCumFrom, primaryCumFrom).map((p, i) => (
               <p key={i} className="exp-mit-ai-line">
                 {p}
               </p>
@@ -270,28 +287,32 @@ export function Mitigation({
       <div className="exp-mit-compare">
         <div className="exp-mit-chart">
           <div className="exp-mit-chart-head">
-            <span className="exp-section-title">BEFORE VS AFTER, PROFIT</span>
+            <span className="exp-section-title">
+              BEFORE VS AFTER, PROFIT{responseMonth > 0 ? ` (FROM MONTH ${responseMonth})` : ""}
+            </span>
             <div className="exp-mit-numbers">
               <span className="exp-mit-num">
                 <span className="exp-swatch" style={{ background: "var(--exp-axis)" }} />
-                Before {fmt(baseDerived.cumProfit)}
+                Stay the course {fmt(baseCumFrom)}
               </span>
             </div>
           </div>
           <LineChart
-            xs={t}
+            xs={tView}
             series={profitSeries}
             xLabel="months"
-            yLabel="€M / month"
+            yLabel="€k / month"
             vGuides={[
-              { x: data.meta.params.tau, label: "revenue lag", color: "var(--exp-axis)" },
+              ...(data.meta.params.tau >= responseMonth
+                ? [{ x: data.meta.params.tau, label: "revenue lag", color: "var(--exp-axis)" }]
+                : []),
               ...(ctx.shockMonth !== undefined
-                ? [{ x: ctx.shockMonth, label: "shock → response", color: "var(--exp-marker)" }]
+                ? [{ x: ctx.shockMonth, label: "shock hits, you respond", color: "var(--exp-marker)" }]
                 : []),
             ]}
             zeroLine
             xFormat={(v) => `${Math.round(v)}`}
-            yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
+            yFormat={(v) => (v * 1000).toFixed(0)}
             height={300}
           />
 
@@ -299,16 +320,16 @@ export function Mitigation({
             <thead>
               <tr>
                 <th>Strategy</th>
-                <th>Cumulative</th>
-                <th>vs before</th>
+                <th>{responseMonth > 0 ? `Cumulative m${responseMonth}–${data.meta.params.T}` : "Cumulative"}</th>
+                <th>vs staying</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>
-                  <span className="exp-swatch" style={{ background: "var(--exp-axis)" }} /> Before
+                  <span className="exp-swatch" style={{ background: "var(--exp-axis)" }} /> Stay the course
                 </td>
-                <td className="num">{fmt(baseDerived.cumProfit)}</td>
+                <td className="num">{fmt(baseCumFrom)}</td>
                 <td className="num">n/a</td>
               </tr>
               {selected.map((c) => (
@@ -316,7 +337,7 @@ export function Mitigation({
                   <td>
                     <span className="exp-swatch" style={{ background: colorOf[c.id] }} /> {c.label}
                   </td>
-                  <td className="num">{fmt(c.cumProfit)}</td>
+                  <td className="num">{fmt(cumFrom(switchedOf[c.id].profit))}</td>
                   <td
                     className="num"
                     style={{ color: c.deltaVsBaseline >= 0 ? "var(--exp-hybrid)" : "var(--exp-accent-3)" }}
@@ -345,9 +366,10 @@ export function Mitigation({
 
       <div className="exp-mit-apply">
         <p className="exp-prose">
-          <strong>{primary.label}</strong> moves cumulative result from {fmt(baseDerived.cumProfit)}{" "}
-          to <strong>{fmt(primaryDerived.cumProfit)}</strong> ({fmtDelta(primary.deltaVsBaseline)}).
-          Applying it sets every lever in the evaluator so you can keep exploring from there.
+          From the response point on, <strong>{primary.label}</strong> earns{" "}
+          <strong>{fmt(primaryCumFrom)}</strong> where staying the course earns {fmt(baseCumFrom)}{" "}
+          ({fmtDelta(primary.deltaVsBaseline)}). Applying it sets every lever in the evaluator so
+          you can keep exploring from there.
         </p>
         <button
           type="button"

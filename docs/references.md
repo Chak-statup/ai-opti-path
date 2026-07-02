@@ -1,12 +1,12 @@
 # Model calibration & references
 
-Every parameter and formula in `src/lib/scenario/model.ts` (`CALIB` block) with its source. Compiled 2026-07-01 by a research + **citation-audit** pass (each URL was WebFetch-re-verified that day; figures trace to the audited source). Currency EUR. **Per-unit** economics (ARPU, serving cost, CAC) are grounded at face value; monetary **aggregates** are at insurer-flagship scale (see below).
+Every parameter and formula in `src/lib/scenario/model.ts` (`CALIB` block) with its source. Compiled 2026-07-01 by a research + **citation-audit** pass (each URL was WebFetch-re-verified that day; figures trace to the audited source). Currency EUR. **Per-unit** economics (ARPU, serving cost, CAC) are grounded at face value; monetary **aggregates** are at a ÷100 demo scale (see below).
 
 > Honesty first: some parameters are grounded in real sources; others are internal modelling assumptions. Both are marked. Do not present an assumption as a citation.
 
 ## Scale & FX conventions
-- **Insurer-flagship scale (restored 2026-07-02):** the code ships K = 2–15M users, N0 = 40k, F in €M/mo — matching the design target (peak revenue €13–80M/mo, ~€1–2B/yr at peak ≈ 1% of Allianz FY2024 business volume €179.8B). An earlier round temporarily divided aggregates by 10 for a "demo scale"; that contradicted the recorded target and is reverted.
-- Per-unit economics (`arpu0, serve0, cac, dm`) are €/user/month, unscaled — the scale enters only through K, N0 and F.
+- **Demo scale (user decision 2026-07-02, supersedes the flagship restore):** the code ships K = 20k–150k users, N0 = 400, F in €k/mo; aggregates are ÷100 of a flagship deployment so cumulative profit stays in single-digit €M and the exhibit does not read as an exaggerated forecast. The grounded flagship magnitudes (×100: K 2–15M users, F0 €4M/mo, F_reg €36M/yr, peak revenue €13–80M/mo ≈ 1% of Allianz FY2024 volume €179.8B) remain the real-world anchors; multiply in-code aggregates by 100 to recover them.
+- Per-unit economics (`arpu0, serve0, cac, dm`) are €/user/month, unscaled; the scale enters only through K, N0 and F.
 - **FX ≈ 1.08 USD/EUR** is an approximate assumption, not a live rate. Pin to an ECB daily reference rate before quoting EUR conversions.
 
 ## A. Parameters grounded in a real source
@@ -39,13 +39,13 @@ Every parameter and formula in `src/lib/scenario/model.ts` (`CALIB` block) with 
 |---|---|---|---|
 | `maxHedge` | 0.70 | RouteLLM (arXiv:2406.18665, ICLR 2025) — https://arxiv.org/abs/2406.18665 | ~70–87% of general queries route to a cheaper model at ~95% frontier quality. **Technical ceiling**; realized enterprise open-source share is only ~19% (Menlo 2024). |
 
-### Fixed / organisational cost (€/month, in code at flagship scale)
+### Fixed / organisational cost (grounded at flagship scale; in code ÷100)
 | Symbol | Code value | Source | Note |
 |---|---|---|---|
-| `F0` | €4M/mo | CareerFoundry ML salary (SalaryExpert/ERI) — https://careerfoundry.com/en/blog/data-analytics/machine-learning-engineer-salary/ | Salary bands grounded (€130–160k loaded); the implied ~150–250 FTE platform org is a **scale assumption** for a group-wide flagship (the salary source directly grounds a 15–25 FTE, €0.4M/mo org). |
-| `F_innov` | €5M/mo | (as above) | Full build ≈ 300–500 FTE at flagship scale — **headcount is the scaled assumption**, unit cost is grounded. |
-| `F_resil` | €1.5M/mo | (as above) | Portability team ~⅓ of build org (ratio assumed). |
-| `F_reg` | **€3M/mo = €36M/yr** | Fourthline bank compliance — https://www.fourthline.com/blog/how-much-do-banks-spend-on-compliance | **Directly grounded at this scale** (mid-size bank compliance €36M/yr). EU AI-Act per-system ≈€29,277 + QMS €20–80k (CEPS/Renda 2021 via SQ Magazine); EU-wide €100–500M/yr (EPRS PE 694.212). |
+| `F0` | €4M/mo (code: €40k) | CareerFoundry ML salary (SalaryExpert/ERI) — https://careerfoundry.com/en/blog/data-analytics/machine-learning-engineer-salary/ | Salary bands grounded (€130–160k loaded); the implied ~150–250 FTE platform org is a **scale assumption** for a group-wide flagship (the salary source directly grounds a 15–25 FTE, €0.4M/mo org). |
+| `F_innov` | €5M/mo (code: €50k) | (as above) | Full build ≈ 300–500 FTE at flagship scale — **headcount is the scaled assumption**, unit cost is grounded. |
+| `F_resil` | €1.5M/mo (code: €15k) | (as above) | Portability team ~⅓ of build org (ratio assumed). |
+| `F_reg` | **€3M/mo = €36M/yr** (code: €30k) | Fourthline bank compliance — https://www.fourthline.com/blog/how-much-do-banks-spend-on-compliance | **Directly grounded at this scale** (mid-size bank compliance €36M/yr). EU AI-Act per-system ≈€29,277 + QMS €20–80k (CEPS/Renda 2021 via SQ Magazine); EU-wide €100–500M/yr (EPRS PE 694.212). |
 
 Supporting: EU ML base salary DE €95,880 / FR €77,113 (CareerFoundry/ERI); fully-loaded 1.25–1.4× (Glencoyne) lifted by EU non-wage costs 24.7% avg / 32.2% FR (Eurostat ddn-20250328-1); enterprise genAI spend $37B 2025 (Menlo).
 
@@ -69,11 +69,11 @@ State plainly as modelling choices.
 | `kappa` = 12 | Steepness of the logistic churn cliff around Q* | Cohort churn across a quality/satisfaction (NPS, task-success) gradient — fit the logistic slope. |
 | `innovQualityLift` = 0.15 | Full in-house build raises DELIVERED quality +0.15 (~half a tier); churn responds through the same logistic cliff. (Replaced the earlier multiplicative `innovChurnCut` = 0.30 — decided 2026-07-01: one quality channel drives churn, so build genuinely mitigates a scenario quality drop.) | Before/after or A/B cohort retention mapped onto the quality index, in-house vs vendor-only. |
 | `innovArpuLift` = 0.20 | In-house build lifts ARPU 20% | Monetization experiments isolating uplift from proprietary features. |
-| `regComplianceBuffer` = 0.30, weights 0.6 resil / 0.4 build | Resilience+build absorb up to 30% of compliance cost: `F_reg·g·(1 − 0.30(0.6v+0.4b))`. The ceiling AND the 0.6/0.4 split are assumptions (resilience weighted higher: approved-model flexibility acts directly on audit scope; build acts via in-house compliance capability). | Case studies on portability + in-house compliance reducing audit/QMS cost. |
+| `regComplianceBuffer` = 0.30 | In-house build absorbs up to 30% of compliance cost: `F_reg·g·(1 − 0.30·b)`. Simplified 2026-07-02 from a two-lever weighted buffer to ONE coefficient at user direction (explainability over nuance). | Case studies on in-house compliance capability reducing audit/QMS cost. |
 | `Q` tiers 0.3/0.6/0.9, `qstar` 0.5 | Dimensionless quality index & churn threshold | Map an observable quality metric to churn; locate the threshold empirically. |
 | `tau` = 6 | Deployment→revenue lag (mo) | Enterprise-insurance sales-cycle / time-to-first-revenue. |
-| `N0` = 40,000 | Initial active users | The insurer's own pilot telemetry. |
-| `K_min` = 2M, `K_max` = 15M | Addressable market by reach | Bottom-up TAM across the target book (group-wide flagship; Allianz serves >125M customers). |
+| `N0` = 400 (demo scale) | Initial active users | The insurer's own pilot telemetry. |
+| `K_min` = 20k, `K_max` = 150k (demo scale; ×100 = flagship) | Addressable market by reach | Bottom-up TAM across the target book. |
 | `shockMonth` = 16; `regPressure` 30/85 | Scenario timing/intensity dials | Stress-test knobs, not empirical. |
 | `T` = 54, `steps` = 361 | Horizon / integration resolution | Design/numerical choices. |
 | FX ≈ 1.08 USD/EUR | Currency conversion | Live ECB daily reference rate on the pitch date. |
@@ -84,6 +84,7 @@ State plainly as modelling choices.
 | Logistic / Bass growth — `p(K−N) + rN(1−N/K) − χN − φ(t/T)N` (`simulate`) | Grounded | Bass, F.M. (1969) *A New Product Growth for Model Consumer Durables*, **Management Science 15(5):215–227**. Meta-analysis: Sultan, Farley & Lehmann (1990), **JMR 27(1):70–77** — https://journals.sagepub.com/doi/abs/10.1177/002224379002700107 |
 | Sigmoid churn-vs-quality — `chi()` logistic cliff | Grounded (form) | Jones & Sasser (1995) *Why Satisfied Customers Defect*, **HBR Nov–Dec 1995** — https://hbr.org/1995/11/why-satisfied-customers-defect . `kappa` slope is a tuning choice (see B). |
 | Blended-price hedge — `shieldedTpf = (1−h)·rawTpf + h·1` | Grounded | Portfolio weighted-average; routable fraction RouteLLM (arXiv:2406.18665); multi-model enterprise norm Menlo 2024 — https://menlovc.com/2024-the-state-of-generative-ai-in-the-enterprise/ |
+| Tier-fair quality bar; `tierBar = Q*·Q/0.6` | Design choice `[assume]` | Each tier is judged against a bar proportional to its own promise (a budget product is not churned against a luxury standard); the 1/0.6 normalisation anchors the dial at the Balanced tier. |
 | Euler–Maruyama SDE — `σN√dt·dW` multiplicative noise (`simulate`) | Form only (σ magnitude grounded via `sigma`) | Standard scheme; canonical text Kloeden & Platen, *Numerical Solution of Stochastic Differential Equations* (Springer). No URL asserted — verify before citing. |
 
 ## Honesty flags to carry into any pitch
@@ -92,5 +93,5 @@ State plainly as modelling choices.
 3. **`chiMax`=0.30, `phi`=0.35, `regInnovDrag`=0.40 are stress ceilings, not expected values.** Expected-case: chiMax ~0.10–0.15, phi ~0.07–0.12/mo, regInnovDrag ~0.25–0.33.
 4. **`maxHedge`=0.70 is a technical ceiling** (RouteLLM), above today's realized ~19% open-source deployment.
 5. **The 3.0× pricing shock has no single-vendor precedent** — a cross-tier-anchored stress magnitude.
-6. **F-scale asymmetry**: F_reg is directly grounded at the in-code value (€36M/yr, Fourthline); F0/F_innov/F_resil have grounded unit costs (salary bands) but flagship-scale **headcounts are ×10 extrapolations** of the directly-sourced 15–25 FTE org.
+6. **Scale**: in-code aggregates are a ÷100 demo scale (user decision); quote the flagship anchors (×100) when talking real-world magnitudes. F_reg is directly grounded at flagship scale (€36M/yr, Fourthline); F0/F_innov/F_resil have grounded unit costs with extrapolated headcounts.
 7. **Pin FX to a live ECB rate** before any EUR conversion.

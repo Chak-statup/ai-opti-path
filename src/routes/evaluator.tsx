@@ -104,11 +104,13 @@ const RADAR_AXES = RISK_AXES.map((a) => a.label);
 type MetricKey = "users" | "revenue" | "cost" | "profit";
 type Tab = "strategy" | MetricKey;
 
+// Display at demo scale: monthly flows in €k, users in thousands (the model's
+// internal units stay €M / millions; only the axis formatting converts).
 const METRIC_PANELS: Record<MetricKey, { title: string; yLabel: string; zero: boolean }> = {
-  users: { title: "Active users", yLabel: "million users", zero: false },
-  revenue: { title: "Revenue (ARPU × users)", yLabel: "€M / month", zero: false },
-  cost: { title: "Cost (serving + acquisition + fixed)", yLabel: "€M / month", zero: false },
-  profit: { title: "Net profit", yLabel: "€M / month", zero: true },
+  users: { title: "Active users", yLabel: "thousand users", zero: false },
+  revenue: { title: "Revenue (ARPU × users)", yLabel: "€k / month", zero: false },
+  cost: { title: "Cost (serving + acquisition + fixed)", yLabel: "€k / month", zero: false },
+  profit: { title: "Net profit", yLabel: "€k / month", zero: true },
 };
 
 const TABS: { key: Tab; label: string }[] = [
@@ -266,7 +268,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   // Live figures for the slider notes, so every claim under a slider is
   // recomputed from the model at the current setting (never hardcoded).
   const innovEff = innovEffective(vec, ctx);
-  const fixedM = (v: number) => (v / 1e6).toFixed(1);
+  const fixedK = (v: number) => (v / 1e3).toFixed(0);
 
   function panelSeries(key: MetricKey): Series[] {
     const faint: Series[] = [];
@@ -311,13 +313,13 @@ function ExplorerView({ data }: { data: RunsData }) {
 
   const reading = `With serving cost at ×${causalState.tpfEff.toFixed(
     1,
-  )} (vendor ×${tpf.toFixed(1)}, resilience-shielded) and the quality bar at ${snappedQ.toFixed(
+  )} (vendor ×${tpf.toFixed(1)}, independence-shielded) and this tier held to its bar of ${causalState.bar.toFixed(
     2,
   )}, ${derived[traceStrat].label} holds churn at ${causalState.churn.toFixed(
     2,
-  )}/mo and ARPU at €${causalState.margin.toFixed(1)}/user. After the deployment lag and the standing competition drag that leaves about ${causalState.usersEnd.toFixed(
-    2,
-  )}M active users and ${fmtMoney(causalState.cumProfit)} cumulative profit, so ${
+  )}/mo and ARPU at €${causalState.margin.toFixed(1)}/user. After the deployment lag and the standing competition drag that leaves about ${(causalState.usersEnd * 1000).toFixed(
+    1,
+  )}k active users and ${fmtMoney(causalState.cumProfit)} cumulative profit, so ${
     causalState.profitPos ? "the line stays profitable" : "the line runs at a loss"
   }.`;
 
@@ -417,7 +419,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 <p className="exp-control-note">
                   <strong>Platform ecosystem.</strong> How widely you ship: contained pilot (0) to
                   mass-market (100). Sets the addressable market <Tex>{"K"}</Tex>: currently{" "}
-                  <strong>{causalState.KM.toFixed(1)}M</strong> potential users (2M&ndash;15M). A wider
+                  <strong>{(causalState.KM * 1000).toFixed(0)}k</strong> potential users (20k&ndash;150k). A wider
                   market grows users and revenue, and multiplies how many users you pay to serve
                   if prices spike.
                 </p>
@@ -442,7 +444,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 <p className="exp-control-note">
                   <strong>Vendor choice.</strong> The share of AI traffic you can serve outside your
                   main vendor: <strong>{Math.round(causalState.hedge * 100)}%</strong> at this setting
-                  (ceiling 70%), costing €{fixedM(causalState.fixed.indep)}M/mo fixed.{" "}
+                  (ceiling 70%), costing €{fixedK(causalState.fixed.indep)}k/mo fixed.{" "}
                   {tpf <= 1 ? (
                     <>
                       At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving; it is{" "}
@@ -479,7 +481,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   {Math.round(innov)} it lifts the quality users experience by{" "}
                   <strong>+{(CALIB.innovQualityLift * innovEff).toFixed(2)}</strong> (max +0.15 ≈ half a
                   tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%,
-                  at €{fixedM(causalState.fixed.build)}M/mo fixed cost. Regulation currently drags
+                  at €{fixedK(causalState.fixed.build)}k/mo fixed cost. Regulation currently drags
                   its delivered effect by {Math.round(CALIB.regInnovDrag * reg)}%.
                 </p>
               </div>
@@ -503,10 +505,10 @@ function ExplorerView({ data }: { data: RunsData }) {
                 <p className="exp-control-note">
                   <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
                   two commitments together: the ARPU premium (<Tex>{"\\Delta m"}</Tex> ={" "}
-                  €{dm.toFixed(1)}/user per unit quality) and the quality bar you promise the market
-                  (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}). More revenue per user and
-                  +{Math.round(CALIB.scalingServeBump * (dm / 12) * 100)}% serving tokens; but churn
-                  goes over the cliff if the bar passes your delivered quality ({causalState.Q.toFixed(2)}).
+                  €{dm.toFixed(1)}/user per unit quality) and the quality bar you promise
+                  (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}, scaled to each tier&rsquo;s ambition:
+                  the traced tier is held to {causalState.bar.toFixed(2)}). More revenue per user; but
+                  churn goes over the cliff if the bar passes your delivered quality ({causalState.Q.toFixed(2)}).
                 </p>
               </div>
             </div>
@@ -552,7 +554,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
                 <p className="exp-control-note">
                   External compliance load. Raises the fixed compliance cost (now €
-                  {fixedM(causalState.fixed.compliance)}M/mo) and slows your in-house build (−
+                  {fixedK(causalState.fixed.compliance)}k/mo) and slows your in-house build (−
                   {Math.round(CALIB.regInnovDrag * reg)}% of its effect); independence and build partly
                   buffer it. It does not change the token price.
                 </p>
@@ -670,7 +672,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                           vGuides={sweepGuides}
                           zeroLine
                           xFormat={(v) => v.toFixed(1)}
-                          yFormat={(v) => v.toFixed(0)}
+                          yFormat={(v) => v.toFixed(1)}
                           height={360}
                         />
                       </>
@@ -686,7 +688,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                           vGuides={baseGuides}
                           zeroLine={METRIC_PANELS[tab].zero}
                           xFormat={(v) => `${Math.round(v)}`}
-                          yFormat={(v) => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))}
+                          yFormat={(v) => (v * 1000).toFixed(0)}
                           height={360}
                         />
                       </>
@@ -714,6 +716,15 @@ function ExplorerView({ data }: { data: RunsData }) {
                       <strong>regulatory load</strong> by the compliance environment. The dashed grey outline is{" "}
                       {derived[traceStrat].label} under today&rsquo;s status quo; the gap to the coloured shape is
                       what the current strategy and scenario change.
+                    </p>
+                    <p className="exp-prose">
+                      <strong>Why these are different risks, not one.</strong> The token price is the
+                      weather: an external per-user serving cost you do not set. Vendor independence
+                      decides how much of that weather you feel (the share of traffic you can serve
+                      off-vendor). In-house build sets the quality you deliver yourself, whatever the
+                      vendor does (retention and ARPU). Scaling intensity is what you promise and
+                      charge (the quality bar and the price premium). They meet only in the P&amp;L,
+                      which is why one number cannot summarise them.
                     </p>
                     <div className="exp-radar-legend">
                       {derived.map((d, s) => (

@@ -149,7 +149,6 @@ export function CausalDiagram({
 }) {
   void stratColor;
 
-  const fixedM = (v: number) => v / 1e6;
   // How loaded the fixed-cost line is with optional spend (investments +
   // compliance) relative to everything it could carry.
   const fixedNorm = Math.max(
@@ -163,7 +162,6 @@ export function CausalDiagram({
     { a: "Qstar", b: "chi", intensity: cs.churnNorm, bad: cs.churnNorm > 0.5 },
     { a: "Q", b: "m", intensity: cs.marginNorm, bad: false },
     { a: "dm", b: "m", intensity: cs.marginNorm, bad: false },
-    { a: "dm", b: "s", intensity: cs.dmN, bad: true },
     { a: "chi", b: "N", intensity: cs.churnNorm, bad: true },
     { a: "phi", b: "N", intensity: cs.comp, bad: true },
     { a: "K", b: "N", intensity: cs.reachN, bad: false },
@@ -202,19 +200,20 @@ export function CausalDiagram({
     Pi: cs.profitPos ? 0 : Math.max(0.6, cs.profitNorm),
   };
 
+  const fixedK = (v: number) => (v / 1e3).toFixed(0);
   const nodeSub: Record<string, string> = {
     Q: `delivered quality ${cs.Q.toFixed(2)}`,
-    Qstar: "market bar",
+    Qstar: `your tier's bar ${cs.bar.toFixed(2)}`,
     dm: "ARPU premium",
     phi: "competition",
     chi: `churn ${cs.churn.toFixed(2)}/mo`,
     m: `€${cs.margin.toFixed(1)}/user`,
-    K: `market ${cs.KM.toFixed(1)}M`,
-    N: `${cs.usersEnd.toFixed(2)}M users`,
-    Pi: `${cs.cumProfit < 0 ? "−" : ""}€${Math.abs(cs.cumProfit).toFixed(0)}M`,
+    K: `market ${(cs.KM * 1000).toFixed(0)}k people`,
+    N: `${(cs.usersEnd * 1000).toFixed(1)}k users`,
+    Pi: `${cs.cumProfit < 0 ? "−" : ""}€${Math.abs(cs.cumProfit).toFixed(1)}M`,
     s: `serving €${cs.serve.toFixed(1)}/user`,
     reg: `compliance load ${Math.round(cs.regN * 100)}`,
-    F: `fixed €${fixedM(cs.fixed.total).toFixed(1)}M/mo`,
+    F: `fixed €${fixedK(cs.fixed.total)}k/mo`,
   };
 
   // Second sub-line: the mechanism (s, F) or the change against the status-quo
@@ -223,15 +222,12 @@ export function CausalDiagram({
     Q: deltaLine(cs.Q, base.Q, 0.005, (d) => d.toFixed(2)),
     chi: deltaLine(cs.churn, base.churn, 0.002, (d) => `${d.toFixed(2)}/mo`, true),
     m: deltaLine(cs.margin, base.margin, 0.05, (d) => `€${d.toFixed(1)}`),
-    N: deltaLine(cs.usersEnd, base.usersEnd, 0.005, (d) => `${d.toFixed(2)}M`),
-    Pi: deltaLine(cs.cumProfit, base.cumProfit, 0.5, (d) => `€${d.toFixed(0)}M`),
+    N: deltaLine(cs.usersEnd, base.usersEnd, 0.0005, (d) => `${(d * 1000).toFixed(1)}k`),
+    Pi: deltaLine(cs.cumProfit, base.cumProfit, 0.05, (d) => `€${d.toFixed(1)}M`),
   };
-  const detail: Record<string, string> = {
-    s:
-      cs.tpfRaw > 1
-        ? `×${cs.tpfRaw.toFixed(1)} → ×${cs.tpfEff.toFixed(1)} · hedge ${Math.round(cs.hedge * 100)}%`
-        : `price ×${cs.tpfRaw.toFixed(1)} · hedge ${Math.round(cs.hedge * 100)}%`,
-    F: `bld ${fixedM(cs.fixed.build).toFixed(1)} · ind ${fixedM(cs.fixed.indep).toFixed(1)} · reg ${fixedM(cs.fixed.compliance).toFixed(1)}`,
+  const detail: Record<string, string | undefined> = {
+    s: cs.tpfRaw > 1 ? `vendor ×${cs.tpfRaw.toFixed(1)}, you pay ×${cs.tpfEff.toFixed(1)}` : undefined,
+    F: `bld ${fixedK(cs.fixed.build)}k · ind ${fixedK(cs.fixed.indep)}k · reg ${fixedK(cs.fixed.compliance)}k`,
   };
 
   return (
@@ -322,7 +318,9 @@ export function CausalDiagram({
         const col = nodeColor[n.id];
         const risk = riskNorm[n.id] ?? 0;
         const showHalo = risk > 0.5;
-        const second = deltas[n.id] ?? (detail[n.id] ? { text: detail[n.id], color: "var(--exp-muted)" } : null);
+        const det = detail[n.id];
+        const second = deltas[n.id] ?? (det ? { text: det, color: "var(--exp-muted)" } : null);
+        const secondOutside = n.shape === "diamond"; // a diamond has no room for two lines
         return (
           <g key={n.id}>
             {showHalo && (
@@ -353,11 +351,18 @@ export function CausalDiagram({
               )}
               <circle cx={left + 20} cy={top + 20} r={5} fill={col} />
               <NodeTitle n={n} />
-              <text x={n.x} y={n.y + (second ? 12 : 18)} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
+              <text x={n.x} y={n.y + (second && !secondOutside ? 12 : 18)} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
                 {nodeSub[n.id]}
               </text>
               {second && (
-                <text x={n.x} y={n.y + 28} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill={second.color}>
+                <text
+                  x={n.x}
+                  y={secondOutside ? top + n.h + 16 : n.y + 28}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="cd-node-sub"
+                  fill={second.color}
+                >
                   {second.text}
                 </text>
               )}

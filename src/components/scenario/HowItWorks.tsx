@@ -5,26 +5,26 @@ type ParamRow = { sym: string; meaning: string; value: string };
 const PARAMS: ParamRow[] = [
   { sym: "N(t)", meaning: "Active users: the single simulated state", value: "simulated" },
   { sym: "Q", meaning: "Quality = strategy (the decision)", value: "0.3 / 0.6 / 0.9" },
-  { sym: "K", meaning: "Addressable market (set by platform reach)", value: "2M – 15M" },
-  { sym: "N_0", meaning: "Initial active users", value: "40,000" },
+  { sym: "K", meaning: "Addressable market (set by platform reach)", value: "20k – 150k" },
+  { sym: "N_0", meaning: "Initial active users", value: "400" },
   { sym: "p", meaning: "External acquisition rate", value: "0.008 / mo" },
   { sym: "r", meaning: "Word-of-mouth growth rate", value: "0.35 / mo" },
   { sym: "\\chi_{\\min},\\,\\chi_{\\max}", meaning: "Churn floor / ceiling", value: "0.02 / 0.30 / mo" },
   { sym: "\\kappa", meaning: "Churn-cliff steepness", value: "12" },
-  { sym: "Q^{\\ast}", meaning: "Churn threshold, cliff location (set by scaling)", value: "0.1 – 1.0" },
+  { sym: "Q^{\\ast}", meaning: "Quality-bar dial (each tier held to Q^* Q/0.6)", value: "0.1 – 1.0" },
   { sym: "a_0,\\,\\Delta m", meaning: "Base ARPU, scaling premium slope", value: "€9, up to €12 /user/mo" },
   { sym: "\\iota", meaning: "Effective in-house build (slider, dragged by regulation)", value: "0 – 1" },
   { sym: "s_0", meaning: "Serving (token) cost / user at price ×1, Balanced tier", value: "€2.5 /user/mo" },
   { sym: "1+2.0(Q-0.6)", meaning: "Tier serving factor (which models you run)", value: "×0.4 / ×1.0 / ×1.6" },
   { sym: "\\mathrm{tpf}", meaning: "Token price factor: the vendor's price (env. slider)", value: "×0.5 – ×4" },
-  { sym: "h", meaning: "Hedged serving share (vendor-independence slider)", value: "0 – 0.70" },
-  { sym: "\\rho", meaning: "Blended serving price after the hedge", value: "(1-h)\\,tpf+h" },
+  { sym: "h", meaning: "Share of serving run off-vendor (independence slider)", value: "0 – 0.70" },
+  { sym: "\\rho", meaning: "Blended serving price after the off-vendor blend", value: "(1-h)\\,tpf+h" },
   { sym: "c_{\\mathrm{ac}}", meaning: "Blended cost per gross acquired user", value: "€20" },
   { sym: "\\varphi", meaning: "Peak competitive-loss rate", value: "0.35 / mo" },
   { sym: "\\sigma", meaning: "Demand volatility", value: "0.16" },
-  { sym: "F_0", meaning: "Base fixed cost per month", value: "€4M / mo" },
-  { sym: "F_{\\iota},\\,F_{\\rho},\\,F_{\\mathrm{reg}}", meaning: "Fixed cost of full build / independence / compliance", value: "€5M / €1.5M / €3M / mo" },
-  { sym: "0.30\\,(0.6v+0.4b)", meaning: "Compliance buffer (indep. v, build b absorb the load)", value: "0 – 0.30" },
+  { sym: "F_0", meaning: "Base fixed cost per month", value: "€40k / mo" },
+  { sym: "F_{\\iota},\\,F_{\\rho},\\,F_{\\mathrm{reg}}", meaning: "Fixed cost of full build / independence / compliance", value: "€50k / €15k / €30k / mo" },
+  { sym: "0.30\\,b", meaning: "Compliance share absorbed by in-house build b", value: "0 – 0.30" },
   { sym: "\\tau", meaning: "Deployment to revenue lag", value: "6 mo" },
   { sym: "T", meaning: "Horizon", value: "54 mo" },
 ];
@@ -88,7 +88,7 @@ export function HowItWorks() {
         <div className="exp-howto-eq">
           <Tex block>
             {
-              "\\chi=\\chi_{\\min}+\\frac{\\chi_{\\max}-\\chi_{\\min}}{1+e^{\\,\\kappa(Q_{\\mathrm{eff}}-Q^{\\ast})}}"
+              "\\chi=\\chi_{\\min}+\\frac{\\chi_{\\max}-\\chi_{\\min}}{1+e^{\\,\\kappa(Q_{\\mathrm{eff}}-Q^{\\ast}_{\\mathrm{tier}})}}\\qquad Q^{\\ast}_{\\mathrm{tier}}=Q^{\\ast}\\,\\tfrac{Q}{0.6}"
             }
           </Tex>
           <Tex block>
@@ -101,10 +101,13 @@ export function HowItWorks() {
             <Tex>{"Q_{\\mathrm{eff}}"}</Tex>: the chosen tier <Tex>{"Q"}</Tex>, shifted <em>down</em> by
             scenarios that trade quality for cost (<Tex>{"\\Delta q_{\\mathrm{scen}}"}</Tex>, e.g.
             adopting open-source models) and lifted by in-house build <Tex>{"\\iota"}</Tex> (up to
-            +0.15, about half a tier), flowing through a threshold cliff at <Tex>{"Q^{\\ast}"}</Tex>. That is
-            why building in-house can genuinely climb back over the bar after a quality-losing
-            scenario. ARPU <Tex>{"m"}</Tex> is priced on the scenario quality and lifted separately by
-            build; it is a <strong>lever</strong>, not an output.
+            +0.15, about half a tier), flowing through a threshold cliff at the bar the tier is held
+            to. The bar is <strong>tier-fair</strong>: <Tex>{"Q^{\\ast}_{\\mathrm{tier}}"}</Tex> scales
+            the dial&rsquo;s <Tex>{"Q^{\\ast}"}</Tex> with the tier&rsquo;s ambition, so a Lean product
+            is judged against the modest promise it actually makes, not against Premium&rsquo;s.
+            That is why building in-house can genuinely climb back over the bar after a
+            quality-losing scenario. ARPU <Tex>{"m"}</Tex> is priced on the scenario quality and
+            lifted separately by build; it is a <strong>lever</strong>, not an output.
           </p>
         </div>
 
@@ -128,7 +131,7 @@ export function HowItWorks() {
         </div>
 
         <div className="exp-howto-eq">
-          <Tex block>{"s(t)=s_0\\,f(Q)\\,\\big(1+0.4\\,\\tfrac{\\Delta m}{12}\\big)\\,\\rho(t)"}</Tex>
+          <Tex block>{"s(t)=s_0\\,f(Q)\\,\\rho(t)"}</Tex>
           <Tex block>
             {
               "\\rho(t)=\\begin{cases}1 & t<t_{\\mathrm{shock}}\\\\[2pt](1-h)\\,\\mathrm{tpf}+h & t\\ge t_{\\mathrm{shock}}\\end{cases}"
@@ -136,13 +139,13 @@ export function HowItWorks() {
           </Tex>
           <p className="exp-howto-cap">
             Where price acts, and where a <em>pricing shock</em> enters the equations. The per-user
-            serving cost <Tex>{"s"}</Tex> is the token cost of goods: the tier factor{" "}
-            <Tex>{"f(Q)=1+2.0\\,(Q-0.6)"}</Tex> prices which models you run (Lean ×0.4, Balanced
-            ×1.0, Premium ×1.6), aggressive scaling burns more tokens per user (up to +40%), and{" "}
-            <Tex>{"\\rho(t)"}</Tex> is the vendor's price after your hedge: today's ×1 until the shock
+            serving cost <Tex>{"s"}</Tex> is the token cost of goods, three factors and nothing hidden: the base
+            cost <Tex>{"s_0"}</Tex>, the tier factor <Tex>{"f(Q)=1+2.0\\,(Q-0.6)"}</Tex> pricing
+            which models you run (Lean ×0.4, Balanced ×1.0, Premium ×1.6), and{" "}
+            <Tex>{"\\rho(t)"}</Tex> is the vendor's price after your off-vendor blend: today's ×1 until the shock
             month <Tex>{"t_{\\mathrm{shock}}"}</Tex>, then a step up to the blended level, where{" "}
             <Tex>{"\\mathrm{tpf}"}</Tex> is the Token-price-factor slider and <Tex>{"h"}</Tex> the
-            hedged share (next section). That step is the kink you see in the cost and profit curves
+            off-vendor share (next section). That step is the kink you see in the cost and profit curves
             at the shock month. Regulation does not touch <Tex>{"s"}</Tex>; it is a distinct
             fixed-cost load (below).
           </p>
@@ -172,14 +175,14 @@ export function HowItWorks() {
         <div className="exp-howto-eq">
           <Tex block>{"h=0.70\\,\\tfrac{\\text{resil}}{100}\\qquad \\rho=(1-h)\\,\\mathrm{tpf}+h\\;\\;(\\mathrm{tpf}>1)"}</Tex>
           <p className="exp-howto-cap">
-            <strong>Vendor independence.</strong> <Tex>{"h"}</Tex> is the share of serving you can run
+            <strong>Vendor independence.</strong> <Tex>{"h"}</Tex> is the share of serving you can run off-vendor,
             on cheaper alternatives (up to 70% at full independence: a routing ceiling, not a
             forecast). Your blended serving price <Tex>{"\\rho"}</Tex> pays that share at today&rsquo;s
             ×1 and only the rest at the vendor&rsquo;s price <Tex>{"\\mathrm{tpf}"}</Tex> (the
             Token-price-factor slider), so a vendor tripling its price lifts your cost to{" "}
             <Tex>{"0.3\\times 3+0.7=\\times 1.6"}</Tex> at full independence, <Tex>{"\\times 2.3"}</Tex>{" "}
             at the default 50. If the price falls, you take the full benefit. At today&rsquo;s ×1 the
-            hedge changes nothing in serving; it is <em>insurance</em>, and its premium is the fixed
+            off-vendor share changes nothing in serving; it is <em>insurance</em>, and its premium is the fixed
             cost <Tex>{"F_{\\rho}"}</Tex> below.
           </p>
         </div>
@@ -187,18 +190,16 @@ export function HowItWorks() {
         <div className="exp-howto-eq">
           <Tex block>
             {
-              "F = F_0 + F_{\\iota}\\,b + F_{\\rho}\\,v + F_{\\mathrm{reg}}\\,g\\,\\big(1-0.30\\,(0.6\\,v+0.4\\,b)\\big)\\qquad v=\\tfrac{\\text{resil}}{100}"
+              "F = F_0 + F_{\\iota}\\,b + F_{\\rho}\\,v + F_{\\mathrm{reg}}\\,g\\,\\big(1-0.30\\,b\\big)\\qquad v=\\tfrac{\\text{resil}}{100}"
             }
           </Tex>
           <p className="exp-howto-cap">
             The cost of the bets, written out in full. Every investment raises fixed cost: in-house
-            build <Tex>{"F_{\\iota}=\\text{€5M/mo}"}</Tex> and vendor independence{" "}
-            <Tex>{"F_{\\rho}=\\text{€1.5M/mo}"}</Tex> at full, and <strong>regulation</strong> adds a
-            compliance overhead <Tex>{"F_{\\mathrm{reg}}=\\text{€3M/mo}"}</Tex>. The last bracket is
-            the compliance <em>buffer</em>: independence <Tex>{"v"}</Tex> (approved-model
-            flexibility) and build <Tex>{"b"}</Tex> (in-house compliance capability) absorb up to 30%
-            of that load, weighted 0.6 / 0.4; all three coefficients are stated modelling
-            assumptions, not fitted values. Platform reach separately sets the market <Tex>{"K"}</Tex>.
+            build <Tex>{"F_{\\iota}=\\text{€50k/mo}"}</Tex> and vendor independence{" "}
+            <Tex>{"F_{\\rho}=\\text{€15k/mo}"}</Tex> at full, and <strong>regulation</strong> adds a
+            compliance overhead <Tex>{"F_{\\mathrm{reg}}=\\text{€30k/mo}"}</Tex>. The last bracket is
+            the one relief valve: in-house build <Tex>{"b"}</Tex> absorbs up to 30% of the
+            compliance load (a stated assumption, one coefficient). Platform reach separately sets the market <Tex>{"K"}</Tex>.
           </p>
         </div>
       </section>
@@ -243,8 +244,7 @@ export function HowItWorks() {
             a higher committed bar, but a steeper cliff if the market bar moves past your quality. One
             dial couples the <strong>ARPU premium</strong> <Tex>{"\\Delta m"}</Tex> and the{" "}
             <strong>quality bar</strong> <Tex>{"Q^{\\ast}"}</Tex>: turning it up raises short-run
-            revenue but also burns more tokens per user (serving cost up to +40%) and raises the
-            tipping-point risk.
+            revenue but raises the promise, and with it the tipping-point risk.
           </p>
         </div>
       </section>
@@ -310,7 +310,7 @@ export function HowItWorks() {
       <p className="exp-howto-illus">
         Every parameter is sourced in <code>docs/references.md</code> (citation-audited). Serving cost,
         ARPU, CAC, the Bass growth coefficients, the churn floor, fixed/compliance cost and the
-        vendor-hedge share are grounded in real data; the quality index, the in-house-build effects,
+        off-vendor (routable) share are grounded in real data; the quality index, the in-house-build effects,
         and the worst-case ceilings (churn 30%/mo, competition 0.35/mo, regulatory drag 40%) are
         stated assumptions or stress bounds to be fit to your data. Euro figures are illustrative
         large-enterprise scale, not a specific company.

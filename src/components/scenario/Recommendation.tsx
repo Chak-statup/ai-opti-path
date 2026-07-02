@@ -38,10 +38,10 @@ export function Recommendation({
 
   const flip =
     ctx.tokenPriceFactor >= 2.5
-      ? "A sustained price at this level punishes the premium tier hardest; it serves users on the priciest frontier models. If prices return toward today's ×1, the premium tier regains the lead; raising vendor independence recovers part of it either way."
+      ? "A sustained price at this level punishes the premium tier hardest; it serves users on the priciest frontier models, while the lean tier's cheap serving becomes the best insurance. If prices return toward today's ×1, the premium tier regains the lead; raising vendor independence recovers part of it either way."
       : ctx.regPressure >= 70
-        ? "Heavy regulation compresses every tier without reordering them. What it does change is the in-house-build lever: compliance eats up to 40% of delivered innovation at full load, so build pays back faster once the load eases."
-        : "The lead rests on today's serving prices: if the vendor's price roughly doubles and persists, the premium tier's frontier serving cost erodes its lead, and past ~×2.5 the ranking flips to the leaner tier.";
+        ? "Heavy regulation compresses every tier without reordering them, and it hits the lean tier's thin margin hardest in relative terms. What it does change is the in-house-build lever: compliance eats up to 40% of delivered innovation at full load, so build pays back faster once the load eases."
+        : "The lead rests on today's serving prices. If the vendor's sustained price passes ~×2, the premium tier's frontier serving cost cedes the lead to the balanced tier; past ~×2.5 the lean tier wins outright; cheap serving is the best insurance in a price war.";
 
   return (
     <div className="exp-rec">
