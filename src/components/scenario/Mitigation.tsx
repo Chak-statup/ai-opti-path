@@ -1,14 +1,18 @@
 // Mitigation step: when a shock hits or the goal changes, the model proposes
 // several alternative strategy vectors and simulates each against the same
-// environment. The human stays in the loop. Toggle any number of candidates to
-// overlay their revenue trajectories against the current baseline, inspect the
-// primary one on the radar, then apply it to the live evaluator.
+// environment. Every candidate is simulated as a RESPONSE: the current posture
+// runs until the shock is realised (the response month), then the candidate
+// takes over on the same user trajectory — so the before/after comparison
+// starts at the point of realisation, not retroactively at month 0. The human
+// stays in the loop: toggle candidates to overlay their profit trajectories,
+// inspect the primary one on the radar, then apply it to the live evaluator.
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, type Series } from "@/components/scenario/LineChart";
 import { RadarChart, type RadarSeries } from "@/components/scenario/RadarChart";
 import {
   deriveRiskScores,
   deriveStrategy,
+  deriveSwitched,
   proposeMitigations,
   RISK_AXES,
   type MitigationBaseline,
@@ -103,18 +107,22 @@ export function Mitigation({
   };
 
   const t = data.t;
+  // The month the risk is realised and a response becomes possible: the shock
+  // month for a timed shock, otherwise t = 0 (a standing scenario is already here).
+  const responseMonth = ctx.shockMonth ?? 0;
   const baseDerived = useMemo(
     () => deriveStrategy(data, base.strat, base.dm, base.qstar, ctx, base.vec),
     [data, base, ctx],
   );
 
-  // Build overlay series: baseline first, then each selected candidate.
+  // Build overlay series: baseline first, then each selected candidate as a
+  // RESPONSE — identical to the baseline up to the response month, switched after.
   const profitSeries: Series[] = useMemo(() => {
     const series: Series[] = [
       { ys: baseDerived.profit, color: "var(--exp-axis)", width: 2, opacity: 0.5 },
     ];
     selected.forEach((c) => {
-      const d = deriveStrategy(data, c.strat, c.dm, c.qstar, ctx, c.vec);
+      const d = deriveSwitched(data, base, { strat: c.strat, dm: c.dm, qstar: c.qstar, vec: c.vec }, ctx);
       series.push({
         ys: d.profit,
         color: colorOf[c.id],
@@ -122,11 +130,11 @@ export function Mitigation({
       });
     });
     return series;
-  }, [baseDerived, selected, data, ctx, colorOf, primaryId]);
+  }, [baseDerived, selected, data, base, ctx, colorOf, primaryId]);
 
   const primaryDerived = useMemo(
-    () => deriveStrategy(data, primary.strat, primary.dm, primary.qstar, ctx, primary.vec),
-    [data, primary, ctx],
+    () => deriveSwitched(data, base, { strat: primary.strat, dm: primary.dm, qstar: primary.qstar, vec: primary.vec }, ctx),
+    [data, base, primary, ctx],
   );
 
   const baseRisk = useMemo(
@@ -170,8 +178,12 @@ export function Mitigation({
       <div className="exp-mit-tag">
         The dominant risk in this scenario is <strong>{RISK_LABELS[dominantKey]}</strong> (
         {Math.round(baseRisk[dominantKey])}/100). Below are the strategy changes that reduce it, each
-        re-simulated against the same environment and ranked by how much it cuts that risk
-        (profit-guarded). Toggle several to compare; the highlighted one drives the radar and Apply.
+        simulated as a <strong>response</strong>
+        {responseMonth > 0
+          ? ` — your current posture runs until the shock lands at month ${responseMonth}, then the change takes over`
+          : " to this standing scenario, applied from the start"}{" "}
+        — and ranked by how much it cuts that risk (profit-guarded). Toggle several to compare; the
+        highlighted one drives the radar and Apply.
       </div>
 
       <div className="exp-mit-ai">
@@ -273,7 +285,7 @@ export function Mitigation({
             vGuides={[
               { x: data.meta.params.tau, label: "τ revenue", color: "var(--exp-axis)" },
               ...(ctx.shockMonth !== undefined
-                ? [{ x: ctx.shockMonth, label: "price shock", color: "var(--exp-marker)" }]
+                ? [{ x: ctx.shockMonth, label: "shock → response", color: "var(--exp-marker)" }]
                 : []),
             ]}
             zeroLine

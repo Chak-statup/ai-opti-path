@@ -3,11 +3,17 @@
 // maps into users and profit. Edge thickness, colour and node state are driven
 // live by the current parameters — change a lever and the pathway reshapes.
 //
+// Every euro channel is a node: the market K (platform reach), the per-user
+// serving cost s (token price through the vendor hedge), the fixed cost F
+// (base + build + independence + compliance) and the regulatory load — so no
+// lever changes profit "invisibly". Mutable nodes carry a live Δ-vs-baseline
+// line (baseline = this strategy under today's status quo, default posture).
+//
 // Visual language: each of the four decisions owns a soft, colour-tinted
 // "influence region" that encloses the nodes it drives, so a first-time viewer
 // immediately sees what a lever affects. Nodes under pressure pick up a red
 // risk halo. Labels are native SVG <text> (KaTeX_Math font) for mobile safety.
-import type { CausalState } from "@/lib/scenario/model";
+import { CALIB, type CausalState } from "@/lib/scenario/model";
 
 type Shape = "rect" | "ellipse" | "diamond";
 type Role = "decision" | "lever" | "prior" | "map" | "flow" | "outcome";
@@ -25,15 +31,18 @@ interface NodeDef {
 }
 
 const NODES: NodeDef[] = [
-  { id: "Q", x: 160, y: 95, w: 188, h: 70, glyph: "Q", italic: true, shape: "rect", role: "decision" },
-  { id: "Qstar", x: 160, y: 250, w: 188, h: 62, glyph: "Q\u2217", italic: true, shape: "ellipse", role: "lever" },
-  { id: "dm", x: 160, y: 360, w: 188, h: 62, glyph: "\u0394m", italic: true, shape: "ellipse", role: "lever" },
-  { id: "phi", x: 470, y: 95, w: 188, h: 64, glyph: "\u03D5", italic: true, shape: "ellipse", role: "prior" },
-  { id: "chi", x: 470, y: 270, w: 188, h: 74, glyph: "\u03C7", italic: true, shape: "rect", role: "map" },
-  { id: "m", x: 470, y: 440, w: 188, h: 74, glyph: "m", italic: true, shape: "rect", role: "map" },
-  { id: "N", x: 790, y: 320, w: 196, h: 82, glyph: "N(t)", italic: true, shape: "ellipse", role: "flow" },
-  { id: "shock", x: 790, y: 500, w: 188, h: 62, glyph: "price", italic: false, shape: "rect", role: "prior" },
-  { id: "Pi", x: 1030, y: 320, w: 168, h: 112, glyph: "\u03A0", italic: true, shape: "diamond", role: "outcome" },
+  { id: "Q", x: 160, y: 95, w: 188, h: 74, glyph: "Q", italic: true, shape: "rect", role: "decision" },
+  { id: "Qstar", x: 160, y: 250, w: 188, h: 62, glyph: "Q∗", italic: true, shape: "ellipse", role: "lever" },
+  { id: "dm", x: 160, y: 360, w: 188, h: 62, glyph: "Δm", italic: true, shape: "ellipse", role: "lever" },
+  { id: "phi", x: 470, y: 95, w: 168, h: 62, glyph: "ϕ", italic: true, shape: "ellipse", role: "prior" },
+  { id: "chi", x: 470, y: 270, w: 188, h: 80, glyph: "χ", italic: true, shape: "rect", role: "map" },
+  { id: "m", x: 470, y: 440, w: 188, h: 80, glyph: "m", italic: true, shape: "rect", role: "map" },
+  { id: "K", x: 790, y: 80, w: 180, h: 60, glyph: "K", italic: true, shape: "ellipse", role: "flow" },
+  { id: "N", x: 790, y: 255, w: 196, h: 84, glyph: "N(t)", italic: true, shape: "ellipse", role: "flow" },
+  { id: "s", x: 790, y: 425, w: 190, h: 78, glyph: "s", italic: true, shape: "rect", role: "prior" },
+  { id: "reg", x: 470, y: 562, w: 188, h: 60, glyph: "reg", italic: false, shape: "ellipse", role: "prior" },
+  { id: "F", x: 1010, y: 558, w: 200, h: 74, glyph: "F", italic: true, shape: "rect", role: "map" },
+  { id: "Pi", x: 1040, y: 300, w: 168, h: 112, glyph: "Π", italic: true, shape: "diamond", role: "outcome" },
 ];
 
 const GOOD = "var(--exp-hybrid)";
@@ -42,12 +51,13 @@ const WARN = "var(--exp-accent-2)";
 const DECISION = "var(--exp-open)";
 
 // The four decision axes and the nodes each one drives. These define the
-// colour-tinted influence regions drawn behind the nodes.
+// colour-tinted influence regions drawn behind the nodes. F is deliberately in
+// no region — three levers raise it, so its sub-label decomposes the spend.
 const GROUPS: { id: string; label: string; members: string[]; color: string }[] = [
   { id: "04", label: "Scaling", members: ["Qstar", "dm"], color: "var(--exp-frontier)" },
   { id: "03", label: "In-house build", members: ["chi", "m"], color: "var(--exp-hybrid)" },
-  { id: "01", label: "Platform reach", members: ["N"], color: "var(--exp-open)" },
-  { id: "02", label: "Vendor indep.", members: ["shock"], color: "var(--exp-accent-1)" },
+  { id: "01", label: "Platform reach", members: ["K"], color: "var(--exp-open)" },
+  { id: "02", label: "Vendor indep.", members: ["s"], color: "var(--exp-accent-1)" },
 ];
 
 function state3(norm: number): string {
@@ -90,7 +100,7 @@ function NodeTitle({ n }: { n: NodeDef }) {
   return (
     <text
       x={n.x}
-      y={n.y - 8}
+      y={n.y - 10}
       textAnchor="middle"
       dominantBaseline="middle"
       fill="var(--exp-ink)"
@@ -108,25 +118,61 @@ function NodeTitle({ n }: { n: NodeDef }) {
   );
 }
 
+// Signed Δ-vs-baseline line. goodWhenDown flips the colour semantics (churn
+// falling is good; profit falling is bad). Returns null when the change is
+// too small to be meaningful — the node then shows its value only.
+function deltaLine(
+  cur: number,
+  base: number,
+  eps: number,
+  fmt: (d: number) => string,
+  goodWhenDown = false,
+): { text: string; color: string } | null {
+  const d = cur - base;
+  if (Math.abs(d) < eps) return null;
+  const up = d > 0;
+  const good = goodWhenDown ? !up : up;
+  return {
+    text: `${up ? "▲" : "▼"} ${fmt(Math.abs(d))} vs base`,
+    color: good ? GOOD : BAD,
+  };
+}
+
 export function CausalDiagram({
   cs,
+  base,
   stratColor,
 }: {
   cs: CausalState;
+  base: CausalState;
   stratColor: string;
 }) {
   void stratColor;
+
+  const fixedM = (v: number) => v / 1e6;
+  // How loaded the fixed-cost line is with optional spend (investments +
+  // compliance) relative to everything it could carry.
+  const fixedNorm = Math.max(
+    0,
+    Math.min(1, (cs.fixed.total - cs.fixed.base) / (CALIB.F_innov + CALIB.F_resil + CALIB.F_reg)),
+  );
+  const regDrag = Math.max(0, Math.min(1, CALIB.regInnovDrag * cs.regN));
 
   const edges: { a: string; b: string; intensity: number; bad: boolean }[] = [
     { a: "Q", b: "chi", intensity: cs.churnNorm, bad: cs.churnNorm > 0.5 },
     { a: "Qstar", b: "chi", intensity: cs.churnNorm, bad: cs.churnNorm > 0.5 },
     { a: "Q", b: "m", intensity: cs.marginNorm, bad: false },
     { a: "dm", b: "m", intensity: cs.marginNorm, bad: false },
+    { a: "dm", b: "s", intensity: cs.dmN, bad: true },
     { a: "chi", b: "N", intensity: cs.churnNorm, bad: true },
     { a: "phi", b: "N", intensity: cs.comp, bad: true },
+    { a: "K", b: "N", intensity: cs.reachN, bad: false },
     { a: "m", b: "Pi", intensity: cs.marginNorm, bad: false },
     { a: "N", b: "Pi", intensity: cs.usersNorm, bad: false },
-    { a: "shock", b: "Pi", intensity: cs.shockNorm, bad: true },
+    { a: "s", b: "Pi", intensity: cs.shockNorm, bad: true },
+    { a: "F", b: "Pi", intensity: fixedNorm, bad: true },
+    { a: "reg", b: "F", intensity: cs.regN, bad: true },
+    { a: "reg", b: "Q", intensity: regDrag, bad: true },
   ];
 
   const nodeColor: Record<string, string> = {
@@ -136,9 +182,12 @@ export function CausalDiagram({
     phi: "var(--exp-axis)",
     chi: state3(cs.churnNorm),
     m: state3(1 - cs.marginNorm),
+    K: DECISION,
     N: state3(1 - cs.usersNorm),
     Pi: cs.profitPos ? GOOD : BAD,
-    shock: cs.shockNorm > 0.5 ? BAD : "var(--exp-axis)",
+    s: cs.shockNorm > 0.5 ? BAD : "var(--exp-axis)",
+    reg: cs.regN > 0.6 ? BAD : "var(--exp-axis)",
+    F: state3(fixedNorm),
   };
 
   // Live risk intensity per node (0 = calm .. 1 = under heavy pressure). Drives
@@ -147,7 +196,9 @@ export function CausalDiagram({
     chi: cs.churnNorm,
     m: 1 - cs.marginNorm,
     N: 1 - cs.usersNorm,
-    shock: cs.shockNorm,
+    s: cs.shockNorm,
+    reg: cs.regN,
+    F: fixedNorm,
     Pi: cs.profitPos ? 0 : Math.max(0.6, cs.profitNorm),
   };
 
@@ -157,14 +208,34 @@ export function CausalDiagram({
     dm: "ARPU premium",
     phi: "competition",
     chi: `churn ${cs.churn.toFixed(2)}/mo`,
-    m: `\u20ac${cs.margin.toFixed(1)}/user`,
+    m: `€${cs.margin.toFixed(1)}/user`,
+    K: `market ${cs.KM.toFixed(1)}M`,
     N: `${cs.usersEnd.toFixed(2)}M users`,
-    Pi: `${cs.cumProfit < 0 ? "\u2212" : ""}\u20ac${Math.abs(cs.cumProfit).toFixed(0)}M`,
-    shock: `serving \u00d7${cs.tpfEff.toFixed(1)}`,
+    Pi: `${cs.cumProfit < 0 ? "−" : ""}€${Math.abs(cs.cumProfit).toFixed(0)}M`,
+    s: `serving €${cs.serve.toFixed(1)}/user`,
+    reg: `compliance load ${Math.round(cs.regN * 100)}`,
+    F: `fixed €${fixedM(cs.fixed.total).toFixed(1)}M/mo`,
+  };
+
+  // Second sub-line: the mechanism (s, F) or the change against the status-quo
+  // baseline posture (everything the levers move).
+  const deltas: Record<string, { text: string; color: string } | null> = {
+    Q: deltaLine(cs.Q, base.Q, 0.005, (d) => d.toFixed(2)),
+    chi: deltaLine(cs.churn, base.churn, 0.002, (d) => `${d.toFixed(2)}/mo`, true),
+    m: deltaLine(cs.margin, base.margin, 0.05, (d) => `€${d.toFixed(1)}`),
+    N: deltaLine(cs.usersEnd, base.usersEnd, 0.005, (d) => `${d.toFixed(2)}M`),
+    Pi: deltaLine(cs.cumProfit, base.cumProfit, 0.5, (d) => `€${d.toFixed(0)}M`),
+  };
+  const detail: Record<string, string> = {
+    s:
+      cs.tpfRaw > 1
+        ? `×${cs.tpfRaw.toFixed(1)} → ×${cs.tpfEff.toFixed(1)} · hedge ${Math.round(cs.hedge * 100)}%`
+        : `price ×${cs.tpfRaw.toFixed(1)} · hedge ${Math.round(cs.hedge * 100)}%`,
+    F: `bld ${fixedM(cs.fixed.build).toFixed(1)} · ind ${fixedM(cs.fixed.indep).toFixed(1)} · reg ${fixedM(cs.fixed.compliance).toFixed(1)}`,
   };
 
   return (
-    <svg viewBox="0 0 1230 600" width="100%" role="img" aria-label="Interactive causal pathway" className="cd-svg">
+    <svg viewBox="0 0 1230 640" width="100%" role="img" aria-label="Interactive causal pathway" className="cd-svg">
       <defs>
         <marker id="cd-good" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse">
           <path d="M0,0 L9,4 L0,8 Z" fill={GOOD} />
@@ -251,6 +322,7 @@ export function CausalDiagram({
         const col = nodeColor[n.id];
         const risk = riskNorm[n.id] ?? 0;
         const showHalo = risk > 0.5;
+        const second = deltas[n.id] ?? (detail[n.id] ? { text: detail[n.id], color: "var(--exp-muted)" } : null);
         return (
           <g key={n.id}>
             {showHalo && (
@@ -281,9 +353,14 @@ export function CausalDiagram({
               )}
               <circle cx={left + 20} cy={top + 20} r={5} fill={col} />
               <NodeTitle n={n} />
-              <text x={n.x} y={n.y + 20} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
+              <text x={n.x} y={n.y + (second ? 12 : 18)} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
                 {nodeSub[n.id]}
               </text>
+              {second && (
+                <text x={n.x} y={n.y + 28} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill={second.color}>
+                  {second.text}
+                </text>
+              )}
             </g>
           </g>
         );

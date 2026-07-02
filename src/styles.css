@@ -1026,6 +1026,14 @@
 .exp-cta:hover { filter: brightness(1.07); }
 
 /* Scenario presets */
+.exp-presets-title {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
 .exp-presets {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

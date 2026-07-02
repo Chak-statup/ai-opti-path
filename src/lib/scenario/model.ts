@@ -31,9 +31,11 @@
 // modelling assumption · [bound] deliberate worst-case ceiling, not a median.
 export const CALIB = {
   // Market & growth (DYNAMICAL — these enter the simulated user ODE)
-  K_min: 200_000, // [assume] addressable market at platform reach 0 (contained pilot)
-  K_max: 1_500_000, // [assume] addressable market at platform reach 100 (mass-market)
-  N0: 4_000, // [assume] active users at t = 0 (fit to pilot telemetry)
+  // Scale: insurer-flagship (design target €80–150M/mo revenue, ~€1–2B/yr —
+  // ≈1% of Allianz FY2024 business volume €179.8B; see docs/references.md).
+  K_min: 2_000_000, // [assume] addressable market at platform reach 0 (contained pilot)
+  K_max: 15_000_000, // [assume] addressable market at platform reach 100 (mass-market)
+  N0: 40_000, // [assume] active users at t = 0 (fit to pilot telemetry)
   p: 0.008, // [src] Bass innovation coeff (PyMC-Marketing; canonical 0.01–0.03)
   r: 0.35, // [src] Bass imitation coeff (PyMC-Marketing; canonical 0.3–0.5)
   chiMin: 0.02, // [src] churn floor/mo (Optifai B2B SaaS; enterprise 1–2%/mo)
@@ -56,15 +58,21 @@ export const CALIB = {
   scalingServeBump: 0.4, // [assume] full aggressive scaling raises serving cost 40% (more tokens/user)
   cac: 20, // [src] blended €/user charged on every GROSS ADD the growth equation generates (First Page Sage; per-seat — benchmarks per-account ~35× higher)
 
-  // Fixed cost (euros / month)
-  F0: 400_000, // [src] baseline org/infra (~15–25 EU ML FTE + infra; ×10 = €4M/mo)
-  F_innov: 500_000, // [src] full in-house build (~40 FTE @ €130–160k loaded)
-  F_resil: 150_000, // [src] full resilience (~11 FTE portability team)
-  F_reg: 300_000, // [src] compliance (Fourthline; ×10 = €36M/yr is the grounded figure)
+  // Fixed cost (euros / month) — insurer-flagship scale
+  F0: 4_000_000, // [src] baseline org/infra (~150–250 ML/platform FTE + infra at group scale)
+  F_innov: 5_000_000, // [src] full in-house build (~400 FTE @ €130–160k loaded)
+  F_resil: 1_500_000, // [src] full resilience (~110 FTE portability/multi-vendor team)
+  F_reg: 3_000_000, // [src] compliance (Fourthline: €36M/yr grounded at this scale)
 
   // Regulation (external) — distinct from token price
   regInnovDrag: 0.4, // [bound] full-load innovation drag (MIT Sloan; expected ~0.25–0.33)
   regComplianceBuffer: 0.3, // [assume] resilience+build buy down 30% of compliance
+  regBufferResilW: 0.6, // [assume] resilience's weight in the compliance buffer
+  regBufferInnovW: 0.4, // [assume] in-house build's weight in the compliance buffer
+
+  // Display normalization (colors/intensities ONLY — never enters the dynamics)
+  chiDisplay: 0.12, // [src] empirical churn ceiling (~0.10–0.15/mo); the model keeps the 0.30 worst-case bound for the cliff itself
+  profitDisplay: 1000, // [assume] |cumProfit| €M at which the profit node reads fully saturated
 
   // Timing
   tau: 6, // [assume] deployment → revenue lag (months; fit to sales cycle)
@@ -282,15 +290,41 @@ export function effectiveTpf(ctx: ScenarioContext, vec: StrategyVector): number 
   return shieldedTpf(ctx.tokenPriceFactor, vec);
 }
 
+// Per-user serving cost (€/user/mo) at the prevailing (post-shock) price level:
+// tier picks the models, aggressive scaling burns more tokens, the hedge blends
+// the vendor's price. This is the value the causal diagram's s node shows.
+export function servePerUser(tierQ: number, dm: number, ctx: ScenarioContext, vec: StrategyVector): number {
+  const serveScale = qualityServeFactor(tierQ) * (1 + CALIB.scalingServeBump * clamp01(dm / 12));
+  return CALIB.serve0 * serveScale * shieldedTpf(ctx.tokenPriceFactor, vec);
+}
+
 // Fixed cost: baseline + the two investments + regulation's compliance load
-// (which resilience and in-house build partly buy down).
-function fixedCost(vec: StrategyVector, ctx: ScenarioContext): number {
+// (which resilience and in-house build partly buy down). Exported decomposed
+// so the causal diagram can show WHERE the fixed spend sits, line by line.
+export interface FixedCostParts {
+  base: number; // € / month
+  build: number;
+  indep: number;
+  compliance: number;
+  total: number;
+}
+
+export function fixedCostParts(vec: StrategyVector, ctx: ScenarioContext): FixedCostParts {
   const innN = clamp01(vec.innovation / 100);
   const resN = clamp01(vec.resilience / 100);
   const regN = clamp01(ctx.regPressure / 100);
-  const buffer = clamp01(CALIB.regComplianceBuffer * (0.6 * resN + 0.4 * innN));
+  const buffer = clamp01(
+    CALIB.regComplianceBuffer * (CALIB.regBufferResilW * resN + CALIB.regBufferInnovW * innN),
+  );
+  const base = CALIB.F0;
+  const build = CALIB.F_innov * innN;
+  const indep = CALIB.F_resil * resN;
   const compliance = CALIB.F_reg * regN * (1 - buffer);
-  return CALIB.F0 + CALIB.F_innov * innN + CALIB.F_resil * resN + compliance;
+  return { base, build, indep, compliance, total: base + build + indep + compliance };
+}
+
+function fixedCost(vec: StrategyVector, ctx: ScenarioContext): number {
+  return fixedCostParts(vec, ctx).total;
 }
 
 // Per-user monthly ARPU (a LEVER, not an output): base + scaling premium Δm·Q,
@@ -427,6 +461,93 @@ function deriveRawExact(
   return { revenue, cost, profit };
 }
 
+// ---- Switched response: the honest two-stage story ------------------------
+// A mitigation is a decision taken WHEN the risk is realised, not at t = 0.
+// This simulates the baseline posture up to switchMonth, then switches the
+// strategy (tier, scaling, vector) and lets the SAME user trajectory continue
+// from N(switchMonth) under the new parameters. The P&L switches with it
+// (ARPU, serving mix, fixed cost, CAC on the adds the new dynamics generate);
+// the environment — including the price step at shockMonth — stays identical.
+// With cand ≡ base this reproduces deriveStrategy's deterministic path exactly.
+export interface SwitchedDerived extends MetricSeries {
+  cumProfit: number; // €M over horizon
+  switchMonth: number;
+}
+
+interface SegmentParams {
+  Qeff: number;
+  qstar: number;
+  K: number;
+  arpu: number;
+  serveScale: number; // serve0 × tier factor × scaling bump (pre price factor)
+  vec: StrategyVector;
+  F: number;
+}
+
+function segmentParams(data: RunsData, b: MitigationBaseline, ctx: ScenarioContext): SegmentParams {
+  const Q = data.meta.strategies[b.strat].Q;
+  const Qs = scenarioQuality(Q, ctx);
+  return {
+    Qeff: effectiveQuality(Q, ctx, b.vec),
+    qstar: b.qstar,
+    K: reachToK(b.vec),
+    arpu: arpuPerUser(Qs, b.dm, innovEffective(b.vec, ctx)),
+    serveScale:
+      CALIB.serve0 * qualityServeFactor(Q) * (1 + CALIB.scalingServeBump * clamp01(b.dm / 12)),
+    vec: b.vec,
+    F: fixedCost(b.vec, ctx),
+  };
+}
+
+export function deriveSwitched(
+  data: RunsData,
+  base: MitigationBaseline,
+  cand: MitigationBaseline,
+  ctx: ScenarioContext = DEFAULT_CONTEXT,
+  switchMonthOpt?: number,
+): SwitchedDerived {
+  const switchMonth = switchMonthOpt ?? ctx.shockMonth ?? 0;
+  const A = segmentParams(data, base, ctx);
+  const B = segmentParams(data, cand, ctx);
+  const t = data.t;
+  const n = CALIB.steps;
+  const dt = CALIB.T / (n - 1);
+
+  // User dynamics, piecewise (deterministic — mitigation compares expectations).
+  const N = new Array<number>(n);
+  N[0] = CALIB.N0;
+  for (let i = 1; i < n; i++) {
+    const ti = (i - 1) * dt;
+    const seg = ti >= switchMonth ? B : A;
+    const ch = chi(seg.Qeff, seg.qstar);
+    const prev = N[i - 1];
+    const comp = (CALIB.phi * ti) / CALIB.T;
+    const drift =
+      CALIB.p * (seg.K - prev) + CALIB.r * prev * (1 - prev / seg.K) - ch * prev - comp * prev;
+    N[i] = Math.max(prev + drift * dt, 0);
+  }
+
+  // P&L, piecewise, with the price step at shockMonth independent of the switch.
+  const revenue = new Array<number>(n);
+  const cost = new Array<number>(n);
+  const profit = new Array<number>(n);
+  for (let i = 0; i < n; i++) {
+    const ti = t[i];
+    const seg = ti >= switchMonth ? B : A;
+    const gate = ti >= CALIB.tau ? 1 : 0;
+    const price = ctx.shockMonth !== undefined && ti < ctx.shockMonth ? 1 : ctx.tokenPriceFactor;
+    const serve = seg.serveScale * shieldedTpf(price, seg.vec);
+    const adds = Math.max(0, CALIB.p * (seg.K - N[i]) + CALIB.r * N[i] * (1 - N[i] / seg.K));
+    const rev = gate * seg.arpu * N[i];
+    const c = serve * N[i] + CALIB.cac * adds + seg.F;
+    revenue[i] = rev;
+    cost[i] = c;
+    profit[i] = rev - c;
+  }
+  const cumProfit = trapezoid(profit, t) / M;
+  return { ...toUnits({ revenue, cost, profit }, N), cumProfit, switchMonth };
+}
+
 // View B: cumulative profit (€M) for every Q* in the grid, per strategy.
 export function sweepCumProfit(
   data: RunsData,
@@ -475,17 +596,26 @@ export function knobsToScaling(dm: number, data: RunsData, qstar?: number): numb
 export interface CausalState {
   Q: number;
   churn: number;
-  churnNorm: number; // 0 good .. 1 bad
+  churnNorm: number; // 0 good .. 1 bad (normalized over the REALISTIC churn band)
   margin: number; // ARPU €/user
   marginNorm: number; // 0 .. 1 (higher = richer margin)
   comp: number; // competition pressure 0 .. 1
   usersEnd: number; // final users (millions)
-  usersNorm: number; // 0 .. 1
+  usersNorm: number; // 0 .. 1 (against a FIXED market scale, so reach moves it)
   cumProfit: number; // €M over horizon
   profitNorm: number; // 0 .. 1 magnitude
   shockNorm: number; // 0 .. 1 token-price pressure
-  tpfEff: number; // effective serving-cost multiplier
+  tpfEff: number; // effective serving-cost multiplier (blended)
+  tpfRaw: number; // the vendor's raw price factor
   profitPos: boolean;
+  // Channels the diagram renders explicitly:
+  KM: number; // addressable market (millions) — set by platform reach
+  reachN: number; // 0 .. 1
+  regN: number; // 0 .. 1 regulatory load
+  dmN: number; // 0 .. 1 scaling ARPU-premium (drives the serving token bump)
+  hedge: number; // 0 .. 1 share of serving on alternatives (vendor independence)
+  serve: number; // €/user/mo serving cost at the prevailing (post-shock) price
+  fixed: FixedCostParts; // €/month decomposition (base | build | indep | compliance)
 }
 
 export function computeCausalState(
@@ -502,7 +632,10 @@ export function computeCausalState(
   const innovEff = innovEffective(vec, ctx);
 
   const churn = chi(Qeff, qstar);
-  const churnNorm = clamp01((churn - CALIB.chiMin) / (CALIB.chiMax - CALIB.chiMin));
+  // Display norm over the REALISTIC churn band (chiMin .. chiDisplay), not the
+  // worst-case model bound chiMax — so realistic slider moves actually change
+  // the color, instead of living in the bottom fifth of the scale.
+  const churnNorm = clamp01((churn - CALIB.chiMin) / (CALIB.chiDisplay - CALIB.chiMin));
 
   const margin = arpuPerUser(Qs, dm, innovEff);
   const marginFloor = CALIB.arpu0; // dm = 0
@@ -515,15 +648,16 @@ export function computeCausalState(
 
   const d = deriveStrategy(data, s, dm, qstar, ctx, vec);
   const usersEnd = d.users[d.users.length - 1];
-  const K = reachToK(vec) / MU;
-  // Normalize the end-of-horizon base against a realistic retained fraction of
-  // the market, so a healthy strategy reads calm and a bleeding one reads red.
-  const usersNorm = clamp01(usersEnd / (0.25 * K));
+  const KM = reachToK(vec) / MU;
+  // Normalize the end-of-horizon base against a FIXED scale, NOT against the
+  // reach-dependent K — dividing by K made the node exactly invariant to the
+  // reach slider. 15% of the maximum market retained at horizon ≈ saturated:
+  // the default posture reads mid-scale, full reach strong, a contained pilot weak.
+  const usersNorm = clamp01(usersEnd / (0.15 * (CALIB.K_max / MU)));
 
   const cumProfit = d.cumProfit;
-  // Magnitude norm at the current ÷10 monetary scale: cumulative profit spans
-  // roughly −€60M .. +€120M across realistic configurations, so €150M ≈ 1.
-  const profitNorm = clamp01(Math.abs(cumProfit) / 150);
+  // Magnitude norm at insurer scale: |cumProfit| ≈ €1B reads fully saturated.
+  const profitNorm = clamp01(Math.abs(cumProfit) / CALIB.profitDisplay);
   const tpfEff = effectiveTpf(ctx, vec);
   const shockNorm = clamp01((tpfEff - 1) / 2);
 
@@ -540,7 +674,15 @@ export function computeCausalState(
     profitNorm,
     shockNorm,
     tpfEff,
+    tpfRaw: ctx.tokenPriceFactor,
     profitPos: cumProfit >= 0,
+    KM,
+    reachN: clamp01((vec.platformReach ?? 50) / 100),
+    regN: clamp01(ctx.regPressure / 100),
+    dmN: clamp01(dm / (data.meta.params.dmMax ?? 12)),
+    hedge: hedgeShare(vec),
+    serve: servePerUser(Q, dm, ctx, vec),
+    fixed: fixedCostParts(vec, ctx),
   };
 }
 
@@ -858,8 +1000,13 @@ export function proposeMitigations(
 
   const raw = [...targeted, ...hedge, guardrail];
 
+  // Score each candidate as a RESPONSE: the baseline posture runs until the
+  // shock is realised (switchMonth = shockMonth, or t=0 for standing
+  // scenarios), then the candidate takes over. This stops a candidate from
+  // retroactively paying — or exploiting — months of posture that predate the
+  // shock it responds to.
   const scored = raw.map((c) => {
-    const d = deriveStrategy(data, c.strat, c.dm, c.qstar, ctx, c.vec);
+    const d = deriveSwitched(data, base, { strat: c.strat, dm: c.dm, qstar: c.qstar, vec: c.vec }, ctx);
     const r = deriveRiskScores(data, c.strat, c.dm, c.qstar, ctx, c.vec);
     return {
       ...c,

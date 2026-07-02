@@ -5,20 +5,26 @@ type ParamRow = { sym: string; meaning: string; value: string };
 const PARAMS: ParamRow[] = [
   { sym: "N(t)", meaning: "Active users — the single simulated state", value: "—" },
   { sym: "Q", meaning: "Quality = strategy (the decision)", value: "0.3 / 0.6 / 0.9" },
-  { sym: "K", meaning: "Addressable market (set by platform reach)", value: "0.2M – 1.5M" },
-  { sym: "N_0", meaning: "Initial active users", value: "4,000" },
+  { sym: "K", meaning: "Addressable market (set by platform reach)", value: "2M – 15M" },
+  { sym: "N_0", meaning: "Initial active users", value: "40,000" },
   { sym: "p", meaning: "External acquisition rate", value: "0.008 / mo" },
   { sym: "r", meaning: "Word-of-mouth growth rate", value: "0.35 / mo" },
   { sym: "\\chi_{\\min},\\,\\chi_{\\max}", meaning: "Churn floor / ceiling", value: "0.02 / 0.30 / mo" },
   { sym: "\\kappa", meaning: "Churn-cliff steepness", value: "12" },
   { sym: "Q^{\\ast}", meaning: "Churn threshold, cliff location (set by scaling)", value: "0.1 – 1.0" },
   { sym: "a_0,\\,\\Delta m", meaning: "Base ARPU, scaling premium slope", value: "€9, up to €12 /user/mo" },
+  { sym: "\\iota", meaning: "Effective in-house build (slider, dragged by regulation)", value: "0 – 1" },
   { sym: "s_0", meaning: "Serving (token) cost / user at price ×1, Balanced tier", value: "€2.5 /user/mo" },
   { sym: "1+2.0(Q-0.6)", meaning: "Tier serving factor (which models you run)", value: "×0.4 / ×1.0 / ×1.6" },
+  { sym: "\\mathrm{tpf}", meaning: "Token price factor — the vendor's price (env. slider)", value: "×0.5 – ×4" },
+  { sym: "h", meaning: "Hedged serving share (vendor-independence slider)", value: "0 – 0.70" },
+  { sym: "\\rho", meaning: "Blended serving price after the hedge", value: "(1-h)\\,tpf+h" },
   { sym: "c_{\\mathrm{ac}}", meaning: "Blended cost per gross acquired user", value: "€20" },
   { sym: "\\varphi", meaning: "Peak competitive-loss rate", value: "0.35 / mo" },
   { sym: "\\sigma", meaning: "Demand volatility", value: "0.16" },
-  { sym: "F_0", meaning: "Base fixed cost per month (+ investments)", value: "€0.4M / mo" },
+  { sym: "F_0", meaning: "Base fixed cost per month", value: "€4M / mo" },
+  { sym: "F_{\\iota},\\,F_{\\rho},\\,F_{\\mathrm{reg}}", meaning: "Fixed cost of full build / independence / compliance", value: "€5M / €1.5M / €3M / mo" },
+  { sym: "0.30\\,(0.6v+0.4b)", meaning: "Compliance buffer (indep. v, build b absorb the load)", value: "0 – 0.30" },
   { sym: "\\tau", meaning: "Deployment to revenue lag", value: "6 mo" },
   { sym: "T", meaning: "Horizon", value: "54 mo" },
 ];
@@ -113,21 +119,34 @@ export function HowItWorks() {
             <Tex>{"\\tau"}</Tex>) minus the serving cost of every active user, minus the blended
             acquisition cost <Tex>{"c_{\\mathrm{ac}}"}</Tex> of every gross user the growth equation
             actually adds — growing the base costs real money — minus fixed cost. Cumulative profit
-            is the time-integral of <Tex>{"\\Pi(t)"}</Tex> over the horizon.
+            is the time-integral of <Tex>{"\\Pi(t)"}</Tex> over the horizon. In the{" "}
+            <strong>Mitigation</strong> step every candidate is simulated <em>piecewise</em>: your
+            current posture runs until the shock month, the response takes over from the user base
+            it actually inherits — so the before/after starts at the point the risk is realised, not
+            retroactively at month 0.
           </p>
         </div>
 
-        <p className="exp-prose exp-howto-note">
-          Where price acts: the per-user serving cost is{" "}
-          <Tex>{"s=s_0\\,f(Q)\\,\\big(1+0.4\\,\\tfrac{\\Delta m}{12}\\big)\\,\\rho"}</Tex> — the
-          token cost of goods. The tier factor <Tex>{"f(Q)=1+2.0\\,(Q-0.6)"}</Tex> prices which
-          models you run (Lean ×0.4, Balanced ×1.0, Premium ×1.6 — a premium product serves on
-          pricier frontier models), aggressive scaling burns more tokens per user (up to +40%), and{" "}
-          <Tex>{"\\rho"}</Tex> is the vendor's price factor after your hedge. A <em>pricing shock</em>{" "}
-          is a temporal event: <Tex>{"\\rho"}</Tex> stays at today's ×1 until the shock month, then
-          steps up to the new level and stays there. Regulation does not touch <Tex>{"s"}</Tex>; it
-          is a distinct fixed-cost load (below).
-        </p>
+        <div className="exp-howto-eq">
+          <Tex block>{"s(t)=s_0\\,f(Q)\\,\\big(1+0.4\\,\\tfrac{\\Delta m}{12}\\big)\\,\\rho(t)"}</Tex>
+          <Tex block>
+            {
+              "\\rho(t)=\\begin{cases}1 & t<t_{\\mathrm{shock}}\\\\[2pt](1-h)\\,\\mathrm{tpf}+h & t\\ge t_{\\mathrm{shock}}\\end{cases}"
+            }
+          </Tex>
+          <p className="exp-howto-cap">
+            Where price acts — and where a <em>pricing shock</em> enters the equations. The per-user
+            serving cost <Tex>{"s"}</Tex> is the token cost of goods: the tier factor{" "}
+            <Tex>{"f(Q)=1+2.0\\,(Q-0.6)"}</Tex> prices which models you run (Lean ×0.4, Balanced
+            ×1.0, Premium ×1.6), aggressive scaling burns more tokens per user (up to +40%), and{" "}
+            <Tex>{"\\rho(t)"}</Tex> is the vendor's price after your hedge: today's ×1 until the shock
+            month <Tex>{"t_{\\mathrm{shock}}"}</Tex>, then a step up to the blended level — where{" "}
+            <Tex>{"\\mathrm{tpf}"}</Tex> is the Token-price-factor slider and <Tex>{"h"}</Tex> the
+            hedged share (next section). That step is the kink you see in the cost and profit curves
+            at the shock month. Regulation does not touch <Tex>{"s"}</Tex>; it is a distinct
+            fixed-cost load (below).
+          </p>
+        </div>
       </section>
 
       <section className="exp-howto-sec">
@@ -141,36 +160,45 @@ export function HowItWorks() {
         </p>
 
         <div className="exp-howto-eq">
-          <Tex block>
-            {
-              "\\iota=\\tfrac{\\text{build}}{100}\\Big(1-0.40\\,\\tfrac{\\text{reg}}{100}\\Big)\\qquad h=0.70\\,\\tfrac{\\text{resil}}{100},\\quad \\rho=(1-h)\\,\\text{tpf}+h\\;\\;(\\text{tpf}>1)"
-            }
-          </Tex>
+          <Tex block>{"\\iota=b\\,\\big(1-0.40\\,g\\big)\\qquad b=\\tfrac{\\text{build}}{100},\\;\\;g=\\tfrac{\\text{reg}}{100}"}</Tex>
           <p className="exp-howto-cap">
-            <strong>In-house build</strong> <Tex>{"\\iota"}</Tex> buys product capability — it raises
-            the quality users experience (up to +0.15, cutting churn through the cliff) and lifts ARPU
-            (up to 20%) — but regulation drags its delivered effect down (compliance eats cycles).{" "}
-            <strong>Vendor independence</strong> is the share{" "}
-            <Tex>{"h"}</Tex> of serving you can run on cheaper alternatives (up to 70% at full). Your
-            blended serving price <Tex>{"\\rho"}</Tex> pays that share at today&rsquo;s ×1 and the rest
-            at the vendor&rsquo;s price — so a vendor tripling its price only lifts your cost to{" "}
-            <Tex>{"0.3\\times3+0.7=1.6\\times"}</Tex> at full independence.
+            <strong>In-house build.</strong> The effective build <Tex>{"\\iota"}</Tex> buys product
+            capability — it raises the quality users experience (up to +0.15, cutting churn through
+            the cliff) and lifts ARPU (up to 20%) — but regulation drags its delivered effect down by
+            up to 40% (compliance eats engineering cycles; the 0.40 is a stress bound).
+          </p>
+        </div>
+
+        <div className="exp-howto-eq">
+          <Tex block>{"h=0.70\\,\\tfrac{\\text{resil}}{100}\\qquad \\rho=(1-h)\\,\\mathrm{tpf}+h\\;\\;(\\mathrm{tpf}>1)"}</Tex>
+          <p className="exp-howto-cap">
+            <strong>Vendor independence.</strong> <Tex>{"h"}</Tex> is the share of serving you can run
+            on cheaper alternatives (up to 70% at full independence — a routing ceiling, not a
+            forecast). Your blended serving price <Tex>{"\\rho"}</Tex> pays that share at today&rsquo;s
+            ×1 and only the rest at the vendor&rsquo;s price <Tex>{"\\mathrm{tpf}"}</Tex> (the
+            Token-price-factor slider) — so a vendor tripling its price lifts your cost to{" "}
+            <Tex>{"0.3\\times 3+0.7=\\times 1.6"}</Tex> at full independence, <Tex>{"\\times 2.3"}</Tex>{" "}
+            at the default 50. If the price falls, you take the full benefit. At today&rsquo;s ×1 the
+            hedge changes nothing in serving — it is <em>insurance</em>, and its premium is the fixed
+            cost <Tex>{"F_{\\rho}"}</Tex> below.
           </p>
         </div>
 
         <div className="exp-howto-eq">
           <Tex block>
             {
-              "F = F_0 + F_{\\iota}\\tfrac{\\text{build}}{100} + F_{\\rho}\\tfrac{\\text{resil}}{100} + F_{\\text{reg}}\\tfrac{\\text{reg}}{100}\\big(1-\\text{buffer}\\big)"
+              "F = F_0 + F_{\\iota}\\,b + F_{\\rho}\\,v + F_{\\mathrm{reg}}\\,g\\,\\big(1-0.30\\,(0.6\\,v+0.4\\,b)\\big)\\qquad v=\\tfrac{\\text{resil}}{100}"
             }
           </Tex>
           <p className="exp-howto-cap">
-            The cost of the bets: every investment raises fixed cost — in-house build{" "}
-            <Tex>{"F_{\\iota}=\\text{€0.5M/mo}"}</Tex>, vendor independence{" "}
-            <Tex>{"F_{\\rho}=\\text{€0.15M/mo}"}</Tex> at full — and <strong>regulation</strong> adds a
-            compliance overhead <Tex>{"F_{\\text{reg}}=\\text{€0.3M/mo}"}</Tex> that resilience and
-            in-house build partly buy down. Platform reach separately sets the market{" "}
-            <Tex>{"K"}</Tex>.
+            The cost of the bets, written out in full: every investment raises fixed cost — in-house
+            build <Tex>{"F_{\\iota}=\\text{€5M/mo}"}</Tex> and vendor independence{" "}
+            <Tex>{"F_{\\rho}=\\text{€1.5M/mo}"}</Tex> at full — and <strong>regulation</strong> adds a
+            compliance overhead <Tex>{"F_{\\mathrm{reg}}=\\text{€3M/mo}"}</Tex>. The last bracket is
+            the compliance <em>buffer</em>: independence <Tex>{"v"}</Tex> (approved-model
+            flexibility) and build <Tex>{"b"}</Tex> (in-house compliance capability) absorb up to 30%
+            of that load, weighted 0.6 / 0.4 — all three coefficients are stated modelling
+            assumptions, not fitted values. Platform reach separately sets the market <Tex>{"K"}</Tex>.
           </p>
         </div>
       </section>

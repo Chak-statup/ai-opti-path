@@ -18,10 +18,13 @@ import {
   deriveRiskScores,
   deriveStrategy,
   deriveTippingPoints,
+  innovEffective,
   knobsToScaling,
   qstarIndex,
   scalingToKnobs,
+  shieldedTpf,
   sweepCumProfit,
+  CALIB,
   PRESETS,
   RISK_AXES,
   DEFAULT_CONTEXT,
@@ -49,7 +52,7 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
     label: "Causal pathway",
     step: "02",
     blurb:
-      "How a strategy plays out, end to end. Move a lever or pick a scenario and watch the pathway reshape. Thicker, redder links mark where pressure builds.",
+      "How a strategy plays out, end to end. The tiers (Lean / Balanced / Premium) are decisions you make; the scenarios are futures that happen to you — pick either and watch the pathway reshape. Thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
@@ -179,6 +182,20 @@ function ExplorerView({ data }: { data: RunsData }) {
     () => computeCausalState(data, traceStrat, dm, snappedQ, ctx, vec),
     [data, traceStrat, dm, snappedQ, ctx, vec],
   );
+  // The diagram's Δ-vs-base reference: the SAME strategy under today's status
+  // quo at the default posture — the same baseline the radar's dashed outline uses.
+  const baseCausalState = useMemo(
+    () =>
+      computeCausalState(
+        data,
+        traceStrat,
+        data.meta.controls.dm.default,
+        data.meta.controls.qstar.default,
+        PRESETS[0].ctx,
+        DEFAULT_VECTOR,
+      ),
+    [data, traceStrat],
+  );
   const riskAll = useMemo(
     () => data.meta.strategies.map((_, s) => deriveRiskScores(data, s, dm, snappedQ, ctx, vec)),
     [data, dm, snappedQ, ctx, vec],
@@ -245,6 +262,11 @@ function ExplorerView({ data }: { data: RunsData }) {
   const envSummary = `serving ×${tpf.toFixed(1)}${
     shockMonth !== undefined ? ` @ m${shockMonth}` : ""
   } · reg ${Math.round(reg)}${qualityShift ? ` · quality −${qualityShift.toFixed(1)}` : ""}`;
+
+  // Live figures for the slider notes, so every claim under a slider is
+  // recomputed from the model at the current setting (never hardcoded).
+  const innovEff = innovEffective(vec, ctx);
+  const fixedM = (v: number) => (v / 1e6).toFixed(1);
 
   function panelSeries(key: MetricKey): Series[] {
     const faint: Series[] = [];
@@ -355,7 +377,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               </div>
 
               <div className="exp-legend">
-                <div className="exp-legend-title">Strategy to trace</div>
+                <div className="exp-legend-title">Your product tier — the strategy (Q)</div>
                 {derived.map((d, s) => (
                   <button
                     type="button"
@@ -393,9 +415,11 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setReach)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  <strong>Platform ecosystem.</strong> Contained pilots to mass-market apps. More
-                  reach widens the addressable market <Tex>{"K"}</Tex>, growing the user base and revenue &mdash;
-                  but also serving-cost exposure when prices spike.
+                  <strong>Platform ecosystem.</strong> How widely you ship &mdash; contained pilot (0) to
+                  mass-market (100). Sets the addressable market <Tex>{"K"}</Tex>: currently{" "}
+                  <strong>{causalState.KM.toFixed(1)}M</strong> potential users (2M&ndash;15M). A wider
+                  market grows users and revenue &mdash; and multiplies how many users you pay to serve
+                  if prices spike.
                 </p>
               </div>
 
@@ -416,9 +440,21 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  <strong>Vendor choice.</strong> The share of serving you can run on cheaper
-                  alternatives. At full independence (100) only ~30% of your traffic feels a vendor
-                  price hike (so ×3 becomes ×1.6; at 70 it becomes ×2.0) — at a higher fixed cost.
+                  <strong>Vendor choice.</strong> The share of AI traffic you can serve outside your
+                  main vendor: <strong>{Math.round(causalState.hedge * 100)}%</strong> at this setting
+                  (ceiling 70%), costing €{fixedM(causalState.fixed.indep)}M/mo fixed.{" "}
+                  {tpf <= 1 ? (
+                    <>
+                      At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving &mdash; it is{" "}
+                      <em>insurance</em>: if the vendor tripled prices, your blended cost would rise only
+                      ×{shieldedTpf(3, vec).toFixed(1)} instead of ×3.0.
+                    </>
+                  ) : (
+                    <>
+                      Right now it blends the vendor&rsquo;s ×{tpf.toFixed(1)} down to{" "}
+                      ×{causalState.tpfEff.toFixed(1)} across your traffic.
+                    </>
+                  )}
                 </p>
               </div>
 
@@ -439,9 +475,12 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setInnov)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  <strong>Build vs buy.</strong> API-first to in-house. More in-house build raises
-                  the quality users experience (cutting churn) and lifts per-user margin, but raises
-                  fixed cost.
+                  <strong>Build vs buy.</strong> API-first (0) to own models &amp; tooling (100). At{" "}
+                  {Math.round(innov)} it lifts the quality users experience by{" "}
+                  <strong>+{(CALIB.innovQualityLift * innovEff).toFixed(2)}</strong> (max +0.15 ≈ half a
+                  tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%
+                  &mdash; for €{fixedM(causalState.fixed.build)}M/mo fixed cost. Regulation currently drags
+                  its delivered effect by {Math.round(CALIB.regInnovDrag * reg)}%.
                 </p>
               </div>
 
@@ -462,9 +501,12 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => setScaling(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  <strong>Scaling strategy.</strong> Cautious to aggressive. Pushes per-customer
-                  margin (Δm {dm.toFixed(1)}) and the quality bar you commit to (Q* {snappedQ.toFixed(2)})
-                  together: more upside, more churn risk if you miss the bar.
+                  <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
+                  two commitments together: the ARPU premium (Δm = €{dm.toFixed(1)}/user per unit
+                  quality) and the quality bar you promise the market (Q* = {snappedQ.toFixed(2)}).
+                  More revenue per user and +{Math.round(CALIB.scalingServeBump * (dm / 12) * 100)}%
+                  serving tokens &mdash; but churn goes over the cliff if the bar passes your delivered
+                  quality ({causalState.Q.toFixed(2)}).
                 </p>
               </div>
             </div>
@@ -509,8 +551,10 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setReg)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  External compliance load. Raises the fixed compliance cost and slows your in-house
-                  innovation; resilience and in-house build partly buffer it. It does not change the token price.
+                  External compliance load. Raises the fixed compliance cost (now €
+                  {fixedM(causalState.fixed.compliance)}M/mo) and slows your in-house build (−
+                  {Math.round(CALIB.regInnovDrag * reg)}% of its effect); independence and build partly
+                  buffer it. It does not change the token price.
                 </p>
               </div>
               <p className="exp-rail-note">
@@ -561,7 +605,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                       CAUSAL PATHWAY: {derived[traceStrat].label.toUpperCase()}
                     </h2>
                     <div className="exp-causal-wrap">
-                      <CausalDiagram cs={causalState} stratColor={STRAT_COLORS[traceStrat]} />
+                      <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} />
                     </div>
                     <div className="exp-axis-map">
                       <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
@@ -571,7 +615,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">02</span>
-                        <span>Vendor independence &rarr; serving-cost shield</span>
+                        <span>Vendor independence &rarr; serving price <Tex>{"\\rho"}</Tex> (shield) &amp; fixed cost <Tex>{"F"}</Tex></span>
                       </span>
                       <span className="exp-axis-map-item">
                         <span className="exp-axis-chip">03</span>
