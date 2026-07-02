@@ -425,23 +425,26 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => onKnob(setResil)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Vendor choice.</strong> The share of AI traffic you can serve outside your
-                  main vendor: <strong>{Math.round(causalState.hedge * 100)}%</strong> at this setting
-                  (ceiling 70%), costing €{fixedK(causalState.fixed.indep)}k/mo fixed.{" "}
-                  {tpf <= 1 ? (
-                    <>
-                      At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving; it is{" "}
-                      <em>insurance</em>: if the vendor tripled prices, your blended cost would rise only
-                      ×{shieldedTpf(3, vec).toFixed(1)} instead of ×3.0.
-                    </>
-                  ) : (
-                    <>
-                      Right now it blends the vendor&rsquo;s ×{tpf.toFixed(1)} down to{" "}
-                      ×{causalState.tpfEff.toFixed(1)} across your traffic.
-                    </>
-                  )}
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Vendor choice.</strong> The share of AI traffic you can serve outside your
+                    main vendor: <strong>{Math.round(causalState.hedge * 100)}%</strong> at this setting
+                    (ceiling 70%), costing €{fixedK(causalState.fixed.indep)}k/mo fixed.{" "}
+                    {tpf <= 1 ? (
+                      <>
+                        At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving; it is{" "}
+                        <em>insurance</em>: if the vendor tripled prices, your blended cost would rise only
+                        ×{shieldedTpf(3, vec).toFixed(1)} instead of ×3.0.
+                      </>
+                    ) : (
+                      <>
+                        Right now it blends the vendor&rsquo;s ×{tpf.toFixed(1)} down to{" "}
+                        ×{causalState.tpfEff.toFixed(1)} across your traffic.
+                      </>
+                    )}
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
