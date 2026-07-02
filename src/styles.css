@@ -8,7 +8,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * AI Strategy Tool — design system.
+ * AI Strategy Tool; design system.
  *
  * Built from the brand palette:
  *   blue  #2980B9 / #4ea1d8   (primary / Platform strategy)
@@ -165,7 +165,7 @@
 }
 
 /* ============================================================
- * Scenario Explorer palette — the ONLY place these colors live.
+ * Scenario Explorer palette; the ONLY place these colors live.
  * Swap the whole exhibit palette here.
  * ============================================================ */
 :root {
@@ -1695,11 +1695,12 @@
   color: var(--exp-ink);
   font-variant-numeric: tabular-nums;
 }
-.exp-mit-card-vec span {
+.exp-mit-card-vec > span {
   border: 1px solid var(--exp-border);
   border-radius: 5px;
   padding: 0.05rem 0.4rem;
 }
+.exp-mit-card-vec .exp-tex-inline { font-size: 0.72rem; }
 .exp-mit-compare {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);

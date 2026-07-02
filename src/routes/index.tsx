@@ -63,17 +63,17 @@ function LandingPage() {
             <p className="lp-about-body">
               An illustration, not a forecast: a live simulation of user growth (logistic growth
               with churn and competition) with a transparent euro P&amp;L on top. You set the
-              strategy you control &mdash; quality tier, scaling, in-house build, vendor
-              independence, platform reach &mdash; and the environment you don&rsquo;t (serving
-              price, regulation). The evaluator traces the causal pathway, profiles the risks,
-              flags tipping points, and proposes mitigations when a shock hits.
+              strategy you control (quality tier, scaling, in-house build, vendor independence,
+              platform reach) and the environment you don&rsquo;t (serving price, regulation). The
+              evaluator traces the causal pathway, profiles the risks, flags tipping points, and
+              proposes mitigations when a shock hits.
             </p>
             <p className="lp-about-body">
               Every axis is wired to a model variable: reach scales the market; in-house build
               raises delivered quality and ARPU; independence shields price spikes; scaling couples
-              the ARPU premium with the quality bar &mdash; and burns more tokens; a premium tier
-              serves on pricier frontier models. Margin is a lever; profit is the output, and it
-              turns on retention as much as on price.
+              the ARPU premium with the quality bar and burns more tokens; a premium tier serves on
+              pricier frontier models. Margin is a lever; profit is the output, and it turns on
+              retention as much as on price.
             </p>
           </details>
         </section>

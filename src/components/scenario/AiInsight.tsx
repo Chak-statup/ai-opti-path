@@ -24,20 +24,20 @@ function buildPrompt(
   });
   return [
     "You are a sober strategy advisor briefing a large European insurer's executive on how aggressively to scale an AI product over a ~54-month (roughly 4.5-year) horizon. All figures are in euros.",
-    "The user base is simulated (logistic growth with churn and competition). The company's decisions (the strategy vector): the product quality tier Q — a higher tier runs pricier frontier models, so it costs MORE per user to serve (Lean ×0.4, Balanced ×1.0, Premium ×1.6 of the base serving cost); scaling aggressiveness, a single dial that couples the per-user ARPU premium (Δm) with the quality bar Q* it commits to — pushing it also raises tokens burned per user (up to +40%); in-house build, which raises the quality users actually experience (churn falls through a quality cliff at Q*) and lifts ARPU, at higher fixed cost; vendor independence, which shields serving-cost spikes and lowers lock-in; and platform reach, which sets the addressable market size.",
-    "External factors it does NOT control: the vendor's token/serving price factor (the per-active-user cost of goods), and regulatory pressure — a DISTINCT force that raises fixed compliance cost and slows in-house innovation (it does not change the token price). Acquisition is paid on every gross user added (blended CAC), so growth costs real money.",
-    "Note: per-user ARPU (margin) is a genuine lever set by the scaling and in-house-build decisions. The OUTPUT is profit, which depends on that ARPU, the simulated user base, serving/acquisition cost and fixed cost — and retention (churn) is the dominant channel.",
+    "The user base is simulated (logistic growth with churn and competition). The company's decisions (the strategy vector): the product quality tier Q; a higher tier runs pricier frontier models, so it costs MORE per user to serve (Lean ×0.4, Balanced ×1.0, Premium ×1.6 of the base serving cost); scaling aggressiveness, a single dial that couples the per-user ARPU premium (Δm) with the quality bar Q* it commits to; pushing it also raises tokens burned per user (up to +40%); in-house build, which raises the quality users actually experience (churn falls through a quality cliff at Q*) and lifts ARPU, at higher fixed cost; vendor independence, which shields serving-cost spikes and lowers lock-in; and platform reach, which sets the addressable market size.",
+    "External factors it does NOT control: the vendor's token/serving price factor (the per-active-user cost of goods), and regulatory pressure; a DISTINCT force that raises fixed compliance cost and slows in-house innovation (it does not change the token price). Acquisition is paid on every gross user added (blended CAC), so growth costs real money.",
+    "Note: per-user ARPU (margin) is a genuine lever set by the scaling and in-house-build decisions. The OUTPUT is profit, which depends on that ARPU, the simulated user base, serving/acquisition cost and fixed cost; and retention (churn) is the dominant channel.",
     "",
     "Current scenario assumptions (external):",
     `- Token / serving price factor (vs. today): ${ctx.tokenPriceFactor}x${
       ctx.shockMonth !== undefined
-        ? ` — NOT flat: price is ×1 (today's) until month ${ctx.shockMonth}, then STEPS UP to ${ctx.tokenPriceFactor}x and stays there (a mid-horizon pricing shock)`
+        ? `; NOT flat: price is ×1 (today's) until month ${ctx.shockMonth}, then STEPS UP to ${ctx.tokenPriceFactor}x and stays there (a mid-horizon pricing shock)`
         : ""
     }`,
     `- Regulatory pressure: ${ctx.regPressure}/100 (raises fixed compliance cost and slows innovation)`,
     ...(ctx.qualityShift
       ? [
-          `- Scenario quality trade: the product runs on cheaper models, so the quality users experience is SHIFTED DOWN by ${ctx.qualityShift.toFixed(1)} — retention and ARPU take a real hit that the cheap serving must outweigh. Tiers with quality headroom absorb it; tiers near the bar Q* fall off the churn cliff.`,
+          `- Scenario quality trade: the product runs on cheaper models, so the quality users experience is SHIFTED DOWN by ${ctx.qualityShift.toFixed(1)}; retention and ARPU take a real hit that the cheap serving must outweigh. Tiers with quality headroom absorb it; tiers near the bar Q* fall off the churn cliff.`,
         ]
       : []),
     "",

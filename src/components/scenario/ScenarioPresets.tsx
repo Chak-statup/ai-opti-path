@@ -1,5 +1,5 @@
 // One-click ENVIRONMENT scenarios. A scenario changes only the outside world
-// (prices, regulation, delivered quality) — your strategy levers stay where
+// (prices, regulation, delivered quality); your strategy levers stay where
 // you set them. The strategy itself (the Lean/Balanced/Premium tier and the
 // four sliders) is YOUR decision, in the rail on the left.
 import type { ScenarioPreset } from "@/lib/scenario/model";
@@ -16,7 +16,7 @@ export function ScenarioPresets({
   return (
     <div role="group" aria-label="Environment scenarios">
       <div className="exp-presets-title">
-        Environment scenarios — the world changes; your strategy stays put
+        Environment scenarios: the world changes; your strategy stays put
       </div>
       <div className="exp-presets">
         {presets.map((p) => (

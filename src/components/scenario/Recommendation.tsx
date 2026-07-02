@@ -1,4 +1,4 @@
-// Demo recommendation — rule-based, no AI backend. Reads the live model
+// Demo recommendation; rule-based, no AI backend. Reads the live model
 // state and assembles an advisory-styled exhibit. Labeled illustrative.
 import type { RiskScores, ScenarioContext, StrategyDerived } from "@/lib/scenario/model";
 
@@ -38,7 +38,7 @@ export function Recommendation({
 
   const flip =
     ctx.tokenPriceFactor >= 2.5
-      ? "A sustained price at this level punishes the premium tier hardest — it serves users on the priciest frontier models. If prices return toward today's ×1, the premium tier regains the lead; raising vendor independence recovers part of it either way."
+      ? "A sustained price at this level punishes the premium tier hardest; it serves users on the priciest frontier models. If prices return toward today's ×1, the premium tier regains the lead; raising vendor independence recovers part of it either way."
       : ctx.regPressure >= 70
         ? "Heavy regulation compresses every tier without reordering them. What it does change is the in-house-build lever: compliance eats up to 40% of delivered innovation at full load, so build pays back faster once the load eases."
         : "The lead rests on today's serving prices: if the vendor's price roughly doubles and persists, the premium tier's frontier serving cost erodes its lead, and past ~×2.5 the ranking flips to the leaner tier.";

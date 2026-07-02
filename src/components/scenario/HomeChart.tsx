@@ -30,7 +30,7 @@ function mulberry32(seed: number) {
 }
 
 export function HomeChart() {
-  // Live-simulated decorative background — same model as the evaluator.
+  // Live-simulated decorative background; same model as the evaluator.
   const data = useMemo(() => buildModelData(), []);
 
   const sets = useMemo<PathSet[]>(() => {

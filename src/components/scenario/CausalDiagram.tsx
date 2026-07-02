@@ -1,11 +1,11 @@
 // Interactive structural causal diagram. The decision (Q), the internal levers
 // and the external environment flow through the deterministic churn / margin
 // maps into users and profit. Edge thickness, colour and node state are driven
-// live by the current parameters — change a lever and the pathway reshapes.
+// live by the current parameters; change a lever and the pathway reshapes.
 //
 // Every euro channel is a node: the market K (platform reach), the per-user
 // serving cost s (token price through the vendor hedge), the fixed cost F
-// (base + build + independence + compliance) and the regulatory load — so no
+// (base + build + independence + compliance) and the regulatory load; so no
 // lever changes profit "invisibly". Mutable nodes carry a live Δ-vs-baseline
 // line (baseline = this strategy under today's status quo, default posture).
 //
@@ -52,7 +52,7 @@ const DECISION = "var(--exp-open)";
 
 // The four decision axes and the nodes each one drives. These define the
 // colour-tinted influence regions drawn behind the nodes. F is deliberately in
-// no region — three levers raise it, so its sub-label decomposes the spend.
+// no region; three levers raise it, so its sub-label decomposes the spend.
 const GROUPS: { id: string; label: string; members: string[]; color: string }[] = [
   { id: "04", label: "Scaling", members: ["Qstar", "dm"], color: "var(--exp-frontier)" },
   { id: "03", label: "In-house build", members: ["chi", "m"], color: "var(--exp-hybrid)" },
@@ -120,7 +120,7 @@ function NodeTitle({ n }: { n: NodeDef }) {
 
 // Signed Δ-vs-baseline line. goodWhenDown flips the colour semantics (churn
 // falling is good; profit falling is bad). Returns null when the change is
-// too small to be meaningful — the node then shows its value only.
+// too small to be meaningful; the node then shows its value only.
 function deltaLine(
   cur: number,
   base: number,

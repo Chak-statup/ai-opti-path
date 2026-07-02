@@ -45,14 +45,14 @@ const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
     label: "Problem",
     step: "01",
     blurb:
-      "The strategic question and why a single margin-per-user number hides the real decision.",
+      "What you are deciding, and why a single margin-per-user number cannot decide it.",
   },
   {
     key: "causal",
     label: "Causal pathway",
     step: "02",
     blurb:
-      "How a strategy plays out, end to end. The tiers (Lean / Balanced / Premium) are decisions you make; the scenarios are futures that happen to you — pick either and watch the pathway reshape. Thicker, redder links mark where pressure builds.",
+      "How a strategy plays out, end to end. The tiers (Lean / Balanced / Premium) are decisions you make; the scenarios are futures that happen to you. Pick either and watch the pathway reshape: thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
@@ -125,7 +125,7 @@ function fmtMoney(v: number): string {
 }
 
 function Explorer() {
-  // The model is simulated live in the browser — no data fetch, no runs.json.
+  // The model is simulated live in the browser; no data fetch, no runs.json.
   const data = useMemo<RunsData>(() => buildModelData(), []);
   return <ExplorerView data={data} />;
 }
@@ -183,7 +183,7 @@ function ExplorerView({ data }: { data: RunsData }) {
     [data, traceStrat, dm, snappedQ, ctx, vec],
   );
   // The diagram's Δ-vs-base reference: the SAME strategy under today's status
-  // quo at the default posture — the same baseline the radar's dashed outline uses.
+  // quo at the default posture; the same baseline the radar's dashed outline uses.
   const baseCausalState = useMemo(
     () =>
       computeCausalState(
@@ -252,7 +252,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   }
 
   const baseGuides: VGuide[] = [
-    { x: params.tau, label: "τ revenue", color: "var(--exp-axis)" },
+    { x: params.tau, label: "revenue lag", color: "var(--exp-axis)" },
     ...(shockMonth !== undefined
       ? [{ x: shockMonth, label: `price ×${tpf.toFixed(1)}`, color: "var(--exp-marker)" } as VGuide]
       : []),
@@ -377,7 +377,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               </div>
 
               <div className="exp-legend">
-                <div className="exp-legend-title">Your product tier — the strategy (Q)</div>
+                <div className="exp-legend-title">Your product tier: the strategy (Q)</div>
                 {derived.map((d, s) => (
                   <button
                     type="button"
@@ -415,10 +415,10 @@ function ExplorerView({ data }: { data: RunsData }) {
                   onChange={(e) => onKnob(setReach)(parseFloat(e.target.value))}
                 />
                 <p className="exp-control-note">
-                  <strong>Platform ecosystem.</strong> How widely you ship &mdash; contained pilot (0) to
+                  <strong>Platform ecosystem.</strong> How widely you ship: contained pilot (0) to
                   mass-market (100). Sets the addressable market <Tex>{"K"}</Tex>: currently{" "}
                   <strong>{causalState.KM.toFixed(1)}M</strong> potential users (2M&ndash;15M). A wider
-                  market grows users and revenue &mdash; and multiplies how many users you pay to serve
+                  market grows users and revenue, and multiplies how many users you pay to serve
                   if prices spike.
                 </p>
               </div>
@@ -445,7 +445,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   (ceiling 70%), costing €{fixedM(causalState.fixed.indep)}M/mo fixed.{" "}
                   {tpf <= 1 ? (
                     <>
-                      At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving &mdash; it is{" "}
+                      At today&rsquo;s price ×{tpf.toFixed(1)} it changes nothing in serving; it is{" "}
                       <em>insurance</em>: if the vendor tripled prices, your blended cost would rise only
                       ×{shieldedTpf(3, vec).toFixed(1)} instead of ×3.0.
                     </>
@@ -478,8 +478,8 @@ function ExplorerView({ data }: { data: RunsData }) {
                   <strong>Build vs buy.</strong> API-first (0) to own models &amp; tooling (100). At{" "}
                   {Math.round(innov)} it lifts the quality users experience by{" "}
                   <strong>+{(CALIB.innovQualityLift * innovEff).toFixed(2)}</strong> (max +0.15 ≈ half a
-                  tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%
-                  &mdash; for €{fixedM(causalState.fixed.build)}M/mo fixed cost. Regulation currently drags
+                  tier), cutting churn, and ARPU by +{Math.round(CALIB.innovArpuLift * innovEff * 100)}%,
+                  at €{fixedM(causalState.fixed.build)}M/mo fixed cost. Regulation currently drags
                   its delivered effect by {Math.round(CALIB.regInnovDrag * reg)}%.
                 </p>
               </div>
@@ -502,11 +502,11 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
                 <p className="exp-control-note">
                   <strong>Scaling strategy.</strong> Cautious (0) to aggressive (100). One dial moves
-                  two commitments together: the ARPU premium (Δm = €{dm.toFixed(1)}/user per unit
-                  quality) and the quality bar you promise the market (Q* = {snappedQ.toFixed(2)}).
-                  More revenue per user and +{Math.round(CALIB.scalingServeBump * (dm / 12) * 100)}%
-                  serving tokens &mdash; but churn goes over the cliff if the bar passes your delivered
-                  quality ({causalState.Q.toFixed(2)}).
+                  two commitments together: the ARPU premium (<Tex>{"\\Delta m"}</Tex> ={" "}
+                  €{dm.toFixed(1)}/user per unit quality) and the quality bar you promise the market
+                  (<Tex>{"Q^{*}"}</Tex> = {snappedQ.toFixed(2)}). More revenue per user and
+                  +{Math.round(CALIB.scalingServeBump * (dm / 12) * 100)}% serving tokens; but churn
+                  goes over the cliff if the bar passes your delivered quality ({causalState.Q.toFixed(2)}).
                 </p>
               </div>
             </div>
@@ -532,7 +532,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                 />
                 <p className="exp-control-note">
                   Multiplier on the vendor&rsquo;s serving cost per active user (COGS). ×1 is today;
-                  set high, it is the prevailing price — the Pricing-shock preset steps up to it at a
+                  set high, it is the prevailing price; the Pricing-shock preset steps up to it at a
                   set month. Vendor independence shields the excess.
                 </p>
               </div>
@@ -706,7 +706,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                   </div>
                   <div className="exp-radar-side">
                     <p className="exp-prose">
-                      All five axes are <strong>risks &mdash; smaller is better</strong>, so a tighter shape is a
+                      All five axes are <strong>risks: smaller is better</strong>, so a tighter shape is a
                       safer strategy. Each spoke is driven by one decision (see the breakdown below):{" "}
                       <strong>cost exposure</strong> by the serving price and platform reach,{" "}
                       <strong>vendor lock-in</strong> by vendor independence, <strong>capability gap</strong> by

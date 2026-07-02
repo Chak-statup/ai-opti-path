@@ -1,21 +1,21 @@
-// AI-strategy scenario model — a real, live dynamical simulation.
+// AI-strategy scenario model; a real, live dynamical simulation.
 //
 // The user base N(t) is SIMULATED in the browser (Euler–Maruyama on a logistic
 // growth + churn + competition SDE) every time a lever moves, so the growth
-// curve genuinely reacts to the strategy — nothing is a frozen precomputed
+// curve genuinely reacts to the strategy; nothing is a frozen precomputed
 // trajectory. On top of the simulated N(t) we net a transparent P&L in euros.
 //
 // Two families of inputs:
-//   • Strategy vector (INTERNAL — the company controls these), each a 0..100
+//   • Strategy vector (INTERNAL; the company controls these), each a 0..100
 //     slider with a documented, comparable effect (see CALIB):
 //       – Platform reach       → scales the addressable market K (dynamics)
 //       – In-house build       → raises delivered quality (→ lower churn) + lifts ARPU
 //       – Vendor independence  → shields token-price spikes + lowers lock-in (€)
 //       – Scaling aggressiveness → couples the ARPU premium Δm and quality bar Q*
 //     plus the discrete strategy choice Q (product quality tier). A higher tier
-//     runs richer (frontier) models, so it costs MORE per user to serve — the
+//     runs richer (frontier) models, so it costs MORE per user to serve; the
 //     tier choice is a genuine trade-off, not a free lunch.
-//   • Environment (EXTERNAL — not controlled):
+//   • Environment (EXTERNAL; not controlled):
 //       – Token price factor   → per-user serving cost (COGS); a "pricing shock"
 //                                is simply a high level of this.
 //       – Regulatory pressure  → a DISTINCT force: raises fixed compliance cost
@@ -30,8 +30,8 @@
 // Provenance tags below: [src] grounded in a real source · [assume] internal
 // modelling assumption · [bound] deliberate worst-case ceiling, not a median.
 export const CALIB = {
-  // Market & growth (DYNAMICAL — these enter the simulated user ODE)
-  // Scale: insurer-flagship (design target €80–150M/mo revenue, ~€1–2B/yr —
+  // Market & growth (DYNAMICAL; these enter the simulated user ODE)
+  // Scale: insurer-flagship (design target €80–150M/mo revenue, ~€1–2B/yr;
   // ≈1% of Allianz FY2024 business volume €179.8B; see docs/references.md).
   K_min: 2_000_000, // [assume] addressable market at platform reach 0 (contained pilot)
   K_max: 15_000_000, // [assume] addressable market at platform reach 100 (mass-market)
@@ -44,33 +44,33 @@ export const CALIB = {
   phi: 0.35, // [bound] peak competition/mo (ramps 0→phi; central ~0.07–0.12)
   sigma: 0.16, // [src] demand volatility CV (frePPLe SBC; <0.70 = smooth)
 
-  // In-house build (innovation) — DYNAMICAL + economic
+  // In-house build (innovation); DYNAMICAL + economic
   innovQualityLift: 0.15, // [assume] full build raises DELIVERED quality +0.15 (~half a tier); churn responds through the same logistic cliff (needs A/B cohort data)
   innovArpuLift: 0.2, // [assume] ... and lifts ARPU 20% (needs monetization experiment)
 
-  // Vendor independence (resilience) — economic (shock buffer)
+  // Vendor independence (resilience); economic (shock buffer)
   maxHedge: 0.7, // [src/bound] RouteLLM 70–87% routable at ~95% quality (realized ~19%)
 
   // Economics (euros / active user / month unless noted)
   arpu0: 9, // [src] base ARPU €/user/mo (Slack Pro €6.75–8.25/seat)
-  serve0: 2.5, // [src+assume] API price grounded × assumed ~0.5–1M tokens/user/mo — at the BALANCED tier
-  qualityServeSlope: 2.0, // [src-anchored] serving factor 1+slope·(Q−0.6): Lean ×0.4, Balanced ×1.0, Premium ×1.6 — a higher tier runs pricier frontier models (cross-tier API spreads are 3–5×)
+  serve0: 2.5, // [src+assume] API price grounded × assumed ~0.5–1M tokens/user/mo; at the BALANCED tier
+  qualityServeSlope: 2.0, // [src-anchored] serving factor 1+slope·(Q−0.6): Lean ×0.4, Balanced ×1.0, Premium ×1.6; a higher tier runs pricier frontier models (cross-tier API spreads are 3–5×)
   scalingServeBump: 0.4, // [assume] full aggressive scaling raises serving cost 40% (more tokens/user)
-  cac: 20, // [src] blended €/user charged on every GROSS ADD the growth equation generates (First Page Sage; per-seat — benchmarks per-account ~35× higher)
+  cac: 20, // [src] blended €/user charged on every GROSS ADD the growth equation generates (First Page Sage; per-seat; benchmarks per-account ~35× higher)
 
-  // Fixed cost (euros / month) — insurer-flagship scale
+  // Fixed cost (euros / month); insurer-flagship scale
   F0: 4_000_000, // [src] baseline org/infra (~150–250 ML/platform FTE + infra at group scale)
   F_innov: 5_000_000, // [src] full in-house build (~400 FTE @ €130–160k loaded)
   F_resil: 1_500_000, // [src] full resilience (~110 FTE portability/multi-vendor team)
   F_reg: 3_000_000, // [src] compliance (Fourthline: €36M/yr grounded at this scale)
 
-  // Regulation (external) — distinct from token price
+  // Regulation (external); distinct from token price
   regInnovDrag: 0.4, // [bound] full-load innovation drag (MIT Sloan; expected ~0.25–0.33)
   regComplianceBuffer: 0.3, // [assume] resilience+build buy down 30% of compliance
   regBufferResilW: 0.6, // [assume] resilience's weight in the compliance buffer
   regBufferInnovW: 0.4, // [assume] in-house build's weight in the compliance buffer
 
-  // Display normalization (colors/intensities ONLY — never enters the dynamics)
+  // Display normalization (colors/intensities ONLY; never enters the dynamics)
   chiDisplay: 0.12, // [src] empirical churn ceiling (~0.10–0.15/mo); the model keeps the 0.30 worst-case bound for the cliff itself
   profitDisplay: 1000, // [assume] |cumProfit| €M at which the profit node reads fully saturated
 
@@ -106,7 +106,7 @@ export interface StrategySpec {
   Q: number;
 }
 
-// Metadata bundle passed around the app. N(t) is NOT stored here — it is
+// Metadata bundle passed around the app. N(t) is NOT stored here; it is
 // simulated live inside deriveStrategy from the current strategy vector.
 export interface RunsData {
   meta: {
@@ -134,9 +134,9 @@ export interface StrategyDerived extends MetricSeries {
 }
 
 export interface StrategyVector {
-  innovation: number; // 0..100 — In-house build (Build vs Buy)
-  resilience: number; // 0..100 — Vendor independence
-  platformReach?: number; // 0..100 — Platform reach (scales market size K)
+  innovation: number; // 0..100; In-house build (Build vs Buy)
+  resilience: number; // 0..100; Vendor independence
+  platformReach?: number; // 0..100; Platform reach (scales market size K)
 }
 
 export const DEFAULT_VECTOR: StrategyVector = {
@@ -149,7 +149,7 @@ export interface ScenarioContext {
   tokenPriceFactor: number; // the prevailing serving-price level (1 = today)
   regPressure: number; // 0..100 regulatory / compliance load (distinct channel)
   // If set, the serving price is ×1 (today) before this month and steps up to
-  // tokenPriceFactor after it — a real, visible pricing shock at a point in time.
+  // tokenPriceFactor after it; a real, visible pricing shock at a point in time.
   shockMonth?: number;
   // Quality the users actually get, shifted DOWN by scenarios that trade quality
   // for cost (e.g. adopting open-source models). 0 = no shift; 0.2 = a real hit.
@@ -192,8 +192,8 @@ export function buildModelData(): RunsData {
         dmMax: 12,
       },
       controls: {
-        dm: { min: 0, max: 12, default: 6, step: 0.5, label: "Δm — ARPU premium (€/user/month per unit quality)" },
-        qstar: { default: 0.5, label: "Q* — churn quality threshold" },
+        dm: { min: 0, max: 12, default: 6, step: 0.5, label: "dm: ARPU premium (€/user/month per unit quality)" },
+        qstar: { default: 0.5, label: "Q*: churn quality threshold" },
       },
       strategies: STRATEGIES,
     },
@@ -240,21 +240,21 @@ export function reachToK(vec: StrategyVector): number {
 }
 
 // Churn rate χ: a pure logistic cliff around Q*. Everything that changes churn
-// does so through ONE channel — the quality users actually experience.
+// does so through ONE channel; the quality users actually experience.
 export function chi(Q: number, qstar: number): number {
   return CALIB.chiMin + (CALIB.chiMax - CALIB.chiMin) / (1 + Math.exp(CALIB.kappa * (Q - qstar)));
 }
 
 // Quality that actually reaches users under a scenario. Some scenarios trade
-// quality for cost — adopting open-source models is cheaper to serve but lower
-// quality — which shifts effective quality down, lifting churn and cutting users.
+// quality for cost; adopting open-source models is cheaper to serve but lower
+// quality; which shifts effective quality down, lifting churn and cutting users.
 export function scenarioQuality(Q: number, ctx: ScenarioContext): number {
   return clamp01(Q - (ctx.qualityShift ?? 0));
 }
 
 // The quality users EXPERIENCE: the tier, shifted down by scenario trades
 // (open-source adoption) and lifted by in-house build (regulation-dragged).
-// This is the single quality that drives churn — so in-house build genuinely
+// This is the single quality that drives churn; so in-house build genuinely
 // mitigates a scenario quality drop by climbing back over the bar Q*.
 export function effectiveQuality(Q: number, ctx: ScenarioContext, vec: StrategyVector): number {
   return clamp01(scenarioQuality(Q, ctx) + CALIB.innovQualityLift * innovEffective(vec, ctx));
@@ -273,10 +273,10 @@ export function hedgeShare(vec: StrategyVector): number {
   return CALIB.maxHedge * clamp01(vec.resilience / 100);
 }
 
-// Serving-cost multiplier at a given raw vendor price — a BLENDED price:
+// Serving-cost multiplier at a given raw vendor price; a BLENDED price:
 // only the un-hedged share (1 − h) pays the vendor's price; the hedged share h
 // runs on alternatives at today's ×1. (If the price falls, take the full
-// benefit — no reason to hedge a cheaper price.) So at h = 0.7 a vendor that
+// benefit; no reason to hedge a cheaper price.) So at h = 0.7 a vendor that
 // triples its price (×3) only lifts your blended cost to 0.3·3 + 0.7 = ×1.6.
 export function shieldedTpf(rawTpf: number, vec: StrategyVector): number {
   if (rawTpf <= 1) return rawTpf;
@@ -284,7 +284,7 @@ export function shieldedTpf(rawTpf: number, vec: StrategyVector): number {
   return (1 - h) * rawTpf + h * 1;
 }
 
-// Effective serving-cost multiplier at the prevailing (post-shock) price level —
+// Effective serving-cost multiplier at the prevailing (post-shock) price level;
 // the exposure the company is carrying. Used by the risk radar and causal state.
 export function effectiveTpf(ctx: ScenarioContext, vec: StrategyVector): number {
   return shieldedTpf(ctx.tokenPriceFactor, vec);
@@ -419,7 +419,7 @@ export function deriveStrategy(
 // Exact P&L on a simulated trajectory. tierQ prices the serving cost (which
 // models the tier runs); Qs prices the ARPU (what the delivered product can
 // charge). Acquisition is charged on the GROSS ADDS the growth equation
-// actually generates — p(K−N) paid + rN(1−N/K) word-of-mouth — at the blended
+// actually generates; p(K−N) paid + rN(1−N/K) word-of-mouth; at the blended
 // CAC, so growing the base costs money and churned users are only "replaced"
 // insofar as the dynamics actually replace them.
 function deriveRawExact(
@@ -467,7 +467,7 @@ function deriveRawExact(
 // strategy (tier, scaling, vector) and lets the SAME user trajectory continue
 // from N(switchMonth) under the new parameters. The P&L switches with it
 // (ARPU, serving mix, fixed cost, CAC on the adds the new dynamics generate);
-// the environment — including the price step at shockMonth — stays identical.
+// the environment; including the price step at shockMonth; stays identical.
 // With cand ≡ base this reproduces deriveStrategy's deterministic path exactly.
 export interface SwitchedDerived extends MetricSeries {
   cumProfit: number; // €M over horizon
@@ -513,7 +513,7 @@ export function deriveSwitched(
   const n = CALIB.steps;
   const dt = CALIB.T / (n - 1);
 
-  // User dynamics, piecewise (deterministic — mitigation compares expectations).
+  // User dynamics, piecewise (deterministic; mitigation compares expectations).
   const N = new Array<number>(n);
   N[0] = CALIB.N0;
   for (let i = 1; i < n; i++) {
@@ -609,7 +609,7 @@ export interface CausalState {
   tpfRaw: number; // the vendor's raw price factor
   profitPos: boolean;
   // Channels the diagram renders explicitly:
-  KM: number; // addressable market (millions) — set by platform reach
+  KM: number; // addressable market (millions); set by platform reach
   reachN: number; // 0 .. 1
   regN: number; // 0 .. 1 regulatory load
   dmN: number; // 0 .. 1 scaling ARPU-premium (drives the serving token bump)
@@ -633,7 +633,7 @@ export function computeCausalState(
 
   const churn = chi(Qeff, qstar);
   // Display norm over the REALISTIC churn band (chiMin .. chiDisplay), not the
-  // worst-case model bound chiMax — so realistic slider moves actually change
+  // worst-case model bound chiMax; so realistic slider moves actually change
   // the color, instead of living in the bottom fifth of the scale.
   const churnNorm = clamp01((churn - CALIB.chiMin) / (CALIB.chiDisplay - CALIB.chiMin));
 
@@ -650,7 +650,7 @@ export function computeCausalState(
   const usersEnd = d.users[d.users.length - 1];
   const KM = reachToK(vec) / MU;
   // Normalize the end-of-horizon base against a FIXED scale, NOT against the
-  // reach-dependent K — dividing by K made the node exactly invariant to the
+  // reach-dependent K; dividing by K made the node exactly invariant to the
   // reach slider. 15% of the maximum market retained at horizon ≈ saturated:
   // the default posture reads mid-scale, full reach strong, a contained pilot weak.
   const usersNorm = clamp01(usersEnd / (0.15 * (CALIB.K_max / MU)));
@@ -729,11 +729,11 @@ export const PRESETS: ScenarioPreset[] = [
 // One spoke per Problem-page decision axis + one for the environment, each
 // owned by identifiable sliders and monotonic in them.
 export interface RiskScores {
-  cost: number; // Cost exposure — (shielded) token price × how many users you serve
-  lockin: number; // Vendor lock-in — low independence × product depth
-  capability: number; // Capability gap — low in-house build, amplified by regulation
-  scaling: number; // Scaling risk — aggressiveness + committing above your quality
-  regulatory: number; // Regulatory load — regulation, buffered by resilience + build
+  cost: number; // Cost exposure; (shielded) token price × how many users you serve
+  lockin: number; // Vendor lock-in; low independence × product depth
+  capability: number; // Capability gap; low in-house build, amplified by regulation
+  scaling: number; // Scaling risk; aggressiveness + committing above your quality
+  regulatory: number; // Regulatory load; regulation, buffered by resilience + build
 }
 
 export function deriveRiskScores(
@@ -753,12 +753,12 @@ export function deriveRiskScores(
   // Shielded price stress: 0 at today's price, 1 at a heavy spike after resilience.
   const stress = clamp01((effectiveTpf(ctx, vec) - 1) / 2);
   // Cliff: how far the committed quality bar Q* sits above the quality users
-  // actually experience (scenario-shifted down, lifted by in-house build — so
+  // actually experience (scenario-shifted down, lifted by in-house build; so
   // building genuinely reduces the cliff a quality-losing scenario opens).
   const cliff = clamp01((qstar - effectiveQuality(Q, ctx, vec)) / 0.4);
 
   // Cost exposure: ~0 at today's price; climbs with the (shielded) serving price
-  // and with how many users you serve — so a pricing shock at scale drives it to
+  // and with how many users you serve; so a pricing shock at scale drives it to
   // the rim. Resilience (via stress) and in-house build pull it back.
   const cost = clamp01(0.15 * reachN + 0.5 * stress + 0.9 * stress * reachN + 0.15 * stress * (1 - innN)) * 100;
   // Vendor lock-in: deep dependence on one vendor, bought down by independence.
@@ -773,7 +773,7 @@ export function deriveRiskScores(
   return { cost, lockin, capability, scaling, regulatory };
 }
 
-// Axis metadata (labels + which sliders move each spoke) — used by the UI so
+// Axis metadata (labels + which sliders move each spoke); used by the UI so
 // the radar can explain itself.
 export const RISK_AXES: { key: keyof RiskScores; label: string; driver: string; rises: string }[] = [
   { key: "cost", label: "Cost exposure", driver: "Token price ↑ · Platform reach ↑ · Vendor independence ↓", rises: "the serving price climbs while you serve many users" },
@@ -828,7 +828,7 @@ export function deriveTippingPoints(
       "lockin",
       "Vendor lock-in",
       70,
-      "Past this line switching cost exceeds the migration benefit — price negotiation loses its basis and pricing power sits with the vendor. Vendor independence is the only lever that pulls it back.",
+      "Past this line switching cost exceeds the migration benefit; price negotiation loses its basis and pricing power sits with the vendor. Vendor independence is the only lever that pulls it back.",
     ),
     mk(
       "capability",
@@ -854,7 +854,7 @@ export function deriveTippingPoints(
 // ---- Diagnostic mitigation ----------------------------------------------
 // Find the DOMINANT risk, then recommend the lever(s) that actually reduce it
 // (grounded in the equations above), re-simulate under the SAME environment,
-// and rank by how much they cut the dominant risk — profit-guarded.
+// and rank by how much they cut the dominant risk; profit-guarded.
 export interface MitigationCandidate {
   id: string;
   label: string;
@@ -924,7 +924,7 @@ export function proposeMitigations(
     });
     targeted.push({
       id: "contain", label: "Contain the footprint", targetRisk: RISK_NAME.cost,
-      rationale: "Pull platform reach back so fewer users are exposed to the vendor's pricing at once — a smaller, cheaper base to serve while the price is high.",
+      rationale: "Pull platform reach back so fewer users are exposed to the vendor's pricing at once: a smaller, cheaper base to serve while the price is high.",
       strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ platformReach: Math.max(20, reach - 30), resilience: Math.max(70, base.vec.resilience) }),
     });
   } else if (dominant === "lockin") {
@@ -963,7 +963,7 @@ export function proposeMitigations(
     if ((ctx.qualityShift ?? 0) > 0) {
       targeted.push({
         id: "rebuild-quality", label: "Rebuild quality in-house", targetRisk: RISK_NAME.scaling,
-        rationale: "The scenario cut the quality users experience below the bar you committed to. A hard in-house build push raises delivered quality back over the bar — retention recovers at the cost of higher fixed spend.",
+        rationale: "The scenario cut the quality users experience below the bar you committed to. A hard in-house build push raises delivered quality back over the bar; retention recovers at the cost of higher fixed spend.",
         strat: base.strat, dm: base.dm, qstar: base.qstar, vec: V({ innovation: 90 }),
       });
     }
@@ -976,7 +976,7 @@ export function proposeMitigations(
   }
 
   // When the serving price is elevated (a pricing shock), always offer a pure
-  // vendor hedge — raising resilience shields the serving cost at its source,
+  // vendor hedge; raising resilience shields the serving cost at its source,
   // which is the true fix even when the dominant axis reads as cost-structure.
   const serveMul = effectiveTpf(ctx, base.vec);
   const hedge: Raw[] =
@@ -993,7 +993,7 @@ export function proposeMitigations(
   // Always include a balanced guardrail option.
   const guardrail: Raw = {
     id: "balance", label: "Balanced reset", targetRisk: "overall",
-    rationale: "Re-centre the vector: healthy in-house build and resilience with moderate scaling — a robust default when no single risk dominates.",
+    rationale: "Re-centre the vector: healthy in-house build and resilience with moderate scaling; a robust default when no single risk dominates.",
     strat: Math.min(nStrat - 1, 1), dm: clampDm(6), qstar: clampQ(0.5),
     vec: V({ innovation: 70, resilience: 72 }),
   };
@@ -1003,7 +1003,7 @@ export function proposeMitigations(
   // Score each candidate as a RESPONSE: the baseline posture runs until the
   // shock is realised (switchMonth = shockMonth, or t=0 for standing
   // scenarios), then the candidate takes over. This stops a candidate from
-  // retroactively paying — or exploiting — months of posture that predate the
+  // retroactively paying; or exploiting; months of posture that predate the
   // shock it responds to.
   const scored = raw.map((c) => {
     const d = deriveSwitched(data, base, { strat: c.strat, dm: c.dm, qstar: c.qstar, vec: c.vec }, ctx);
@@ -1017,7 +1017,7 @@ export function proposeMitigations(
   });
 
   // Credible options only: each must materially cut the dominant risk AND not
-  // make profit meaningfully worse than the baseline — so we never headline a
+  // make profit meaningfully worse than the baseline; so we never headline a
   // money-losing "mitigation". If none qualify, fall back to the single
   // best-profit risk-reducer so there is always something honest to show.
   const floor = -Math.max(3, 0.02 * Math.abs(baseProfit));
@@ -1040,7 +1040,7 @@ export function proposeMitigations(
       return true;
     })
     // Rank by dominant-risk reduction, but when two options cut the risk by a
-    // comparable amount (same ~20-point band) prefer the more profitable one —
+    // comparable amount (same ~20-point band) prefer the more profitable one;
     // so the headline is both a real risk fix and the best business outcome.
     .sort((a, b) => {
       const ba = Math.round(a.riskReduction / 20);

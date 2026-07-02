@@ -2,13 +2,14 @@
 // several alternative strategy vectors and simulates each against the same
 // environment. Every candidate is simulated as a RESPONSE: the current posture
 // runs until the shock is realised (the response month), then the candidate
-// takes over on the same user trajectory — so the before/after comparison
+// takes over on the same user trajectory; so the before/after comparison
 // starts at the point of realisation, not retroactively at month 0. The human
 // stays in the loop: toggle candidates to overlay their profit trajectories,
 // inspect the primary one on the radar, then apply it to the live evaluator.
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, type Series } from "@/components/scenario/LineChart";
 import { RadarChart, type RadarSeries } from "@/components/scenario/RadarChart";
+import { Tex } from "@/components/scenario/Tex";
 import {
   deriveRiskScores,
   deriveStrategy,
@@ -116,7 +117,7 @@ export function Mitigation({
   );
 
   // Build overlay series: baseline first, then each selected candidate as a
-  // RESPONSE — identical to the baseline up to the response month, switched after.
+  // RESPONSE; identical to the baseline up to the response month, switched after.
   const profitSeries: Series[] = useMemo(() => {
     const series: Series[] = [
       { ys: baseDerived.profit, color: "var(--exp-axis)", width: 2, opacity: 0.5 },
@@ -177,13 +178,13 @@ export function Mitigation({
     <div className="exp-mit">
       <div className="exp-mit-tag">
         The dominant risk in this scenario is <strong>{RISK_LABELS[dominantKey]}</strong> (
-        {Math.round(baseRisk[dominantKey])}/100). Below are the strategy changes that reduce it, each
-        simulated as a <strong>response</strong>
+        {Math.round(baseRisk[dominantKey])}/100). Below are the strategy changes that reduce it,
+        ranked by how much they cut that risk (profit-guarded). Each is simulated as a{" "}
+        <strong>response</strong>
         {responseMonth > 0
-          ? ` — your current posture runs until the shock lands at month ${responseMonth}, then the change takes over`
-          : " to this standing scenario, applied from the start"}{" "}
-        — and ranked by how much it cuts that risk (profit-guarded). Toggle several to compare; the
-        highlighted one drives the radar and Apply.
+          ? `: your current posture runs until the shock lands at month ${responseMonth}, then the change takes over.`
+          : " to this standing scenario, applied from the start."}{" "}
+        Toggle several to compare; the highlighted one drives the radar and Apply.
       </div>
 
       <div className="exp-mit-ai">
@@ -254,8 +255,8 @@ export function Mitigation({
               <p className="exp-mit-card-rationale">{c.rationale}</p>
               <div className="exp-mit-card-vec">
                 <span>{data.meta.strategies[c.strat].label}</span>
-                <span>Q* {c.qstar.toFixed(2)}</span>
-                <span>Δm {c.dm.toFixed(1)}</span>
+                <span><Tex>{"Q^{*}"}</Tex> {c.qstar.toFixed(2)}</span>
+                <span><Tex>{"\\Delta m"}</Tex> {c.dm.toFixed(1)}</span>
                 <span>Innov {Math.round(c.vec.innovation)}</span>
                 <span>Resil {Math.round(c.vec.resilience)}</span>
                 <span>Reach {Math.round(c.vec.platformReach ?? 50)}</span>
@@ -283,7 +284,7 @@ export function Mitigation({
             xLabel="months"
             yLabel="€M / month"
             vGuides={[
-              { x: data.meta.params.tau, label: "τ revenue", color: "var(--exp-axis)" },
+              { x: data.meta.params.tau, label: "revenue lag", color: "var(--exp-axis)" },
               ...(ctx.shockMonth !== undefined
                 ? [{ x: ctx.shockMonth, label: "shock → response", color: "var(--exp-marker)" }]
                 : []),

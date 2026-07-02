@@ -1,5 +1,5 @@
 // Custom, mono-stroke line icons for the four decision axes on the Problem tab.
-// Deliberately geometric / structural — not the generic "sparkle / robot / brain"
+// Deliberately geometric / structural; not the generic "sparkle / robot / brain"
 // AI look. They inherit colour via currentColor and match the diagram's
 // restrained, technical style.
 import type { SVGProps } from "react";
@@ -18,7 +18,7 @@ const base: IconProps = {
   "aria-hidden": true,
 };
 
-// 01 Platform ecosystem — nested app tiles radiating outward (reach / scale).
+// 01 Platform ecosystem; nested app tiles radiating outward (reach / scale).
 export function IconPlatform(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -31,7 +31,7 @@ export function IconPlatform(props: IconProps) {
   );
 }
 
-// 02 Vendor choice — one trunk splitting into multiple plug endpoints
+// 02 Vendor choice; one trunk splitting into multiple plug endpoints
 // (single frontier vendor vs open / multi-vendor).
 export function IconVendor(props: IconProps) {
   return (
@@ -46,7 +46,7 @@ export function IconVendor(props: IconProps) {
   );
 }
 
-// 03 Build vs buy — a module being assembled from a corner piece (build)
+// 03 Build vs buy; a module being assembled from a corner piece (build)
 // against a sealed unit (buy).
 export function IconBuild(props: IconProps) {
   return (
@@ -61,7 +61,7 @@ export function IconBuild(props: IconProps) {
   );
 }
 
-// 04 Scaling strategy — a throttle sweeping up a stepped ramp.
+// 04 Scaling strategy; a throttle sweeping up a stepped ramp.
 export function IconScaling(props: IconProps) {
   return (
     <svg {...base} {...props}>

@@ -70,31 +70,36 @@ export function ProblemFrame({ onStart }: { onStart: () => void }) {
       <section className="exp-section">
         <h2 className="exp-section-title">THE DECISION</h2>
         <p className="exp-prose">
-          Over the next 12 to 18 months you have to decide how aggressively to scale AI:
-          how far to commit to a single frontier vendor, how much to build in house, and how many
-          apps to put in front of millions of users. These choices are made together and are hard to
-          reverse.
+          Over the next 12 to 18 months the company must decide how aggressively to scale its AI
+          product: how deeply to commit to a single frontier vendor, how much capability to build in
+          house, and how widely to ship to customers. These four choices lock each other in, and
+          reversing any of them later is expensive.
         </p>
       </section>
 
       <section className="exp-section">
         <h2 className="exp-section-title">THE CORE INSIGHT</h2>
         <p className="exp-prose">
-          To turn qualitative reasoning into a quantitative model we simulate the user base over time
-          and net a transparent P&amp;L on top. <strong>Profit is the output.</strong> It depends on
-          per-user margin (ARPU &mdash; a lever you set), the size and retention of the user base, the
-          vendor&rsquo;s serving price, and fixed cost. The point is that no single number decides it:
-          retention (churn) matters as much as price, and cost and dependency evolve as you scale.
-          Making those causal dependencies explicit &mdash; and letting you stress them &mdash; is
-          what this tool does.&nbsp;
+          A business case for a decision like this usually collapses into one number: margin per
+          user. That number hides the decision. Profit here is not set by any single lever; it
+          emerges over time from four interacting quantities: what each user pays (ARPU), how many
+          users you keep (retention), what each user costs to serve (the vendor&rsquo;s token
+          price), and the fixed cost of the capabilities you choose to build. A strategy that wins
+          on margin can still lose on churn, and a cheap stack today can become the expensive one
+          after a price move you do not control.
+        </p>
+        <p className="exp-prose">
+          So instead of comparing static numbers, this tool <strong>simulates</strong> the user base
+          month by month and nets a transparent P&amp;L on top. <strong>Profit is the output</strong>,
+          not an input: move a decision and you see revenue, cost, users and risk move with it.
         </p>
       </section>
 
       <section className="exp-section">
         <h2 className="exp-section-title">WHAT MAKES THIS HARD</h2>
         <p className="exp-prose">
-          Considering our use case: Four decisions are to be taken at the same time and reinforce
-          one another. None can be tuned in isolation, and each carries its own systemic risks.
+          Four decisions have to be taken at the same time. Each one changes the payoff of the
+          others, so none can be tuned in isolation, and each carries its own systemic risks.
         </p>
         <div className="exp-axis-grid">
           {AXES.map((a) => {
