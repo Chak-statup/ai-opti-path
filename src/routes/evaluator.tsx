@@ -652,38 +652,21 @@ function ExplorerView({ data }: { data: RunsData }) {
                         {envSummary}
                       </span>
                     </div>
-                    {tab === "strategy" ? (
-                      <>
-                        <h2 className="exp-section-title">CUMULATIVE PROFIT VS QUALITY THRESHOLD</h2>
-                        <LineChart
-                          xs={data.qstar_grid}
-                          series={sweepSeries}
-                          xLabel="Quality threshold"
-                          yLabel="€M over horizon"
-                          vGuides={sweepGuides}
-                          zeroLine
-                          xFormat={(v) => v.toFixed(1)}
-                          yFormat={(v) => v.toFixed(1)}
-                          height={360}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
-                        <LineChart
-                          xs={t}
-                          series={panelSeries(tab)}
-                          title={METRIC_PANELS[tab].title}
-                          xLabel="months"
-                          yLabel={METRIC_PANELS[tab].yLabel}
-                          vGuides={baseGuides}
-                          zeroLine={METRIC_PANELS[tab].zero}
-                          xFormat={(v) => `${Math.round(v)}`}
-                          yFormat={(v) => (v * 1000).toFixed(0)}
-                          height={360}
-                        />
-                      </>
-                    )}
+                    <>
+                      <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
+                      <LineChart
+                        xs={t}
+                        series={panelSeries(tab)}
+                        title={METRIC_PANELS[tab].title}
+                        xLabel="months"
+                        yLabel={METRIC_PANELS[tab].yLabel}
+                        vGuides={baseGuides}
+                        zeroLine={METRIC_PANELS[tab].zero}
+                        xFormat={(v) => `${Math.round(v)}`}
+                        yFormat={(v) => (v * 1000).toFixed(0)}
+                        height={360}
+                      />
+                    </>
                   </>
                 )}
               </section>
