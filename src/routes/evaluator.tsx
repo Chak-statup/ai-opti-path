@@ -448,7 +448,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               <div className="exp-control">
                 <div className="exp-control-head">
                   <span className="exp-control-label">
-                    <span className="exp-axis-chip">04</span> Scaling aggressiveness
+                    <span className="exp-axis-chip">04</span> Scaling&nbsp; Intensity
                   </span>
                   <span className="exp-control-val">{Math.round(scaling)}</span>
                 </div>
