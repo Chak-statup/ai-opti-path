@@ -47,7 +47,7 @@ function LandingPage() {
             </h1>
             <p className="lp-hero-lead">
               Scaling AI is a system of coupled decisions, not a single yes or no. Set your
-              strategy, stress it against what you cannot control, and see which path survives.
+              strategy, stress it against diverse scenarios, and decide which is better.
             </p>
             <div className="lp-cta-row">
               <Link to="/evaluator" className="lp-cta-primary">

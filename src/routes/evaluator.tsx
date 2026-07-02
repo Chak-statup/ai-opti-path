@@ -487,7 +487,7 @@ function ExplorerView({ data }: { data: RunsData }) {
               <div className="exp-control">
                 <div className="exp-control-head">
                   <span className="exp-control-label">
-                    <span className="exp-axis-chip">04</span> Scaling aggressiveness
+                    <span className="exp-axis-chip">04</span> Scaling intensity
                   </span>
                   <span className="exp-control-val">{Math.round(scaling)}</span>
                 </div>
@@ -710,7 +710,7 @@ function ExplorerView({ data }: { data: RunsData }) {
                       safer strategy. Each spoke is driven by one decision (see the breakdown below):{" "}
                       <strong>cost exposure</strong> by the serving price and platform reach,{" "}
                       <strong>vendor lock-in</strong> by vendor independence, <strong>capability gap</strong> by
-                      in-house build, <strong>scaling risk</strong> by scaling aggressiveness, and{" "}
+                      in-house build, <strong>scaling risk</strong> by scaling intensity, and{" "}
                       <strong>regulatory load</strong> by the compliance environment. The dashed grey outline is{" "}
                       {derived[traceStrat].label} under today&rsquo;s status quo; the gap to the coloured shape is
                       what the current strategy and scenario change.

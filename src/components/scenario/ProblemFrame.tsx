@@ -55,7 +55,7 @@ const AXES: Axis[] = [
     title: "Scaling strategy",
     question:
       "When does a pilot become a core system? Scaling without an exit path is structural risk.",
-    lever: "Scaling aggressiveness",
+    lever: "Scaling intensity",
     risks: [
       "Cost structure tipping point",
       "Technical debt",

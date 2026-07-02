@@ -713,7 +713,7 @@ export const PRESETS: ScenarioPreset[] = [
   },
   {
     id: "regulatory-stress",
-    label: "Regulatory stress test",
+    label: "Regulatory pressure",
     blurb: "Heavy audit and governance duty across the sector (token price unchanged).",
     ctx: { tokenPriceFactor: 1.0, regPressure: 85 },
   },
@@ -779,7 +779,7 @@ export const RISK_AXES: { key: keyof RiskScores; label: string; driver: string; 
   { key: "cost", label: "Cost exposure", driver: "Token price ↑ · Platform reach ↑ · Vendor independence ↓", rises: "the serving price climbs while you serve many users" },
   { key: "lockin", label: "Vendor lock-in", driver: "Vendor independence ↓ · Quality ↑", rises: "you sit deep on one vendor with no cheap way to switch" },
   { key: "capability", label: "Capability gap", driver: "In-house build ↓ · Regulation ↑", rises: "you build little in-house and lean on the vendor's roadmap" },
-  { key: "scaling", label: "Scaling risk", driver: "Scaling aggressiveness ↑ · delivered quality ↓ (in-house build restores it)", rises: "you push margin and a quality bar above what users actually experience" },
+  { key: "scaling", label: "Scaling risk", driver: "Scaling intensity ↑ · delivered quality ↓ (in-house build restores it)", rises: "you push margin and a quality bar above what users actually experience" },
   { key: "regulatory", label: "Regulatory load", driver: "Regulation ↑ · Vendor independence & build ↓", rises: "compliance duty outpaces what your capability absorbs" },
 ];
 
@@ -952,7 +952,7 @@ export function proposeMitigations(
   } else if (dominant === "scaling") {
     targeted.push({
       id: "ease-off", label: "Ease off scaling", targetRisk: RISK_NAME.scaling,
-      rationale: "Reduce scaling aggressiveness so the ARPU push and quality bar retreat from the cost-structure tipping point.",
+      rationale: "Reduce scaling intensity so the ARPU push and quality bar retreat from the cost-structure tipping point.",
       strat: base.strat, dm: clampDm(base.dm - 3.5), qstar: clampQ(base.qstar - 0.12), vec: V({}),
     });
     targeted.push({
