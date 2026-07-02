@@ -41,44 +41,37 @@ type Stage = "problem" | "causal" | "risk" | "tipping" | "mitigate" | "recommend
 
 const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
   {
-    key: "problem",
-    label: "Problem",
-    step: "01",
-    blurb:
-      "What you are deciding, and why a single margin-per-user number cannot decide it.",
-  },
-  {
     key: "causal",
     label: "Causal pathway",
-    step: "02",
+    step: "01",
     blurb:
       "How a strategy plays out, end to end. The tiers (Lean / Balanced / Premium) are decisions you make; the scenarios are futures that happen to you. Pick either and watch the pathway reshape: thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
     label: "Risk profile",
-    step: "03",
+    step: "02",
     blurb:
       "Every parameter collapses into one five-axis fingerprint per strategy, drawn against the status-quo baseline.",
   },
   {
     key: "tipping",
     label: "Tipping points",
-    step: "04",
+    step: "03",
     blurb:
       "Each risk against its critical line. Past a tipping point the dynamic reinforces itself and is hard to reverse.",
   },
   {
     key: "mitigate",
     label: "Mitigation",
-    step: "05",
+    step: "04",
     blurb:
       "A shock landed or the goal changed. The model proposes several new strategy vectors and simulates each. Compare them and see the before vs after.",
   },
   {
     key: "recommend",
     label: "Recommendation",
-    step: "06",
+    step: "05",
     blurb:
       "A plain-language read of the current scenario: which path wins, what drives it, and what would change the answer.",
   },
