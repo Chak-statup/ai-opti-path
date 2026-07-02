@@ -42,7 +42,7 @@ type Stage = "problem" | "causal" | "risk" | "tipping" | "mitigate" | "recommend
 const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
   {
     key: "causal",
-    label: "Causal pathway",
+    label: "Outcome pathway",
     step: "01",
     blurb:
       "How a strategy plays out, end to end. The tiers (Lean / Balanced / Premium) are decisions you make; the scenarios are futures that happen to you. Pick either and watch the pathway reshape: thicker, redder links mark where pressure builds.",
