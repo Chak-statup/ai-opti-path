@@ -41,44 +41,37 @@ type Stage = "problem" | "causal" | "risk" | "tipping" | "mitigate" | "recommend
 
 const STAGES: { key: Stage; label: string; step: string; blurb: string }[] = [
   {
-    key: "problem",
-    label: "Problem",
-    step: "01",
-    blurb:
-      "What you are deciding, and why a single margin-per-user number cannot decide it.",
-  },
-  {
     key: "causal",
     label: "Causal pathway",
-    step: "02",
+    step: "01",
     blurb:
       "How a strategy plays out, end to end. The tiers (Lean / Balanced / Premium) are decisions you make; the scenarios are futures that happen to you. Pick either and watch the pathway reshape: thicker, redder links mark where pressure builds.",
   },
   {
     key: "risk",
     label: "Risk profile",
-    step: "03",
+    step: "02",
     blurb:
       "Every parameter collapses into one five-axis fingerprint per strategy, drawn against the status-quo baseline.",
   },
   {
     key: "tipping",
     label: "Tipping points",
-    step: "04",
+    step: "03",
     blurb:
       "Each risk against its critical line. Past a tipping point the dynamic reinforces itself and is hard to reverse.",
   },
   {
     key: "mitigate",
     label: "Mitigation",
-    step: "05",
+    step: "04",
     blurb:
       "A shock landed or the goal changed. The model proposes several new strategy vectors and simulates each. Compare them and see the before vs after.",
   },
   {
     key: "recommend",
     label: "Recommendation",
-    step: "06",
+    step: "05",
     blurb:
       "A plain-language read of the current scenario: which path wins, what drives it, and what would change the answer.",
   },
@@ -134,7 +127,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const { params } = data.meta;
   const t = data.t;
 
-  const [stage, setStage] = useState<Stage>("problem");
+  const [stage, setStage] = useState<Stage>("causal");
   const [traceStrat, setTraceStrat] = useState(1);
   const [dm, setDm] = useState(data.meta.controls.dm.default);
   const [qstar, setQstar] = useState(data.meta.controls.qstar.default);
@@ -147,8 +140,10 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [qualityShift, setQualityShift] = useState<number | undefined>(undefined);
   const [activePreset, setActivePreset] = useState<string | null>("status-quo");
   const [tab, setTab] = useState<Tab>("profit");
-  const [causalView, setCausalView] = useState<"pathway" | "charts">("pathway");
+  const [causalView, setCausalView] = useState<"pathway" | "charts">("charts");
   const [showHow, setShowHow] = useState(false);
+  const [showProblem, setShowProblem] = useState(false);
+  const [pathwayInfo, setPathwayInfo] = useState(false);
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
   const ctx: ScenarioContext = useMemo(
@@ -354,11 +349,6 @@ function ExplorerView({ data }: { data: RunsData }) {
       </nav>
       <p className="exp-journey-blurb">{activeStage.blurb}</p>
 
-      {stage === "problem" && (
-        <div className="exp-stage">
-          <ProblemFrame onStart={() => setStage("causal")} />
-        </div>
-      )}
 
       {showRail && (
         <div className="exp-body">
@@ -578,19 +568,19 @@ function ExplorerView({ data }: { data: RunsData }) {
                 <div className="exp-subtabs" role="tablist" aria-label="Causal view">
                   <button
                     role="tab"
-                    aria-selected={causalView === "pathway"}
-                    className={`exp-tab ${causalView === "pathway" ? "active" : ""}`}
-                    onClick={() => setCausalView("pathway")}
-                  >
-                    Pathway
-                  </button>
-                  <button
-                    role="tab"
                     aria-selected={causalView === "charts"}
                     className={`exp-tab ${causalView === "charts" ? "active" : ""}`}
                     onClick={() => setCausalView("charts")}
                   >
                     Trajectories
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={causalView === "pathway"}
+                    className={`exp-tab ${causalView === "pathway" ? "active" : ""}`}
+                    onClick={() => setCausalView("pathway")}
+                  >
+                    Pathway
                   </button>
                 </div>
 
@@ -602,39 +592,51 @@ function ExplorerView({ data }: { data: RunsData }) {
                     <div className="exp-causal-wrap">
                       <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} />
                     </div>
-                    <div className="exp-axis-map">
-                      <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">01</span>
-                        <span>Platform reach &rarr; market size <Tex>{"K"}</Tex> &amp; users <Tex>{"N(t)"}</Tex></span>
-                      </span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">02</span>
-                        <span>Vendor independence &rarr; serving price <Tex>{"\\rho"}</Tex> (shield) &amp; fixed cost <Tex>{"F"}</Tex></span>
-                      </span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">03</span>
-                        <span>In-house build &rarr; delivered quality <Tex>{"Q_{\\mathrm{eff}}"}</Tex> &amp; ARPU <Tex>{"m"}</Tex></span>
-                      </span>
-                      <span className="exp-axis-map-item">
-                        <span className="exp-axis-chip">04</span>
-                        <span>Scaling &rarr; price premium <Tex>{"\\Delta m"}</Tex> &amp; users&rsquo; expectations <Tex>{"Q^{*}"}</Tex></span>
-                      </span>
-                    </div>
+                    <button
+                      type="button"
+                      className="exp-info-toggle"
+                      aria-expanded={pathwayInfo}
+                      onClick={() => setPathwayInfo((v) => !v)}
+                    >
+                      {pathwayInfo ? "Hide details −" : "More info +"}
+                    </button>
+                    {pathwayInfo && (
+                      <>
+                        <div className="exp-axis-map">
+                          <span className="exp-axis-map-title">Where your four decisions enter the pathway</span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">01</span>
+                            <span>Platform reach &rarr; market size <Tex>{"K"}</Tex> &amp; users <Tex>{"N(t)"}</Tex></span>
+                          </span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">02</span>
+                            <span>Vendor independence &rarr; serving price <Tex>{"\\rho"}</Tex> (shield) &amp; fixed cost <Tex>{"F"}</Tex></span>
+                          </span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">03</span>
+                            <span>In-house build &rarr; delivered quality <Tex>{"Q_{\\mathrm{eff}}"}</Tex> &amp; ARPU <Tex>{"m"}</Tex></span>
+                          </span>
+                          <span className="exp-axis-map-item">
+                            <span className="exp-axis-chip">04</span>
+                            <span>Scaling &rarr; price premium <Tex>{"\\Delta m"}</Tex> &amp; users&rsquo; expectations <Tex>{"Q^{*}"}</Tex></span>
+                          </span>
+                        </div>
 
-                    <div className="exp-causal-key">
-                      <span className="exp-causal-key-item">
-                        <span className="exp-edge-sample good" /> reinforcing link
-                      </span>
-                      <span className="exp-causal-key-item">
-                        <span className="exp-edge-sample bad" /> pressure / risk
-                      </span>
-                      <span className="exp-causal-key-item">thicker line = stronger effect</span>
-                      <span className="exp-causal-key-item">
-                        <span className="exp-edge-sample risk" /> shaded node = under pressure
-                      </span>
-                    </div>
-                    <p className="exp-prose">{reading}</p>
+                        <div className="exp-causal-key">
+                          <span className="exp-causal-key-item">
+                            <span className="exp-edge-sample good" /> reinforcing link
+                          </span>
+                          <span className="exp-causal-key-item">
+                            <span className="exp-edge-sample bad" /> pressure / risk
+                          </span>
+                          <span className="exp-causal-key-item">thicker line = stronger effect</span>
+                          <span className="exp-causal-key-item">
+                            <span className="exp-edge-sample risk" /> shaded node = under pressure
+                          </span>
+                        </div>
+                        <p className="exp-prose">{reading}</p>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -783,6 +785,36 @@ function ExplorerView({ data }: { data: RunsData }) {
             />
             <AiInsight derived={derived} riskAll={riskAll} ctx={ctx} />
           </section>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="exp-problem-fab"
+        aria-expanded={showProblem}
+        onClick={() => setShowProblem((v) => !v)}
+      >
+        {showProblem ? "Close" : "The problem"}
+      </button>
+
+      {showProblem && (
+        <div className="exp-howto-overlay" role="dialog" aria-label="The problem">
+          <div className="exp-howto-panel">
+            <div className="exp-howto-panel-head">
+              <span>The problem</span>
+              <button
+                type="button"
+                className="exp-howto-close"
+                onClick={() => setShowProblem(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="exp-howto-panel-body">
+              <ProblemFrame onStart={() => setShowProblem(false)} />
+            </div>
+          </div>
         </div>
       )}
 
