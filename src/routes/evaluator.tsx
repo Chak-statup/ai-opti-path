@@ -397,13 +397,16 @@ function ExplorerView({ data }: { data: RunsData }) {
                   list="exp-mid50"
                   onChange={(e) => onKnob(setReach)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  <strong>Platform ecosystem.</strong> How widely you ship: contained pilot (0) to
-                  mass-market (100). Sets the addressable market <Tex>{"K"}</Tex>: currently{" "}
-                  <strong>{(causalState.KM * 1000).toFixed(0)}k</strong> potential users (20k&ndash;150k). A wider
-                  market grows users and revenue, and multiplies how many users you pay to serve
-                  if prices spike.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    <strong>Platform ecosystem.</strong> How widely you ship: contained pilot (0) to
+                    mass-market (100). Sets the addressable market <Tex>{"K"}</Tex>: currently{" "}
+                    <strong>{(causalState.KM * 1000).toFixed(0)}k</strong> potential users (20k&ndash;150k). A wider
+                    market grows users and revenue, and multiplies how many users you pay to serve
+                    if prices spike.
+                  </p>
+                </details>
               </div>
 
               <div className="exp-control">
