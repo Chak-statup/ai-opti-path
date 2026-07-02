@@ -1824,6 +1824,36 @@
   transition: filter 0.12s ease;
 }
 .exp-howto-fab:hover { filter: brightness(1.1); }
+.exp-problem-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 4rem;
+  z-index: 40;
+  background: var(--exp-surface);
+  color: var(--exp-ink);
+  border: 1px solid var(--exp-grid);
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.7rem 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transition: filter 0.12s ease;
+}
+.exp-problem-fab:hover { filter: brightness(0.97); }
+.exp-info-toggle {
+  background: none;
+  border: none;
+  color: var(--exp-open);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  align-self: flex-start;
+}
+.exp-info-toggle:hover { text-decoration: underline; }
 .exp-howto-overlay {
   position: fixed;
   inset: 0;
