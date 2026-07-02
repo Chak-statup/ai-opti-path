@@ -205,7 +205,7 @@ export const PRESETS = [
   },
   {
     id: "regulatory-stress",
-    label: "Regulatory stress test",
+    label: "Regulatory pressure",
     blurb: "Heavy audit duty raises the effective token price for every AI app.",
     ctx: { tokenPriceFactor: 1.5, regPressure: 80 },
     dm: 6, qstar: 0.5,
