@@ -177,7 +177,6 @@ function ExplorerView({ data }: { data: RunsData }) {
     () => data.meta.strategies.map((_, s) => deriveStrategy(data, s, dm, snappedQ, ctx, vec)),
     [data, dm, snappedQ, ctx, vec],
   );
-  const sweep = useMemo(() => sweepCumProfit(data, dm, ctx, vec), [data, dm, ctx, vec]);
   const causalState = useMemo(
     () => computeCausalState(data, traceStrat, dm, snappedQ, ctx, vec),
     [data, traceStrat, dm, snappedQ, ctx, vec],
