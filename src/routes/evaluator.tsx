@@ -538,12 +538,15 @@ function ExplorerView({ data }: { data: RunsData }) {
                   value={reg}
                   onChange={(e) => onKnob(setReg)(parseFloat(e.target.value))}
                 />
-                <p className="exp-control-note">
-                  External compliance load. Raises the fixed compliance cost (now €
-                  {fixedK(causalState.fixed.compliance)}k/mo) and slows your in-house build (−
-                  {Math.round(CALIB.regInnovDrag * reg)}% of its effect); independence and build partly
-                  buffer it. It does not change the token price.
-                </p>
+                <details className="exp-note-details">
+                  <summary className="exp-note-summary">What this does</summary>
+                  <p className="exp-control-note">
+                    External compliance load. Raises the fixed compliance cost (now €
+                    {fixedK(causalState.fixed.compliance)}k/mo) and slows your in-house build (−
+                    {Math.round(CALIB.regInnovDrag * reg)}% of its effect); independence and build partly
+                    buffer it. It does not change the token price.
+                  </p>
+                </details>
               </div>
               <p className="exp-rail-note">
                 Effective serving price is now ×{causalState.tpfEff.toFixed(1)} after resilience shielding.
