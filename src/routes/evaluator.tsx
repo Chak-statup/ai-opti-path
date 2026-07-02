@@ -127,7 +127,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const { params } = data.meta;
   const t = data.t;
 
-  const [stage, setStage] = useState<Stage>("problem");
+  const [stage, setStage] = useState<Stage>("causal");
   const [traceStrat, setTraceStrat] = useState(1);
   const [dm, setDm] = useState(data.meta.controls.dm.default);
   const [qstar, setQstar] = useState(data.meta.controls.qstar.default);
