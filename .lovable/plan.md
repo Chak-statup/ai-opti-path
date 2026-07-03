@@ -1,61 +1,44 @@
+# Plot-first evaluator + diagram downloads
 
-# Causal pathway redesign + Problem-tab icons
+Three changes, none of which alter the model, the formulas, or the wording of any existing content. Everything is layout, a toggle, and an export utility.
 
-Two visual upgrades, both presentation-only (no model math changes).
+## 1. Make the plot the hero; sliders in a collapsible sidebar; scenarios in a dropdown
 
-## Part A — Causal pathway diagram (`CausalDiagram.tsx` + styles)
+Today `/evaluator` renders a fixed two-column grid (`.exp-body`: 230px rail + main) for the Causal / Risk / Tipping stages, with scenario presets as a row of cards above the chart. The rail competes with the plot for attention.
 
-### Remove
-- The four gray column bands (`var(--exp-grid)` rectangles).
-- The four column caption pills: "decision & levers", "causal maps", "dynamics", "outcome".
+Changes (in `src/routes/evaluator.tsx` and `src/styles.css`):
 
-### Add: lever "influence regions" (the headline change)
-Each of the four decisions gets its own soft, rounded, color-tinted region that visually encloses the nodes it drives, so a first-time viewer instantly sees "this lever moves these things." Concept:
+- **Collapsible sidebar.** Add a `railOpen` state (default open on desktop, closed on narrow screens). Wrap the existing `<aside class="exp-rail">` so it can slide/collapse, and add a slim toggle button ("Controls" with a chevron) pinned at the edge of the main area. When collapsed, the plot dashboard takes the full width. No slider markup or copy changes — the whole existing rail (four decisions, environment, readout) just moves inside the collapsible container.
+- **Grid becomes responsive to the toggle.** `.exp-body` switches between `230px 1fr` (open) and `1fr` (collapsed) via a modifier class. The chart/diagram area is always the dominant, neatly-centered element.
+- **Scenarios as a dropdown.** Replace the `ScenarioPresets` card row with a compact labeled dropdown ("Scenario:") that lists the same presets and calls the same `applyPreset`. The active preset stays reflected in the selected value. `ScenarioPresets.tsx` gets a new compact `variant="dropdown"` (default keeps the card layout so nothing else breaks); the evaluator uses the dropdown variant. Same presets, same behavior, same content.
+- The Trajectories / Pathway subtabs and the metric tabs stay exactly where they are, directly above the plot, so the plot is the first and most prominent thing on the page.
 
-```text
- ┌── 04 Scaling ─────────┐
- │   Q*      Δm          │──────► χ (churn) ──┐
- └───────────────────────┘                    ├─► N(t) ──► Π
- ┌── 03 In-house build ──┐     m (margin) ────┘
- │   drives χ + m        │
- └───────────────────────┘
- ┌ 02 Vendor ┐  shock ──────────────────────────► Π
- └───────────┘
- ┌ 01 Platform reach ┐ ── scales ── N(t)
- └───────────────────┘
-```
+Flow preserved: default stage stays `causal`, default subview stays `charts` (Trajectories), the journey stepper, FABs, and all other stages are untouched.
 
-- Region 04 **Scaling** encloses `Q*` and `Δm` (your example — driven together).
-- Region 03 **In-house build** highlights its drive into `χ` and `m`.
-- Region 02 **Vendor independence** ties to the `shock` node.
-- Region 01 **Platform reach** ties to `N(t)`.
-- Each region: rounded translucent fill in its axis color, a thin matching border, and a small numbered chip (01–04) + short label on the region edge. Colors reuse the existing decision/axis tokens, kept muted.
+## 2. Causal diagram: toggle to hide the small sub-text under node labels
 
-### Add: risk shading
-- Nodes currently carrying pressure (the "bad" state) get a distinct **red-tinted halo / soft glow** behind the card, not just a colored border — so risk reads at a glance. This applies live: e.g. when `χ` (churn), `shock`, or a negative `Π` cross into the bad band, their halo appears/intensifies.
-- A single compact legend row stays: "reinforcing link / pressure / thicker = stronger", plus a new "shaded = risk under pressure" swatch.
+In `CausalDiagram.tsx` every node renders a title glyph plus one or two small sub-lines (`nodeSub`, the delta/detail line). 
 
-### Polish for "more elaborate / better"
-- Slightly larger node cards, more breathing room, cleaner curved edges (keep existing bezier + animated flow dashes).
-- Keep native SVG `<text>` labels (mobile-safe, current approach) — no KaTeX-in-foreignObject regression.
-- The `exp-axis-map` legend block below the diagram is now partly redundant with on-diagram region labels; I'll keep a slimmed version (or fold it into the diagram) so nothing is lost.
+- Add a `showDetail` boolean prop. When `false`, render only the node title glyph (the variable, e.g. `Q`, `N(t)`, `Π`) and skip the `nodeSub` and second sub-line `<text>` elements. Vertically center the glyph when details are hidden.
+- In `evaluator.tsx`, add a toggle button in the Pathway view header ("Show values" / "Variables only") wired to a `causalDetail` state, passed into `<CausalDiagram showDetail={...} />`. Default keeps current behavior (details shown).
 
-### What does NOT change
-- All node math, edge intensities, colors-by-state logic, and `CausalState` stay identical. This is layout + new region/halo overlays only.
+## 3. High-res PNG download with STAT-UP logo + copyright, for every diagram
 
-## Part B — Problem tab icons (`ProblemFrame.tsx` + styles)
+Add one shared utility and one small reusable wrapper, then attach a download button to each diagram (Trajectory LineChart, RadarChart, CausalDiagram).
 
-Add a distinctive icon to each of the four axis cards (01–04). Goal: modern, technical, structural — not the generic "sparkle/robot/brain" AI look. Plan to use **custom hand-drawn line SVGs** (thin stroke, geometric, matching the diagram's restrained style) rather than off-the-shelf rounded icons:
+- **`src/lib/exportChart.ts`** — `downloadChartPng(svgEl, { filename, title })`:
+  1. Clone the target `<svg>`, inline the computed values of the CSS custom properties it uses (`--exp-*` tokens resolve to real colors so the export isn't blank), and set explicit width/height.
+  2. Serialize to a data URL, draw onto a canvas at ~3× device scale for high resolution.
+  3. Draw a footer band with the STAT-UP logo (loaded from the existing `statup-logo` asset URL) and a copyright line: `© {year} STAT-UP · For demonstration purposes only.`
+  4. Trigger a `.png` download via a temporary anchor.
+- **`src/components/scenario/ChartFrame.tsx`** — wraps a diagram, holds a `ref` to the rendered `<svg>`, and renders a small "Download PNG" button (top-right) that calls the utility. Styling uses existing tokens.
+- Wrap the three diagrams in `ChartFrame` in `evaluator.tsx`. The LineChart/RadarChart/CausalDiagram components themselves need no internal change (the frame finds the `<svg>` via ref), keeping their markup intact.
 
-| Axis | Icon concept |
-|---|---|
-| 01 Platform ecosystem | nested app tiles / stacked panels radiating outward (reach) |
-| 02 Vendor choice | a single trunk splitting into multiple plug endpoints (one vendor vs many) |
-| 03 Build vs buy | a blueprint bracket / module being assembled vs a sealed box |
-| 04 Scaling strategy | a throttle/dial sweeping up a stepped ramp |
+## Technical notes
+- All new colors/styles use existing `--exp-*` semantic tokens; no raw hex in components.
+- Pure frontend/presentation work: no changes to `src/lib/scenario/model.ts`, no data, no formulas, no copy.
+- `standalone/` is left as-is unless you want it synced afterward (can be a follow-up).
+- Verify by loading `/evaluator`: sidebar collapses/expands, scenario dropdown switches environments, causal toggle hides sub-text, and each diagram downloads a crisp PNG with logo + copyright.
 
-- Mono-stroke, `currentColor`, ~28px, sit in the card header next to the number.
-- Subtle hover treatment consistent with existing card styling.
-
-## Open question before build
-For Part B icons: do you want **(a)** custom line SVGs as described (most control, on-brand, non-generic), or **(b)** curated Lucide icons chosen to look technical (faster, but slightly more "standard")? My recommendation is (a).
+## Open question
+For the download, should the exported PNG use a **light background regardless of theme** (best for pasting into decks), or match the current light/dark theme? Default plan: always light background for consistency in reports.

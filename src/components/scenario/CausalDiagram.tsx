@@ -96,11 +96,11 @@ function groupBox(members: string[]) {
   return { left, top, w: right - left, h: bottom - top };
 }
 
-function NodeTitle({ n }: { n: NodeDef }) {
+function NodeTitle({ n, centered = false }: { n: NodeDef; centered?: boolean }) {
   return (
     <text
       x={n.x}
-      y={n.y - 10}
+      y={centered ? n.y : n.y - 10}
       textAnchor="middle"
       dominantBaseline="middle"
       fill="var(--exp-ink)"
@@ -142,10 +142,12 @@ export function CausalDiagram({
   cs,
   base,
   stratColor,
+  showDetail = true,
 }: {
   cs: CausalState;
   base: CausalState;
   stratColor: string;
+  showDetail?: boolean;
 }) {
   void stratColor;
 
@@ -356,21 +358,25 @@ export function CausalDiagram({
                   fill="var(--exp-surface)" stroke={col} strokeWidth={3} />
               )}
               <circle cx={left + 20} cy={top + 20} r={5} fill={col} />
-              <NodeTitle n={n} />
-              <text x={n.x} y={n.y + (second && !secondOutside ? 12 : 18)} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
-                {nodeSub[n.id]}
-              </text>
-              {second && (
-                <text
-                  x={n.x}
-                  y={secondOutside ? top + n.h + 16 : n.y + 28}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="cd-node-sub"
-                  fill={second.color}
-                >
-                  {second.text}
-                </text>
+              <NodeTitle n={n} centered={!showDetail} />
+              {showDetail && (
+                <>
+                  <text x={n.x} y={n.y + (second && !secondOutside ? 12 : 18)} textAnchor="middle" dominantBaseline="central" className="cd-node-sub" fill="var(--exp-muted)">
+                    {nodeSub[n.id]}
+                  </text>
+                  {second && (
+                    <text
+                      x={n.x}
+                      y={secondOutside ? top + n.h + 16 : n.y + 28}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="cd-node-sub"
+                      fill={second.color}
+                    >
+                      {second.text}
+                    </text>
+                  )}
+                </>
               )}
             </g>
           </g>

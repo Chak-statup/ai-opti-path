@@ -11,6 +11,7 @@ import { AiInsight } from "@/components/scenario/AiInsight";
 import { ProblemFrame } from "@/components/scenario/ProblemFrame";
 import { HowItWorks } from "@/components/scenario/HowItWorks";
 import { Tex } from "@/components/scenario/Tex";
+import { ChartFrame } from "@/components/scenario/ChartFrame";
 import { StatupLogo } from "@/components/StatupLogo";
 import {
   buildModelData,
@@ -144,6 +145,8 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [showHow, setShowHow] = useState(false);
   const [showProblem, setShowProblem] = useState(false);
   const [pathwayInfo, setPathwayInfo] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  const [nodeDetail, setNodeDetail] = useState(true);
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
   const ctx: ScenarioContext = useMemo(
@@ -351,8 +354,20 @@ function ExplorerView({ data }: { data: RunsData }) {
 
 
       {showRail && (
-        <div className="exp-body">
-          <aside className="exp-rail">
+        <div className={`exp-body ${railOpen ? "rail-open" : "rail-collapsed"}`}>
+          <button
+            type="button"
+            className="exp-rail-toggle"
+            aria-expanded={railOpen}
+            aria-controls="exp-rail"
+            onClick={() => setRailOpen((v) => !v)}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            {railOpen ? "Hide controls" : "Controls & levers"}
+          </button>
+          <aside className="exp-rail" id="exp-rail" hidden={!railOpen}>
             <div className="exp-rail-group">
               <div className="exp-rail-group-head">
                 <span className="exp-rail-group-title">Your four decisions</span>
@@ -582,7 +597,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           <main className="exp-main">
             {stage === "causal" && (
               <section className="exp-section">
-                <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
+                <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} variant="dropdown" />
                 <div className="exp-subtabs" role="tablist" aria-label="Causal view">
                   <button
                     role="tab"
@@ -607,9 +622,24 @@ function ExplorerView({ data }: { data: RunsData }) {
                     <h2 className="exp-section-title">
                       OUTCOME PATHWAY: {derived[traceStrat].label.toUpperCase()}
                     </h2>
-                    <div className="exp-causal-wrap">
-                      <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} />
+                    <div className="exp-diagram-tools">
+                      <button
+                        type="button"
+                        className={`exp-detail-toggle ${nodeDetail ? "on" : ""}`}
+                        aria-pressed={nodeDetail}
+                        onClick={() => setNodeDetail((v) => !v)}
+                      >
+                        {nodeDetail ? "Hide node details" : "Show node details"}
+                      </button>
                     </div>
+                    <ChartFrame
+                      filename={`outcome-pathway-${derived[traceStrat].label.toLowerCase()}`}
+                      title={`Outcome pathway — ${derived[traceStrat].label}`}
+                    >
+                      <div className="exp-causal-wrap">
+                        <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} showDetail={nodeDetail} />
+                      </div>
+                    </ChartFrame>
                     <button
                       type="button"
                       className="exp-info-toggle"
@@ -676,18 +706,23 @@ function ExplorerView({ data }: { data: RunsData }) {
                     </div>
                     <>
                       <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
-                      <LineChart
-                        xs={t}
-                        series={panelSeries(tab)}
-                        title={METRIC_PANELS[tab].title}
-                        xLabel="months"
-                        yLabel={METRIC_PANELS[tab].yLabel}
-                        vGuides={baseGuides}
-                        zeroLine={METRIC_PANELS[tab].zero}
-                        xFormat={(v) => `${Math.round(v)}`}
-                        yFormat={(v) => (v * 1000).toFixed(0)}
-                        height={360}
-                      />
+                      <ChartFrame
+                        filename={`trajectory-${tab}`}
+                        title={`Trajectory — ${activeTab.label}`}
+                      >
+                        <LineChart
+                          xs={t}
+                          series={panelSeries(tab)}
+                          title={METRIC_PANELS[tab].title}
+                          xLabel="months"
+                          yLabel={METRIC_PANELS[tab].yLabel}
+                          vGuides={baseGuides}
+                          zeroLine={METRIC_PANELS[tab].zero}
+                          xFormat={(v) => `${Math.round(v)}`}
+                          yFormat={(v) => (v * 1000).toFixed(0)}
+                          height={360}
+                        />
+                      </ChartFrame>
                     </>
                   </>
                 )}
@@ -700,7 +735,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                 <h2 className="exp-section-title">RISK PROFILE vs STATUS QUO</h2>
                 <div className="exp-radar-layout">
                   <div className="exp-radar-wrap">
-                    <RadarChart axes={RADAR_AXES} series={radarSeries} />
+                    <ChartFrame filename="risk-profile" title="Risk profile vs status quo">
+                      <RadarChart axes={RADAR_AXES} series={radarSeries} />
+                    </ChartFrame>
                   </div>
                   <div className="exp-radar-side">
                     <p className="exp-prose">
