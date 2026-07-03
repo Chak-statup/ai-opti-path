@@ -735,7 +735,9 @@ function ExplorerView({ data }: { data: RunsData }) {
                 <h2 className="exp-section-title">RISK PROFILE vs STATUS QUO</h2>
                 <div className="exp-radar-layout">
                   <div className="exp-radar-wrap">
-                    <RadarChart axes={RADAR_AXES} series={radarSeries} />
+                    <ChartFrame filename="risk-profile" title="Risk profile vs status quo">
+                      <RadarChart axes={RADAR_AXES} series={radarSeries} />
+                    </ChartFrame>
                   </div>
                   <div className="exp-radar-side">
                     <p className="exp-prose">
