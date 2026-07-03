@@ -475,7 +475,7 @@
 /* Stack the control rail above the main panel on tablets and phones so the
    chart / diagram area gets the full width instead of being squeezed. */
 @media (max-width: 900px) {
-  .exp-body { grid-template-columns: 1fr; }
+  .exp-body.rail-open { grid-template-columns: 1fr; }
   .exp-rail {
     border-right: none;
     border-bottom: 1px solid var(--exp-border);
