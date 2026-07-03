@@ -597,7 +597,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           <main className="exp-main">
             {stage === "causal" && (
               <section className="exp-section">
-                <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
+                <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} variant="dropdown" />
                 <div className="exp-subtabs" role="tablist" aria-label="Causal view">
                   <button
                     role="tab"
