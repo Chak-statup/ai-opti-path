@@ -11,6 +11,7 @@ import { AiInsight } from "@/components/scenario/AiInsight";
 import { ProblemFrame } from "@/components/scenario/ProblemFrame";
 import { HowItWorks } from "@/components/scenario/HowItWorks";
 import { Tex } from "@/components/scenario/Tex";
+import { ChartFrame } from "@/components/scenario/ChartFrame";
 import { StatupLogo } from "@/components/StatupLogo";
 import {
   buildModelData,
