@@ -96,11 +96,11 @@ function groupBox(members: string[]) {
   return { left, top, w: right - left, h: bottom - top };
 }
 
-function NodeTitle({ n }: { n: NodeDef }) {
+function NodeTitle({ n, centered = false }: { n: NodeDef; centered?: boolean }) {
   return (
     <text
       x={n.x}
-      y={n.y - 10}
+      y={centered ? n.y : n.y - 10}
       textAnchor="middle"
       dominantBaseline="middle"
       fill="var(--exp-ink)"
