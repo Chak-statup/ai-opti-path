@@ -622,9 +622,24 @@ function ExplorerView({ data }: { data: RunsData }) {
                     <h2 className="exp-section-title">
                       OUTCOME PATHWAY: {derived[traceStrat].label.toUpperCase()}
                     </h2>
-                    <div className="exp-causal-wrap">
-                      <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} />
+                    <div className="exp-diagram-tools">
+                      <button
+                        type="button"
+                        className={`exp-detail-toggle ${nodeDetail ? "on" : ""}`}
+                        aria-pressed={nodeDetail}
+                        onClick={() => setNodeDetail((v) => !v)}
+                      >
+                        {nodeDetail ? "Hide node details" : "Show node details"}
+                      </button>
                     </div>
+                    <ChartFrame
+                      filename={`outcome-pathway-${derived[traceStrat].label.toLowerCase()}`}
+                      title={`Outcome pathway — ${derived[traceStrat].label}`}
+                    >
+                      <div className="exp-causal-wrap">
+                        <CausalDiagram cs={causalState} base={baseCausalState} stratColor={STRAT_COLORS[traceStrat]} showDetail={nodeDetail} />
+                      </div>
+                    </ChartFrame>
                     <button
                       type="button"
                       className="exp-info-toggle"
