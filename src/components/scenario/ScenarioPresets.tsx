@@ -8,11 +8,41 @@ export function ScenarioPresets({
   presets,
   activeId,
   onSelect,
+  variant = "cards",
 }: {
   presets: ScenarioPreset[];
   activeId: string | null;
   onSelect: (p: ScenarioPreset) => void;
+  variant?: "cards" | "dropdown";
 }) {
+  if (variant === "dropdown") {
+    const active = presets.find((p) => p.id === activeId);
+    return (
+      <div className="exp-scenario-select" role="group" aria-label="Environment scenarios">
+        <label className="exp-scenario-select-label" htmlFor="exp-scenario-dd">
+          Scenario
+        </label>
+        <select
+          id="exp-scenario-dd"
+          className="exp-scenario-dd"
+          value={activeId ?? ""}
+          onChange={(e) => {
+            const p = presets.find((x) => x.id === e.target.value);
+            if (p) onSelect(p);
+          }}
+        >
+          {activeId === null && <option value="">Custom (edited)</option>}
+          {presets.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+        {active && <span className="exp-scenario-select-blurb">{active.blurb}</span>}
+      </div>
+    );
+  }
+
   return (
     <div role="group" aria-label="Environment scenarios">
       <div className="exp-presets-title">
