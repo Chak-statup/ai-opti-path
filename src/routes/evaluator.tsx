@@ -706,18 +706,23 @@ function ExplorerView({ data }: { data: RunsData }) {
                     </div>
                     <>
                       <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
-                      <LineChart
-                        xs={t}
-                        series={panelSeries(tab)}
-                        title={METRIC_PANELS[tab].title}
-                        xLabel="months"
-                        yLabel={METRIC_PANELS[tab].yLabel}
-                        vGuides={baseGuides}
-                        zeroLine={METRIC_PANELS[tab].zero}
-                        xFormat={(v) => `${Math.round(v)}`}
-                        yFormat={(v) => (v * 1000).toFixed(0)}
-                        height={360}
-                      />
+                      <ChartFrame
+                        filename={`trajectory-${tab}`}
+                        title={`Trajectory — ${activeTab.label}`}
+                      >
+                        <LineChart
+                          xs={t}
+                          series={panelSeries(tab)}
+                          title={METRIC_PANELS[tab].title}
+                          xLabel="months"
+                          yLabel={METRIC_PANELS[tab].yLabel}
+                          vGuides={baseGuides}
+                          zeroLine={METRIC_PANELS[tab].zero}
+                          xFormat={(v) => `${Math.round(v)}`}
+                          yFormat={(v) => (v * 1000).toFixed(0)}
+                          height={360}
+                        />
+                      </ChartFrame>
                     </>
                   </>
                 )}
