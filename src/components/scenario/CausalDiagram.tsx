@@ -142,10 +142,12 @@ export function CausalDiagram({
   cs,
   base,
   stratColor,
+  showDetail = true,
 }: {
   cs: CausalState;
   base: CausalState;
   stratColor: string;
+  showDetail?: boolean;
 }) {
   void stratColor;
 
