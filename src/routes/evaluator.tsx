@@ -368,6 +368,57 @@ function ExplorerView({ data }: { data: RunsData }) {
             {railOpen ? "Hide controls" : "Controls & levers"}
           </button>
           <aside className="exp-rail" id="exp-rail" hidden={!railOpen}>
+            {stage === "causal" && (
+              <div className="exp-rail-controls">
+                <p className="exp-rail-lead">{activeStage.blurb}</p>
+
+                <div className="exp-rail-field">
+                  <span className="exp-rail-field-label">View</span>
+                  <div className="exp-subtabs" role="tablist" aria-label="Causal view">
+                    <button
+                      role="tab"
+                      aria-selected={causalView === "charts"}
+                      className={`exp-tab ${causalView === "charts" ? "active" : ""}`}
+                      onClick={() => setCausalView("charts")}
+                    >
+                      Trajectories
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={causalView === "pathway"}
+                      className={`exp-tab ${causalView === "pathway" ? "active" : ""}`}
+                      onClick={() => setCausalView("pathway")}
+                    >
+                      Pathway
+                    </button>
+                  </div>
+                </div>
+
+                {causalView === "charts" && (
+                  <div className="exp-rail-field">
+                    <span className="exp-rail-field-label">Metric</span>
+                    <div className="exp-tabs exp-tabs-vert" role="tablist" aria-label="Chart view">
+                      {TABS.map((x) => (
+                        <button
+                          key={x.key}
+                          role="tab"
+                          aria-selected={tab === x.key}
+                          className={`exp-tab ${tab === x.key ? "active" : ""}`}
+                          onClick={() => setTab(x.key)}
+                        >
+                          {x.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="exp-rail-field">
+                  <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} variant="dropdown" />
+                </div>
+              </div>
+            )}
+
             <div className="exp-rail-group">
               <div className="exp-rail-group-head">
                 <span className="exp-rail-group-title">Your four decisions</span>
