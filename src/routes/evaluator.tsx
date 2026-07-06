@@ -719,42 +719,29 @@ function ExplorerView({ data }: { data: RunsData }) {
                   </>
                 ) : (
                   <>
-                    <div className="exp-tabs" role="tablist" aria-label="Chart view">
-                      {TABS.map((x) => (
-                        <button
-                          key={x.key}
-                          role="tab"
-                          aria-selected={tab === x.key}
-                          className={`exp-tab ${tab === x.key ? "active" : ""}`}
-                          onClick={() => setTab(x.key)}
-                        >
-                          {x.label}
-                        </button>
-                      ))}
+                    <div className="exp-section-head">
+                      <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
                       <span className="exp-scenario-chip" title="Environment these charts are computed under">
                         {envSummary}
                       </span>
                     </div>
-                    <>
-                      <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
-                      <ChartFrame
-                        filename={`trajectory-${tab}`}
-                        title={`Trajectory — ${activeTab.label}`}
-                      >
-                        <LineChart
-                          xs={t}
-                          series={panelSeries(tab)}
-                          title={METRIC_PANELS[tab].title}
-                          xLabel="months"
-                          yLabel={METRIC_PANELS[tab].yLabel}
-                          vGuides={baseGuides}
-                          zeroLine={METRIC_PANELS[tab].zero}
-                          xFormat={(v) => `${Math.round(v)}`}
-                          yFormat={(v) => (v * 1000).toFixed(0)}
-                          height={360}
-                        />
-                      </ChartFrame>
-                    </>
+                    <ChartFrame
+                      filename={`trajectory-${tab}`}
+                      title={`Trajectory — ${activeTab.label}`}
+                    >
+                      <LineChart
+                        xs={t}
+                        series={panelSeries(tab)}
+                        title={METRIC_PANELS[tab].title}
+                        xLabel="months"
+                        yLabel={METRIC_PANELS[tab].yLabel}
+                        vGuides={baseGuides}
+                        zeroLine={METRIC_PANELS[tab].zero}
+                        xFormat={(v) => `${Math.round(v)}`}
+                        yFormat={(v) => (v * 1000).toFixed(0)}
+                        height={360}
+                      />
+                    </ChartFrame>
                   </>
                 )}
               </section>
