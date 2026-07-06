@@ -350,7 +350,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           );
         })}
       </nav>
-      <p className="exp-journey-blurb">{activeStage.blurb}</p>
+      {!showRail && <p className="exp-journey-blurb">{activeStage.blurb}</p>}
 
 
       {showRail && (
