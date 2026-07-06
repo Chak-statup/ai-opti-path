@@ -145,7 +145,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [showHow, setShowHow] = useState(false);
   const [showProblem, setShowProblem] = useState(false);
   const [pathwayInfo, setPathwayInfo] = useState(false);
-  const [railOpen, setRailOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(true);
   const [nodeDetail, setNodeDetail] = useState(true);
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
