@@ -1,44 +1,56 @@
-# Plot-first evaluator + diagram downloads
+# Plot-as-hero: left control sidebar, graph fills the right
 
-Three changes, none of which alter the model, the formulas, or the wording of any existing content. Everything is layout, a toggle, and an export utility.
+Variation B. Consolidate the scattered top chrome into one persistent left sidebar built from the existing `exp-rail`, so the chart area on the right shows just a title + the graph, edge to edge. Pure layout/CSS — no model, formula, data, or copy-logic changes. Reuse the existing `.exp-*` design tokens and the existing collapsible mechanism (no shadcn sidebar, to stay consistent with the current visual system).
 
-## 1. Make the plot the hero; sliders in a collapsible sidebar; scenarios in a dropdown
+## What moves where
 
-Today `/evaluator` renders a fixed two-column grid (`.exp-body`: 230px rail + main) for the Causal / Risk / Tipping stages, with scenario presets as a row of cards above the chart. The rail competes with the plot for attention.
+Today, above the graph, this stacks vertically (7 rows): journey blurb → "Controls & levers" button → Scenario dropdown + blurb → Trajectories/Pathway tabs → Profit/Users/Revenue/Cost tabs + chip → "TRAJECTORY, PROFIT" caption → "Net profit" title → graph.
 
-Changes (in `src/routes/evaluator.tsx` and `src/styles.css`):
+New structure for the Trajectories/Pathway stage:
 
-- **Collapsible sidebar.** Add a `railOpen` state (default open on desktop, closed on narrow screens). Wrap the existing `<aside class="exp-rail">` so it can slide/collapse, and add a slim toggle button ("Controls" with a chevron) pinned at the edge of the main area. When collapsed, the plot dashboard takes the full width. No slider markup or copy changes — the whole existing rail (four decisions, environment, readout) just moves inside the collapsible container.
-- **Grid becomes responsive to the toggle.** `.exp-body` switches between `230px 1fr` (open) and `1fr` (collapsed) via a modifier class. The chart/diagram area is always the dominant, neatly-centered element.
-- **Scenarios as a dropdown.** Replace the `ScenarioPresets` card row with a compact labeled dropdown ("Scenario:") that lists the same presets and calls the same `applyPreset`. The active preset stays reflected in the selected value. `ScenarioPresets.tsx` gets a new compact `variant="dropdown"` (default keeps the card layout so nothing else breaks); the evaluator uses the dropdown variant. Same presets, same behavior, same content.
-- The Trajectories / Pathway subtabs and the metric tabs stay exactly where they are, directly above the plot, so the plot is the first and most prominent thing on the page.
+```text
+┌───────────────┬─────────────────────────────────────┐
+│  SIDEBAR      │  MAIN (graph is the hero)            │
+│  (collapsible)│                                       │
+│               │  Net profit            [Download PNG]│
+│ View          │                                       │
+│  [Traject.]   │   ┌─────────────────────────────┐   │
+│  [Pathway]    │   │                             │   │
+│               │   │        THE GRAPH            │   │
+│ Metric        │   │      (fills width)          │   │
+│  Profit       │   │                             │   │
+│  Users        │   └─────────────────────────────┘   │
+│  Revenue      │                                       │
+│  Cost         │                                       │
+│               │                                       │
+│ Scenario ▼    │                                       │
+│  (blurb)      │                                       │
+│ ───────────   │                                       │
+│ Your 4        │                                       │
+│  decisions    │                                       │
+│  (sliders)    │                                       │
+│ ───────────   │                                       │
+│ Cumulative    │                                       │
+│  profit       │                                       │
+└───────────────┴─────────────────────────────────────┘
+```
 
-Flow preserved: default stage stays `causal`, default subview stays `charts` (Trajectories), the journey stepper, FABs, and all other stages are untouched.
+## Changes
 
-## 2. Causal diagram: toggle to hide the small sub-text under node labels
+**`src/routes/evaluator.tsx`**
+- Move the Scenario dropdown (`ScenarioPresets variant="dropdown"`), the Trajectories/Pathway view toggle, and the Profit/Users/Revenue/Cost metric selector OUT of `exp-main` and INTO the top of `exp-rail`, above "Your four decisions". Group them under slim labels ("View", "Metric", "Scenario"). Same handlers, same state, same presets — only their DOM location changes.
+- `exp-main` keeps only: the section title (e.g. "Net profit" / "Outcome pathway …"), the Download PNG button (kept top-right of the chart), the chart/diagram itself, and the collapsible "More info +" details (unchanged).
+- Remove the redundant chrome above the graph: the `exp-journey-blurb` paragraph (line 353) and the "TRAJECTORY, PROFIT" small caption. The blurb text is relocated as muted helper text at the very top of the sidebar so the explanation is still available but out of the graph's way.
+- Keep the "Controls & levers" / "Hide controls" toggle as the sidebar's collapse control. Default it OPEN on desktop; when collapsed the graph spans full width. On the Risk and Tipping stages the same sidebar pattern applies (they already share `exp-rail`).
 
-In `CausalDiagram.tsx` every node renders a title glyph plus one or two small sub-lines (`nodeSub`, the delta/detail line). 
+**`src/styles.css`**
+- `.exp-body` becomes a real 2-column grid: sidebar (fixed, ~260–300px) + `1fr` main, with the main graph area centered and allowed to grow. Collapsed state → single `1fr` column with a slim re-open button.
+- Add compact styling for the relocated controls inside the rail: `.exp-rail` gets a "View" and "Metric" segmented group styled with existing tokens; the metric tabs become a vertical or wrapped compact list to fit the narrow column.
+- Make the chart wrapper (`exp-fig` / `exp-causal-wrap`) stretch to the main column width so the plot is visibly the largest element.
+- Responsive: below ~900px the sidebar collapses to the top (stacked) so mobile still works.
 
-- Add a `showDetail` boolean prop. When `false`, render only the node title glyph (the variable, e.g. `Q`, `N(t)`, `Π`) and skip the `nodeSub` and second sub-line `<text>` elements. Vertically center the glyph when details are hidden.
-- In `evaluator.tsx`, add a toggle button in the Pathway view header ("Show values" / "Variables only") wired to a `causalDetail` state, passed into `<CausalDiagram showDetail={...} />`. Default keeps current behavior (details shown).
-
-## 3. High-res PNG download with STAT-UP logo + copyright, for every diagram
-
-Add one shared utility and one small reusable wrapper, then attach a download button to each diagram (Trajectory LineChart, RadarChart, CausalDiagram).
-
-- **`src/lib/exportChart.ts`** — `downloadChartPng(svgEl, { filename, title })`:
-  1. Clone the target `<svg>`, inline the computed values of the CSS custom properties it uses (`--exp-*` tokens resolve to real colors so the export isn't blank), and set explicit width/height.
-  2. Serialize to a data URL, draw onto a canvas at ~3× device scale for high resolution.
-  3. Draw a footer band with the STAT-UP logo (loaded from the existing `statup-logo` asset URL) and a copyright line: `© {year} STAT-UP · For demonstration purposes only.`
-  4. Trigger a `.png` download via a temporary anchor.
-- **`src/components/scenario/ChartFrame.tsx`** — wraps a diagram, holds a `ref` to the rendered `<svg>`, and renders a small "Download PNG" button (top-right) that calls the utility. Styling uses existing tokens.
-- Wrap the three diagrams in `ChartFrame` in `evaluator.tsx`. The LineChart/RadarChart/CausalDiagram components themselves need no internal change (the frame finds the `<svg>` via ref), keeping their markup intact.
-
-## Technical notes
-- All new colors/styles use existing `--exp-*` semantic tokens; no raw hex in components.
-- Pure frontend/presentation work: no changes to `src/lib/scenario/model.ts`, no data, no formulas, no copy.
-- `standalone/` is left as-is unless you want it synced afterward (can be a follow-up).
-- Verify by loading `/evaluator`: sidebar collapses/expands, scenario dropdown switches environments, causal toggle hides sub-text, and each diagram downloads a crisp PNG with logo + copyright.
-
-## Open question
-For the download, should the exported PNG use a **light background regardless of theme** (best for pasting into decks), or match the current light/dark theme? Default plan: always light background for consistency in reports.
+## Guardrails
+- No changes to `src/lib/scenario/model.ts`, formulas, numbers, or the wording of control notes.
+- All colors via existing `--exp-*` tokens; no raw hex in components.
+- Metric tabs, view toggle, scenario presets, sliders, readout, and PNG export keep identical behavior — only their placement and container styling change.
+- Verify on `/evaluator`: graph sits at the top-right as the dominant element, sidebar collapses/expands, scenario/metric/view switching all still work, and the layout reflows cleanly on a narrow screen.

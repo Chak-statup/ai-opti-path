@@ -145,7 +145,7 @@ function ExplorerView({ data }: { data: RunsData }) {
   const [showHow, setShowHow] = useState(false);
   const [showProblem, setShowProblem] = useState(false);
   const [pathwayInfo, setPathwayInfo] = useState(false);
-  const [railOpen, setRailOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(true);
   const [nodeDetail, setNodeDetail] = useState(true);
 
   const activeStage = STAGES.find((s) => s.key === stage)!;
@@ -350,7 +350,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           );
         })}
       </nav>
-      <p className="exp-journey-blurb">{activeStage.blurb}</p>
+      {!showRail && <p className="exp-journey-blurb">{activeStage.blurb}</p>}
 
 
       {showRail && (
@@ -368,6 +368,57 @@ function ExplorerView({ data }: { data: RunsData }) {
             {railOpen ? "Hide controls" : "Controls & levers"}
           </button>
           <aside className="exp-rail" id="exp-rail" hidden={!railOpen}>
+            {stage === "causal" && (
+              <div className="exp-rail-controls">
+                <p className="exp-rail-lead">{activeStage.blurb}</p>
+
+                <div className="exp-rail-field">
+                  <span className="exp-rail-field-label">View</span>
+                  <div className="exp-subtabs" role="tablist" aria-label="Causal view">
+                    <button
+                      role="tab"
+                      aria-selected={causalView === "charts"}
+                      className={`exp-tab ${causalView === "charts" ? "active" : ""}`}
+                      onClick={() => setCausalView("charts")}
+                    >
+                      Trajectories
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={causalView === "pathway"}
+                      className={`exp-tab ${causalView === "pathway" ? "active" : ""}`}
+                      onClick={() => setCausalView("pathway")}
+                    >
+                      Pathway
+                    </button>
+                  </div>
+                </div>
+
+                {causalView === "charts" && (
+                  <div className="exp-rail-field">
+                    <span className="exp-rail-field-label">Metric</span>
+                    <div className="exp-tabs exp-tabs-vert" role="tablist" aria-label="Chart view">
+                      {TABS.map((x) => (
+                        <button
+                          key={x.key}
+                          role="tab"
+                          aria-selected={tab === x.key}
+                          className={`exp-tab ${tab === x.key ? "active" : ""}`}
+                          onClick={() => setTab(x.key)}
+                        >
+                          {x.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="exp-rail-field">
+                  <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} variant="dropdown" />
+                </div>
+              </div>
+            )}
+
             <div className="exp-rail-group">
               <div className="exp-rail-group-head">
                 <span className="exp-rail-group-title">Your four decisions</span>
@@ -597,26 +648,6 @@ function ExplorerView({ data }: { data: RunsData }) {
           <main className="exp-main">
             {stage === "causal" && (
               <section className="exp-section">
-                <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} variant="dropdown" />
-                <div className="exp-subtabs" role="tablist" aria-label="Causal view">
-                  <button
-                    role="tab"
-                    aria-selected={causalView === "charts"}
-                    className={`exp-tab ${causalView === "charts" ? "active" : ""}`}
-                    onClick={() => setCausalView("charts")}
-                  >
-                    Trajectories
-                  </button>
-                  <button
-                    role="tab"
-                    aria-selected={causalView === "pathway"}
-                    className={`exp-tab ${causalView === "pathway" ? "active" : ""}`}
-                    onClick={() => setCausalView("pathway")}
-                  >
-                    Pathway
-                  </button>
-                </div>
-
                 {causalView === "pathway" ? (
                   <>
                     <h2 className="exp-section-title">
@@ -688,42 +719,29 @@ function ExplorerView({ data }: { data: RunsData }) {
                   </>
                 ) : (
                   <>
-                    <div className="exp-tabs" role="tablist" aria-label="Chart view">
-                      {TABS.map((x) => (
-                        <button
-                          key={x.key}
-                          role="tab"
-                          aria-selected={tab === x.key}
-                          className={`exp-tab ${tab === x.key ? "active" : ""}`}
-                          onClick={() => setTab(x.key)}
-                        >
-                          {x.label}
-                        </button>
-                      ))}
+                    <div className="exp-section-head">
+                      <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
                       <span className="exp-scenario-chip" title="Environment these charts are computed under">
                         {envSummary}
                       </span>
                     </div>
-                    <>
-                      <h2 className="exp-section-title">Trajectory, {activeTab.label}</h2>
-                      <ChartFrame
-                        filename={`trajectory-${tab}`}
-                        title={`Trajectory — ${activeTab.label}`}
-                      >
-                        <LineChart
-                          xs={t}
-                          series={panelSeries(tab)}
-                          title={METRIC_PANELS[tab].title}
-                          xLabel="months"
-                          yLabel={METRIC_PANELS[tab].yLabel}
-                          vGuides={baseGuides}
-                          zeroLine={METRIC_PANELS[tab].zero}
-                          xFormat={(v) => `${Math.round(v)}`}
-                          yFormat={(v) => (v * 1000).toFixed(0)}
-                          height={360}
-                        />
-                      </ChartFrame>
-                    </>
+                    <ChartFrame
+                      filename={`trajectory-${tab}`}
+                      title={`Trajectory — ${activeTab.label}`}
+                    >
+                      <LineChart
+                        xs={t}
+                        series={panelSeries(tab)}
+                        title={METRIC_PANELS[tab].title}
+                        xLabel="months"
+                        yLabel={METRIC_PANELS[tab].yLabel}
+                        vGuides={baseGuides}
+                        zeroLine={METRIC_PANELS[tab].zero}
+                        xFormat={(v) => `${Math.round(v)}`}
+                        yFormat={(v) => (v * 1000).toFixed(0)}
+                        height={360}
+                      />
+                    </ChartFrame>
                   </>
                 )}
               </section>
