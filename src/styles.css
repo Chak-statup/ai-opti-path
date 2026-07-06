@@ -541,6 +541,7 @@
     gap: 1.5rem 2rem;
     align-items: start;
   }
+  .exp-rail-controls { grid-column: 1 / -1; }
 }
 
 @media (max-width: 640px) {
