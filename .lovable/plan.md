@@ -1,56 +1,49 @@
-# Plot-as-hero: left control sidebar, graph fills the right
+## Goal
 
-Variation B. Consolidate the scattered top chrome into one persistent left sidebar built from the existing `exp-rail`, so the chart area on the right shows just a title + the graph, edge to edge. Pure layout/CSS — no model, formula, data, or copy-logic changes. Reuse the existing `.exp-*` design tokens and the existing collapsible mechanism (no shadcn sidebar, to stay consistent with the current visual system).
+Three focused changes on `/evaluator`, no model/formula/number changes:
 
-## What moves where
+1. Outcome pathway uses scenario **cards** (like Risk profile) instead of the dropdown.
+2. The step progress bar moves from a horizontal strip on top to a **vertical bar on the right**, so the plot sits centered between the left control rail and the right journey bar.
+3. Remove the **empty space above the spider chart** on Risk profile.
 
-Today, above the graph, this stacks vertically (7 rows): journey blurb → "Controls & levers" button → Scenario dropdown + blurb → Trajectories/Pathway tabs → Profit/Users/Revenue/Cost tabs + chip → "TRAJECTORY, PROFIT" caption → "Net profit" title → graph.
+---
 
-New structure for the Trajectories/Pathway stage:
+### 1. Scenario cards in Outcome pathway
+
+- In the causal rail controls (`src/routes/evaluator.tsx`, the `exp-rail-controls` block), remove the `ScenarioPresets variant="dropdown"` field.
+- Add the card variant `ScenarioPresets` (same as Risk/Tipping) at the top of the `exp-main` causal section — above the chart in both Trajectories and Pathway views — matching how Risk profile renders it. Same `presets`, `activePreset`, `applyPreset` — behavior unchanged.
+
+### 2. Vertical journey bar on the right
+
+New page shell layout so the plot is flanked on both sides:
 
 ```text
-┌───────────────┬─────────────────────────────────────┐
-│  SIDEBAR      │  MAIN (graph is the hero)            │
-│  (collapsible)│                                       │
-│               │  Net profit            [Download PNG]│
-│ View          │                                       │
-│  [Traject.]   │   ┌─────────────────────────────┐   │
-│  [Pathway]    │   │                             │   │
-│               │   │        THE GRAPH            │   │
-│ Metric        │   │      (fills width)          │   │
-│  Profit       │   │                             │   │
-│  Users        │   └─────────────────────────────┘   │
-│  Revenue      │                                       │
-│  Cost         │                                       │
-│               │                                       │
-│ Scenario ▼    │                                       │
-│  (blurb)      │                                       │
-│ ───────────   │                                       │
-│ Your 4        │                                       │
-│  decisions    │                                       │
-│  (sliders)    │                                       │
-│ ───────────   │                                       │
-│ Cumulative    │                                       │
-│  profit       │                                       │
-└───────────────┴─────────────────────────────────────┘
+┌──────────┬────────────────────────┬───────────┐
+│ CONTROLS │        PLOT            │  JOURNEY  │
+│  rail    │   (centered, hero)     │  01 ▪     │
+│ (left)   │                        │  02 ▪     │
+│          │                        │  03 ▪     │
+└──────────┴────────────────────────┴───────────┘
 ```
 
-## Changes
+- Wrap the stage content + journey nav in a flex/grid container. Move the `exp-journey` `<nav>` to the right side and restyle it as a vertical rail: steps stacked top-to-bottom, the connector line running vertically, same numbered dots and active/done states.
+- Applies across all stages (causal, risk, tipping, mitigate, recommend) so the journey bar is consistently on the right.
+- Below ~900px it collapses back to a horizontal bar on top (existing responsive breakpoint) so mobile stays usable.
 
-**`src/routes/evaluator.tsx`**
-- Move the Scenario dropdown (`ScenarioPresets variant="dropdown"`), the Trajectories/Pathway view toggle, and the Profit/Users/Revenue/Cost metric selector OUT of `exp-main` and INTO the top of `exp-rail`, above "Your four decisions". Group them under slim labels ("View", "Metric", "Scenario"). Same handlers, same state, same presets — only their DOM location changes.
-- `exp-main` keeps only: the section title (e.g. "Net profit" / "Outcome pathway …"), the Download PNG button (kept top-right of the chart), the chart/diagram itself, and the collapsible "More info +" details (unchanged).
-- Remove the redundant chrome above the graph: the `exp-journey-blurb` paragraph (line 353) and the "TRAJECTORY, PROFIT" small caption. The blurb text is relocated as muted helper text at the very top of the sidebar so the explanation is still available but out of the graph's way.
-- Keep the "Controls & levers" / "Hide controls" toggle as the sidebar's collapse control. Default it OPEN on desktop; when collapsed the graph spans full width. On the Risk and Tipping stages the same sidebar pattern applies (they already share `exp-rail`).
+**Technical:** `src/styles.css` — repoint `.exp-journey` from `display:flex` (row) to a vertical column with `flex-direction:column`; swap the `::before` connector from horizontal to vertical; give the outer wrapper a grid with a fixed right column (~150–170px). `src/routes/evaluator.tsx` — restructure the JSX so `exp-journey` renders inside the right column alongside the main content instead of as a full-width strip.
 
-**`src/styles.css`**
-- `.exp-body` becomes a real 2-column grid: sidebar (fixed, ~260–300px) + `1fr` main, with the main graph area centered and allowed to grow. Collapsed state → single `1fr` column with a slim re-open button.
-- Add compact styling for the relocated controls inside the rail: `.exp-rail` gets a "View" and "Metric" segmented group styled with existing tokens; the metric tabs become a vertical or wrapped compact list to fit the narrow column.
-- Make the chart wrapper (`exp-fig` / `exp-causal-wrap`) stretch to the main column width so the plot is visibly the largest element.
-- Responsive: below ~900px the sidebar collapses to the top (stacked) so mobile still works.
+### 3. Trim whitespace above the radar
 
-## Guardrails
-- No changes to `src/lib/scenario/model.ts`, formulas, numbers, or the wording of control notes.
-- All colors via existing `--exp-*` tokens; no raw hex in components.
-- Metric tabs, view toggle, scenario presets, sliders, readout, and PNG export keep identical behavior — only their placement and container styling change.
-- Verify on `/evaluator`: graph sits at the top-right as the dominant element, sidebar collapses/expands, scenario/metric/view switching all still work, and the layout reflows cleanly on a narrow screen.
+- `.exp-radar-layout` currently vertically centers (`align-items:center`), which pushes the shorter radar column down relative to the taller text column, creating a gap above the chart. Change to `align-items:start`.
+- Tighten the radar container top padding/margin so the chart starts right under the title.
+
+---
+
+### Guardrails
+- No changes to `model.ts`, formulas, numbers, or copy wording.
+- All colors via existing `--exp-*` tokens.
+- Scenario switching, metric/view toggles, sliders, readout, PNG export unchanged.
+- Verify: cards switch scenarios in Outcome pathway; journey bar sits vertical on the right with plot centered; radar starts flush under its title; layout reflows cleanly on narrow screens.
+
+### Recommendation
+Proceed with all three. #1 and #3 are low-risk. #2 is the largest change but purely layout/CSS; keeping the ~900px fallback to a top horizontal bar avoids breaking mobile.

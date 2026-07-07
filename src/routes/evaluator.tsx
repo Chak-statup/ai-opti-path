@@ -333,23 +333,8 @@ function ExplorerView({ data }: { data: RunsData }) {
         </Link>
       </header>
 
-      <nav className="exp-journey" aria-label="Evaluator journey">
-        {STAGES.map((s, i) => {
-          const activeIdx = STAGES.findIndex((x) => x.key === stage);
-          const state = i === activeIdx ? "active" : i < activeIdx ? "done" : "todo";
-          return (
-            <button
-              key={s.key}
-              className={`exp-journey-step ${state}`}
-              aria-current={stage === s.key}
-              onClick={() => setStage(s.key)}
-            >
-              <span className="exp-journey-num">{s.step}</span>
-              <span className="exp-journey-label">{s.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      <div className="exp-shell">
+        <div className="exp-shell-main">
       {!showRail && <p className="exp-journey-blurb">{activeStage.blurb}</p>}
 
 
@@ -413,9 +398,6 @@ function ExplorerView({ data }: { data: RunsData }) {
                   </div>
                 )}
 
-                <div className="exp-rail-field">
-                  <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} variant="dropdown" />
-                </div>
               </div>
             )}
 
@@ -648,6 +630,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           <main className="exp-main">
             {stage === "causal" && (
               <section className="exp-section">
+                <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
                 {causalView === "pathway" ? (
                   <>
                     <h2 className="exp-section-title">
@@ -860,6 +843,27 @@ function ExplorerView({ data }: { data: RunsData }) {
           </section>
         </div>
       )}
+        </div>
+        <nav className="exp-journey" aria-label="Evaluator journey">
+          {STAGES.map((s, i) => {
+            const activeIdx = STAGES.findIndex((x) => x.key === stage);
+            const state = i === activeIdx ? "active" : i < activeIdx ? "done" : "todo";
+            return (
+              <button
+                key={s.key}
+                className={`exp-journey-step ${state}`}
+                aria-current={stage === s.key}
+                onClick={() => setStage(s.key)}
+              >
+                <span className="exp-journey-num">{s.step}</span>
+                <span className="exp-journey-label">{s.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+
 
       <button
         type="button"
