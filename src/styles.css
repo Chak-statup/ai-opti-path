@@ -915,7 +915,7 @@
   color: var(--exp-muted);
   transition: all 0.12s ease;
 }
-.exp-journey-label { line-height: 1.2; text-align: center; }
+.exp-journey-label { line-height: 1.2; text-align: left; }
 .exp-journey-step.done .exp-journey-num {
   border-color: var(--exp-frontier);
   color: var(--exp-frontier);
