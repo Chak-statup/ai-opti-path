@@ -333,23 +333,8 @@ function ExplorerView({ data }: { data: RunsData }) {
         </Link>
       </header>
 
-      <nav className="exp-journey" aria-label="Evaluator journey">
-        {STAGES.map((s, i) => {
-          const activeIdx = STAGES.findIndex((x) => x.key === stage);
-          const state = i === activeIdx ? "active" : i < activeIdx ? "done" : "todo";
-          return (
-            <button
-              key={s.key}
-              className={`exp-journey-step ${state}`}
-              aria-current={stage === s.key}
-              onClick={() => setStage(s.key)}
-            >
-              <span className="exp-journey-num">{s.step}</span>
-              <span className="exp-journey-label">{s.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      <div className="exp-shell">
+        <div className="exp-shell-main">
       {!showRail && <p className="exp-journey-blurb">{activeStage.blurb}</p>}
 
 
