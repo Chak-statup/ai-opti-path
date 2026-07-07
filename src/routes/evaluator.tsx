@@ -630,6 +630,7 @@ function ExplorerView({ data }: { data: RunsData }) {
           <main className="exp-main">
             {stage === "causal" && (
               <section className="exp-section">
+                <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} />
                 {causalView === "pathway" ? (
                   <>
                     <h2 className="exp-section-title">
