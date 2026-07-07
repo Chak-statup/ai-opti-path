@@ -398,9 +398,6 @@ function ExplorerView({ data }: { data: RunsData }) {
                   </div>
                 )}
 
-                <div className="exp-rail-field">
-                  <ScenarioPresets presets={PRESETS} activeId={activePreset} onSelect={applyPreset} variant="dropdown" />
-                </div>
               </div>
             )}
 
