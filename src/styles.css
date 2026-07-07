@@ -530,6 +530,31 @@
     border-right: none;
     border-bottom: 1px solid var(--exp-border);
   }
+  /* Journey collapses back to a horizontal strip on top on narrow screens. */
+  .exp-shell { grid-template-columns: 1fr; }
+  .exp-journey {
+    order: -1;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0;
+    padding: 1.25rem 1.5rem 0;
+    position: static;
+  }
+  .exp-journey-step {
+    flex: 1 1 0;
+    min-width: 96px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .exp-journey-step::before {
+    left: -50%;
+    top: 16px;
+    width: 100%;
+    height: 2px;
+  }
+  .exp-journey-label { text-align: center; }
 }
 
 /* On tablets the stacked rail lays its two groups side by side so the
