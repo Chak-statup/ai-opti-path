@@ -538,12 +538,18 @@
     flex-wrap: nowrap;
     overflow-x: auto;
     gap: 0;
-    padding: 1.25rem 1.5rem 0;
+    padding: 1.25rem 1.5rem;
     position: static;
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid var(--exp-border);
+    background: transparent;
   }
+  .exp-journey-title { display: none; }
   .exp-journey-step {
     flex: 1 1 0;
     min-width: 96px;
+    min-height: 0;
     flex-direction: column;
     align-items: center;
     text-align: center;
