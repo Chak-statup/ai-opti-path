@@ -845,6 +845,7 @@ function ExplorerView({ data }: { data: RunsData }) {
       )}
         </div>
         <nav className="exp-journey" aria-label="Evaluator journey">
+          <p className="exp-journey-title">Journey</p>
           {STAGES.map((s, i) => {
             const activeIdx = STAGES.findIndex((x) => x.key === stage);
             const state = i === activeIdx ? "active" : i < activeIdx ? "done" : "todo";
